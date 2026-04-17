@@ -1,6 +1,6 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "bash /workspaces/life/.claude/status-line-command.sh"
+    "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
   }
 }
