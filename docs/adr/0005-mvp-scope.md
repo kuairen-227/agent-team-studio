@@ -2,7 +2,7 @@
 
 ## Status
 
-proposed
+accepted
 
 - 作成日: 2026-04-17
 - 関連: ADR-0003（前提）, ADR-0004（前提）, Issue #9
