@@ -20,19 +20,27 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 
 確定済みの前提：
 
-- **ランタイム**: Node.js 24（devcontainer で設定済み）
 - **言語**: TypeScript strict モード（CLAUDE.md で規定済み）
-- **パッケージ管理**: pnpm + workspace プロトコル（CLAUDE.md で規定済み）
+
+ランタイムとパッケージ管理は本 ADR で選定する。devcontainer の Node.js 24 / pnpm は初期設定であり、変更可能。
 
 ## Considered Alternatives
+
+### ランタイム
+
+| # | 選択肢 | 判定 |
+| - | --- | --- |
+| A | Bun | **採用** — TypeScript ネイティブ実行、組み込みテストランナー、高速パッケージインストール。Next.js・Hono・Drizzle すべて対応済み。ツールチェーンが大幅に簡素化される（tsx, vitest が不要）。Node.js 互換 API が充実し実用段階 |
+| B | Node.js 24 | 却下 — 最も成熟したエコシステムだが、TS 実行に tsx、テストに vitest 等の追加ツールが必要でツールチェーンが多い |
+| C | Deno 2 | 却下 — Web Standard API ベースで Hono との親和性は最高だが、Next.js のサポートが限定的。採用するなら Next.js ごと見直す必要がある |
 
 ### モノレポ構成
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | pnpm workspace + Turborepo | **採用** — pnpm 既定の workspace 機能を活用し、Turborepo でビルドキャッシュ・タスクオーケストレーションを効率化 |
-| B | pnpm workspace のみ（Turborepo なし） | 却下 — パッケージ間のビルド順序やキャッシュを手動管理する負担が大きい |
-| C | Nx | 却下 — 機能は豊富だが設定が重く、MVP 規模ではオーバースペック |
+| A | Bun workspace + Turborepo | **採用** — Bun 組み込みの workspace 機能を活用し、Turborepo でビルドキャッシュ・タスクオーケストレーションを効率化 |
+| B | Bun workspace のみ（Turborepo なし） | 却下 — パッケージ間のビルド順序やキャッシュを手動管理する負担が大きい |
+| C | Nx | 却下 — 機能は豊富だが設��が重く、MVP 規模ではオーバースペック |
 
 ### フロントエンド
 
@@ -46,7 +54,7 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Hono | **採用** — Web Standard API ベース、TypeScript ファースト、型安全なルーティング。軽量かつ組み込み WebSocket サポートあり。Node.js 24 との相性良好 |
+| A | Hono | **採用** — Web Standard API ベース、TypeScript ファースト、型安全なルーティング。軽量かつ組み込み WebSocket サポートあり。Bun との相性が特に良好 |
 | B | Fastify | 却下 — 成熟したエコシステムだが、Hono に比べ設定が重く、Web Standard API ベースではない |
 | C | Express v5 | 却下 — 型サポートが弱く TypeScript strict との相性がやや劣る |
 
@@ -87,9 +95,10 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 
 | レイヤー | 技術 | バージョン方針 |
 | --- | --- | --- |
-| ランタイム | Node.js 24 | devcontainer で固定 |
+| ランタイム | Bun | devcontainer で固定 |
 | 言語 | TypeScript (strict) | 最新安定版 |
-| パッケージ管理 | pnpm | devcontainer 同梱版 |
+| パッケージ管理 | Bun (組み込み) | ランタイムに同梱 |
+| テストランナー | bun:test (組み込み) | ランタイムに同梱 |
 | モノレポ | Turborepo | 最新安定版 |
 | フロントエンド | Next.js (App Router) | 最新安定版 |
 | UI コンポーネント | shadcn/ui + Tailwind CSS v4 | 最新安定版 |
@@ -111,7 +120,6 @@ agent-team-studio/
 │   ├── shared/           # フロント・バックエンド共有の型定義
 │   ├── agent-core/       # エージェント実行エンジン
 │   └── db/               # Drizzle スキーマ・マイグレーション
-├── pnpm-workspace.yaml
 ├── package.json
 ├── tsconfig.base.json
 ├── biome.json
@@ -138,20 +146,22 @@ packages/db → packages/shared
 
 ### 開発環境
 
-devcontainer に PostgreSQL コンテナを追加する。設定は #12（CI/CD・開発環境）で詳細化する。
+devcontainer のベースイメージを Bun 公式イメージに変更し、PostgreSQL コンテナを追加する。詳細は #12（CI/CD・開発環境）で定義する。
 
 ## Consequences
 
 ### ポジティブ
 
-- TypeScript ファーストのツールチェーン（Hono, Drizzle, Biome）で統一され、型安全性が高い
-- pnpm workspace + Turborepo で、パッケージ間の依存管理とビルド効率が確保される
+- Bun の採用により tsx, vitest 等の追加ツールが不要になり、ツールチェーンが簡素化される
+- TypeScript ファーストのツールチェーン（Bun, Hono, Drizzle, Biome）で統一され、型安全性が高い
+- Bun workspace + Turborepo で、パッケージ間の依存管理とビルド効率が確保される
 - Next.js + Hono の分離構成により、フロントエンドとバックエンドを独立して開発・テスト・デプロイできる
 - shadcn/ui により UI コンポーネントのカスタマイズ自由度が高く、ライブラリのバージョンロックインがない
 - PostgreSQL + Drizzle により、本格的な RDBMS 運用を学びつつ型安全なデータアクセスが可能
 
 ### ネガティブ / リスク
 
+- Bun は Node.js に比べエコシステムが若く、一部の npm パッケージで互換性問題が起きる可能性がある（Node.js 互換 API でほぼ解消されているが、完全ではない）
 - Next.js App Router は抽象度が高く、フレームワーク固有の学習コストがある（RSC, Server Actions のメンタルモデル習得が必要）
 - Next.js と Hono の 2 サーバー構成により、開発時の起動・CORS 設定・デプロイ構成がやや複雑になる
 - PostgreSQL は devcontainer へのコンテナ追加が必要で、SQLite に比べ初期セットアップが重い
