@@ -3,7 +3,7 @@ name: create-pr
 description: プロジェクト規約に沿った PR を作成する。ブランチの変更内容を解析し、PR テンプレートに沿った本文を生成して gh pr create を実行する。
 when_to_use: ユーザーが「PR作って」「プルリクエスト作成して」「PR出して」「マージしたい」などと言ったとき
 argument-hint: "[issue-number]"
-allowed-tools: Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git push:*) Bash(gh pr create:*) Bash(gh pr view:*) Read Grep
+allowed-tools: Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git push:*) Bash(gh pr create:*) Bash(gh pr view:*) Bash(gh label list:*) Bash(gh issue view:*) Read Grep
 ---
 
 # create-pr
@@ -50,15 +50,31 @@ PR テンプレート:
 - **70文字以内**に収める
 - コミットが1つの場合はそのコミットメッセージをベースにする
 
-### 6. リモートへの push
+### 6. ラベルの選定
+
+ブランチプレフィックスからタイプラベルを決定する:
+
+| プレフィックス | ラベル |
+| -------------- | ------------- |
+| `feat/` | `enhancement` |
+| `fix/` | `bug` |
+| `docs/` | `documentation` |
+| `chore/` | `chore` |
+| `refactor/` | `chore` |
+| `test/` | `test` |
+
+対応 Issue がある場合は `gh issue view` でフェーズラベル（`phase:*`）を確認し、同じフェーズラベルを PR にも付与する。対応 Issue がない場合はフェーズラベルを省略する。
+
+### 7. リモートへの push
 
 - 現在のブランチがリモートに push されているか確認する
 - push されていない場合は `git push -u origin <branch>` で push する
 
-### 7. PR 作成
+### 8. PR 作成
 
 ```bash
-gh pr create --title "<タイトル>" --body "<本文>"
+gh pr create --title "<タイトル>" --body "<本文>" --label "<ラベル>" --assignee @me
 ```
 
+- 対応 Issue のフェーズラベルがある場合は `--label` を複数指定する
 - 作成後、PR の URL を表示する
