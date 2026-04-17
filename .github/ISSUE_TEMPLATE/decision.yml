@@ -1,0 +1,32 @@
+name: Decision Record
+description: 意思決定の記録
+labels: ["decision"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景
+      description: この決定が必要になった背景・状況
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: 検討した選択肢
+      description: どのような選択肢を検討しましたか？
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: 決定内容
+      description: 何を決定しましたか？
+    validations:
+      required: true
+  - type: textarea
+    id: consequences
+    attributes:
+      label: 影響・結果
+      description: この決定によって生じる影響（任意）
+    validations:
+      required: false

@@ -1,0 +1,18 @@
+name: Task
+description: タスク・chore
+labels: ["chore"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: 何をする必要がありますか？
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 受け入れ条件
+      description: 完了の基準（任意）
+    validations:
+      required: false
