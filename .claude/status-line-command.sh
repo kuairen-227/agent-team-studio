@@ -1,5 +1,5 @@
 #!/bin/bash
-# Claude Code statusline script
+# Claude Code status line script
 # Displays /status equivalent info: model, context usage, session info
 
 input=$(cat)
