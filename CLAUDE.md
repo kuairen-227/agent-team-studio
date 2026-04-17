@@ -23,6 +23,9 @@
 ## コーディング規約
 
 - **コミット**: conventional commits 形式 — `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`。意味のある単位でコミットする
+  - **Scope**: `type(scope):` 形式でスコープを付与する。プロダクト開発の進行に合わせて拡張する
+  - 現在のスコープ: `adr`, `ci`, `project`（プロジェクト管理・設定）
+  - パッケージ追加時はパッケージ名をスコープとして使用する
 - **TypeScript**: strict モード有効、`any` の使用を避ける
 - **インポート**: パッケージ間の依存には workspace プロトコル（`workspace:*`）を使用
 
