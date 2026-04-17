@@ -3,12 +3,16 @@ name: create-pr
 description: プロジェクト規約に沿った PR を作成する。ブランチの変更内容を解析し、PR テンプレートに沿った本文を生成して gh pr create を実行する。
 when_to_use: ユーザーが「PR作って」「プルリクエスト作成して」「PR出して」「マージしたい」などと言ったとき
 argument-hint: "[issue-number]"
-allowed-tools: Bash(git *) Bash(gh pr *) Read Grep
+allowed-tools: Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git push:*) Bash(gh pr create:*) Bash(gh pr view:*) Read Grep
 ---
 
 # create-pr
 
 プロジェクトの規約に従って、現在のブランチから PR を作成する。
+
+PR テンプレート:
+
+!`cat .github/PULL_REQUEST_TEMPLATE.md`
 
 ## 手順
 
@@ -27,37 +31,22 @@ allowed-tools: Bash(git *) Bash(gh pr *) Read Grep
 
 ### 3. 対応 Issue の特定
 
-- コミットメッセージやブランチ名から Issue 番号を推測する
+- `$ARGUMENTS` で Issue 番号が指定されていればそれを使用する
+- 指定がなければコミットメッセージやブランチ名から推測する
 - 特定できない場合はユーザーに確認する（任意、なしでも可）
 
 ### 4. PR 本文の生成
 
-`.github/PULL_REQUEST_TEMPLATE.md` の構造に従い、以下のセクションで本文を構成する:
+上記の PR テンプレートの構造に従って本文を構成する:
 
-```markdown
-## What
-
-<!-- 変更内容の簡潔な説明（コミット履歴・差分から要約） -->
-
-## Why
-
-<!-- 対応する Issue がある場合: closes #XX -->
-<!-- Issue がない場合: 変更の動機を記載 -->
-
-## How
-
-<!-- 実装アプローチの説明。変更が小さい（ファイル数3以下かつ差分50行以内）場合は「軽微な変更のため省略」と記載 -->
-
-## Checklist
-
-- [ ] テストが通ること（該当する場合）
-- [ ] ドキュメントを更新したこと（該当する場合）
-```
+- **What**: コミット履歴・差分から変更内容を要約
+- **Why**: 対応 Issue がある場合は `closes #XX`、ない場合は動機を記載
+- **How**: 実装アプローチ。変更が小さい（ファイル数3以下かつ差分50行以内）場合は「軽微な変更のため省略」
+- **Checklist**: テンプレートのチェックリストをそのまま含める
 
 ### 5. PR タイトルの生成
 
-- Conventional Commits のプレフィックス（`feat:`, `fix:`, `chore:`, `docs:` 等）で始める
-- スコープがある場合は `type(scope):` 形式にする
+- CLAUDE.md のコミット規約に従い、Conventional Commits プレフィックスで始める
 - **70文字以内**に収める
 - コミットが1つの場合はそのコミットメッセージをベースにする
 
@@ -72,11 +61,4 @@ allowed-tools: Bash(git *) Bash(gh pr *) Read Grep
 gh pr create --title "<タイトル>" --body "<本文>"
 ```
 
-- `--base main` はデフォルトなので省略可
 - 作成後、PR の URL を表示する
-
-## 規約リファレンス
-
-- ブランチ命名: `docs/guides/branch-strategy.md`
-- PR 運用ルール: `docs/guides/github-workflow.md`
-- コミット規約: `CLAUDE.md` のコーディング規約セクション
