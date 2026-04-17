@@ -6,6 +6,7 @@
   "permissions": {
     "allow": [
       "Skill(create-adr)",
+      "Skill(create-issue)",
       "Skill(create-pr)",
       "Bash(git add:*)",
       "Bash(git branch:*)",
@@ -20,11 +21,14 @@
       "Bash(git rebase:*)",
       "Bash(git stash:*)",
       "Bash(git status:*)",
+      "Bash(git switch:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
+      "Bash(gh issue create:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(gh label list:*)",
+      "Bash(gh milestone list:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)"
     ],
