@@ -18,8 +18,12 @@
       "Bash(git rebase:*)",
       "Bash(git stash:*)",
       "Bash(git status:*)",
+      "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh issue list:*)",
+      "Bash(gh label list:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
