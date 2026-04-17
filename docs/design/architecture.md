@@ -45,7 +45,7 @@ graph TB
 
 ## モノレポ構成
 
-```
+```bash
 agent-team-studio/
 ├── apps/
 │   ├── web/              # React + Vite (SPA)
@@ -78,7 +78,7 @@ graph TD
 
 レイヤードアーキテクチャ（routes → services → repositories）を採用。
 
-```
+```bash
 apps/api/src/
 ├── routes/              # HTTP/WS ハンドラ（入出力の変換）
 │   ├── executions.ts
@@ -103,7 +103,7 @@ apps/api/src/
 
 Feature-based 構成を採用。機能単位でコンポーネント・hooks・型をまとめる。
 
-```
+```bash
 apps/web/src/
 ├── features/
 │   ├── template-select/     # テンプレート選択画面
@@ -130,7 +130,7 @@ apps/web/src/
 
 フロント・バックエンド間の型定義を一元管理する。
 
-```
+```bash
 packages/shared/src/
 ├── api-types.ts         # REST API のリクエスト・レスポンス型
 ├── ws-types.ts          # WebSocket メッセージ型
@@ -140,7 +140,7 @@ packages/shared/src/
 
 ## エージェント実行エンジン（packages/agent-core）
 
-```
+```bash
 packages/agent-core/src/
 ├── engine.ts            # エージェントチームの実行制御
 ├── agent.ts             # 個別エージェントの実行
@@ -150,7 +150,7 @@ packages/agent-core/src/
 
 ## データベース（packages/db）
 
-```
+```bash
 packages/db/
 ├── src/
 │   ├── schema/          # テーブル定義
@@ -169,7 +169,7 @@ packages/db/
 
 Hono が Vite のビルド成果物（静的ファイル）を配信。サーバーは 1 プロセスで完結。
 
-```
+```text
 Browser → Hono ─┬─ /           → 静的ファイル（React SPA）
                  ├─ /api/*     → REST API
                  └─ /ws        → WebSocket
@@ -179,7 +179,7 @@ Browser → Hono ─┬─ /           → 静的ファイル（React SPA）
 
 Vite dev server と Hono dev server を並行起動。Vite のプロキシ機能で API リクエストを Hono に転送。
 
-```
+```text
 Browser → Vite dev server ─┬─ /           → HMR 付き React
                             ├─ /api/*     → proxy → Hono dev server
                             └─ /ws        → proxy → Hono dev server
