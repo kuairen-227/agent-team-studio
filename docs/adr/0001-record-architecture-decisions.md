@@ -22,7 +22,7 @@ Michael Nygard の軽量 ADR フォーマット（Title / Status / Context / Dec
 
 ### Consequences の記述規約
 
-Nygard 原則に従い、Consequences は**決定の結果として生じる事象の中立的記述**に徹める。リスク緩和策や追加アクション（`→ 対策:` 等）は Consequences に書かない。
+Nygard 原則に従い、Consequences は**決定を適用した後の結果のコンテキスト**を記述する。ポジティブ・ネガティブ・中立のすべてを列挙する。
 
-- **既に決定済みの緩和策** → Decision セクションに記述する（決定の一部であるため）
-- **未決定・後続で扱う緩和策** → 後続 Issue / ADR への参照に留める（例: `#N で扱う`）
+- ネガティブ項には、影響の所在や後続 Issue / バージョンへの参照を添えてよい（例: `（#N で対応）`、`（v2 で追加）`）
+- ただし、詳細な対策手順や実装方針は Consequences に書かず、Decision セクションまたは後続 Issue で扱う
