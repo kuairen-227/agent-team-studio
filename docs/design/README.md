@@ -1,10 +1,11 @@
 # 設計ドキュメント
 
-設計に関するドキュメントを管理するディレクトリです。
+プロダクトの設計方針・技術仕様のリファレンス。意思決定の経緯は [ADR](../adr/README.md) を参照。
 
-## 運用方針
+## ドキュメント一覧
 
-- 設計ドキュメントはマークダウンで記述し、このディレクトリに配置する
-- ファイル命名規則: `NNNN-<短い説明>.md`（例: `0001-api-architecture.md`）
-- 対応する GitHub Issue（`design` ラベル）から必ずリンクすること
-- 図が必要な場合は Mermaid 記法を使用する（devcontainer に拡張機能導入済み）
+| ドキュメント | 内容 |
+| --- | --- |
+| [tech-stack.md](./tech-stack.md) | 技術スタック一覧 |
+| [architecture.md](./architecture.md) | アーキテクチャ概要（構成図・ディレクトリ・レイヤー） |
+| [api-design.md](./api-design.md) | API 設計規約（REST・WebSocket・型共有） |
