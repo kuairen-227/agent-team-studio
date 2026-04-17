@@ -6,13 +6,14 @@
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
-    "JTBD", // Jobs To Be Done
+    "JTBD",
     "kuairen",
     "mctx",
     "msession",
     "mstyle",
     "Nygard",
-    "oneline"
+    "oneline",
+    "Turborepo"
   ],
   "ignoreWords": [],
   "import": []

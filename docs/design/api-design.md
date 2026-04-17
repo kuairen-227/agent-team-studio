@@ -13,7 +13,7 @@ GET    /api/templates          # テンプレート一覧
 GET    /api/templates/:id      # テンプレート詳細
 
 POST   /api/executions         # 実行開始
-GET    /api/executions          # 実行履歴一覧
+GET    /api/executions         # 実行履歴一覧
 GET    /api/executions/:id     # 実行結果詳細
 ```
 
