@@ -41,4 +41,4 @@
 - **Issue テンプレート**: `.github/ISSUE_TEMPLATE/` に定義（feature, bug, task, decision）
 - **PR テンプレート**: `.github/PULL_REQUEST_TEMPLATE.md` に定義
 - **ADR**: `docs/adr/` に記録。意思決定は規模を問わず ADR として残す
-- **ラベル**: タイプラベル（bug, enhancement, chore 等）とフェーズラベル（`phase:planning` 等）を使用
+- **ラベル**: タイプラベル（bug, enhancement, chore 等）とステータスラベル（`status:backlog`, `status:ready`, `status:in-progress`, `status:blocked`, `status:review`）を使用
