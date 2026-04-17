@@ -2,5 +2,11 @@
   "statusLine": {
     "type": "command",
     "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)"
+    ]
   }
 }
