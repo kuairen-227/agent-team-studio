@@ -1,11 +1,14 @@
 {
-    "version": "0.2",
-    "ignorePaths": [],
-    "dictionaryDefinitions": [],
-    "dictionaries": [],
-    "words": [
-        "kuairen"
-    ],
-    "ignoreWords": [],
-    "import": []
+  "version": "0.2",
+  "ignorePaths": [
+    ".devcontainer/devcontainer.json"
+  ],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [
+    "kuairen",
+    "Nygard"
+  ],
+  "ignoreWords": [],
+  "import": []
 }

@@ -1,0 +1,32 @@
+name: Bug Report
+description: バグの報告
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: バグの説明
+      description: 何が起きていますか？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: バグを再現する手順を記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: 期待される動作 vs 実際の動作
+      description: 期待される動作と実際の動作を記述してください
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 環境
+      description: OS、ブラウザ、Node.js バージョンなど（任意）
+    validations:
+      required: false

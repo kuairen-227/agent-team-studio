@@ -17,3 +17,11 @@
 - **コミット**: conventional commits 形式 — `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`。意味のある単位でコミットする
 - **TypeScript**: strict モード有効、`any` の使用を避ける
 - **インポート**: パッケージ間の依存には workspace プロトコル（`workspace:*`）を使用
+
+## プロジェクト管理
+
+- **ブランチ戦略**: `docs/guides/branch-strategy.md` を参照。GitHub Flow ベースで `feat/`, `fix/`, `docs/`, `chore/` プレフィックスを使用
+- **Issue テンプレート**: `.github/ISSUE_TEMPLATE/` に定義（feature, bug, task, decision）
+- **PR テンプレート**: `.github/PULL_REQUEST_TEMPLATE.md` に定義
+- **ADR**: `docs/adr/` に記録。意思決定は規模を問わず ADR として残す
+- **ラベル**: タイプラベル（bug, enhancement, chore 等）とフェーズラベル（`phase:planning` 等）を使用
