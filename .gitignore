@@ -2,3 +2,13 @@ _dev/
 
 # Claude Code
 .claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.idea/
+*.swp
+*.swo
+*~
