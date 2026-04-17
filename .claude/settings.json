@@ -5,6 +5,8 @@
   },
   "permissions": {
     "allow": [
+      "Skill(create-adr)",
+      "Skill(create-pr)",
       "Bash(git add:*)",
       "Bash(git branch:*)",
       "Bash(git checkout:*)",
@@ -21,6 +23,7 @@
       "Bash(grep:*)",
       "Bash(ls:*)",
       "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
       "Bash(gh label list:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)"
