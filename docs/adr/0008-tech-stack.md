@@ -18,11 +18,7 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 - 実行履歴・テンプレートの永続化
 - シングルユーザー前提（認証不要）
 
-確定済みの前提：
-
-- **言語**: TypeScript strict モード（CLAUDE.md で規定済み）
-
-ランタイムとパッケージ管理は本 ADR で選定する。devcontainer の Node.js 24 / pnpm は初期設定であり、変更可能。
+MVP の技術特性を分析すると、リアルタイム・クライアント中心のアプリケーションであり、SSR/SSG が活きる場面がほぼない（SEO 不要、シングルユーザー、主要画面が WebSocket ストリーミング）。この特性がフロントエンド選定に大きく影響する。
 
 ## Considered Alternatives
 
@@ -30,9 +26,9 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Bun | **採用** — TypeScript ネイティブ実行、組み込みテストランナー、高速パッケージインストール。Next.js・Hono・Drizzle すべて対応済み。ツールチェーンが大幅に簡素化される（tsx, vitest が不要）。Node.js 互換 API が充実し実用段階 |
+| A | Bun | **採用** — TypeScript ネイティブ実行、組み込みテストランナー・パッケージ管理。ツールチェーンが大幅に簡素化される（tsx, vitest が不要）。Hono・Vite・Drizzle すべて対応済み。Node.js 互換 API が充実し実用段階 |
 | B | Node.js 24 | 却下 — 最も成熟したエコシステムだが、TS 実行に tsx、テストに vitest 等の追加ツールが必要でツールチェーンが多い |
-| C | Deno 2 | 却下 — Web Standard API ベースで Hono との親和性は最高だが、Next.js のサポートが限定的。採用するなら Next.js ごと見直す必要がある |
+| C | Deno 2 | 却下 — Web Standard API ベースで Hono との親和性は最高だが、React + Vite エコシステムとの統合実績が Bun に劣る |
 
 ### モノレポ構成
 
@@ -40,21 +36,21 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 | - | --- | --- |
 | A | Bun workspace + Turborepo | **採用** — Bun 組み込みの workspace 機能を活用し、Turborepo でビルドキャッシュ・タスクオーケストレーションを効率化 |
 | B | Bun workspace のみ（Turborepo なし） | 却下 — パッケージ間のビルド順序やキャッシュを手動管理する負担が大きい |
-| C | Nx | 却下 — 機能は豊富だが設��が重く、MVP 規模ではオーバースペック |
+| C | Nx | 却下 — 機能は豊富だが設定が重く、MVP 規模ではオーバースペック |
 
 ### フロントエンド
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Next.js (App Router) | **採用** — React エコシステム最大のフルスタックフレームワーク。RSC・Server Actions による最新の React パターンを学べる。将来的な SSR/SEO 対応にも備えられる |
-| B | React + Vite (SPA) | 却下 — SSR 不要な MVP にはシンプルだが、Next.js の学習価値と将来拡張性を優先 |
+| A | React + Vite (SPA) | **採用** — MVP のリアルタイム中心の特性に最も素直な構成。Hono と同一サーバーで配信でき、WebSocket 統合が自然。CORS 設定不要。フレームワークの魔法に頼らず Web の基礎が学べる |
+| B | Next.js (App Router) | 却下 — RSC・Server Actions の学習価値は高いが、MVP の技術特性（リアルタイム中心・SEO 不要・シングルユーザー）では強みが活きない。Hono と 2 サーバー構成になり、CORS・起動管理が複雑化する |
 | C | Remix | 却下 — Web 標準準拠で設計は優れるがエコシステムが小さく、リアルタイム表示主体の本 MVP では強みが活きにくい |
 
 ### バックエンド API
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Hono | **採用** — Web Standard API ベース、TypeScript ファースト、型安全なルーティング。軽量かつ組み込み WebSocket サポートあり。Bun との相性が特に良好 |
+| A | Hono | **採用** — Web Standard API ベース、TypeScript ファースト、型安全なルーティング。軽量かつ組み込み WebSocket サポートあり。Bun との相性が特に良好。SPA の静的ファイル配信も可能で、1 サーバー構成を実現できる |
 | B | Fastify | 却下 — 成熟したエコシステムだが、Hono に比べ設定が重く、Web Standard API ベースではない |
 | C | Express v5 | 却下 — 型サポートが弱く TypeScript strict との相性がやや劣る |
 
@@ -78,14 +74,14 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Biome | **採用** — ESLint + Prettier を 1 ツールに統合。Rust 製で高速、設定が少ない。2026 年の主流ツール |
+| A | Biome | **採用** — ESLint + Prettier を 1 ツールに統合。Rust 製で高速、設定が少ない |
 | B | ESLint + Prettier | 却下 — 実績は豊富だが 2 ツールの設定・競合管理が煩雑。Biome で統合できる |
 
 ### リアルタイム通信
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | Hono 組み込み WebSocket | **採用** — バックエンドと統一的なミドルウェア体系で扱える。MVP のスコープ（エージェント単位のステータス + ストリーミング表示）には十分 |
+| A | Hono 組み込み WebSocket | **採用** — バックエンドと統一的なミドルウェア体系で扱える。SPA と同一サーバーなので接続がシンプル。MVP のスコープ（エージェント単位のステータス + ストリーミング表示）には十分 |
 | B | Socket.IO | 却下 — 高レベル機能は豊富だが抽象度が高く、WebSocket の理解が深まらない |
 | C | ws（生 WebSocket） | 却下 — 低レベルすぎて MVP のスピードに不向き |
 
@@ -100,7 +96,7 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 | パッケージ管理 | Bun (組み込み) | ランタイムに同梱 |
 | テストランナー | bun:test (組み込み) | ランタイムに同梱 |
 | モノレポ | Turborepo | 最新安定版 |
-| フロントエンド | Next.js (App Router) | 最新安定版 |
+| フロントエンド | React + Vite (SPA) | 最新安定版 |
 | UI コンポーネント | shadcn/ui + Tailwind CSS v4 | 最新安定版 |
 | バックエンド | Hono | 最新安定版 |
 | WebSocket | Hono 組み込み WebSocket | Hono に同梱 |
@@ -114,8 +110,8 @@ ADR-0005 で MVP スコープ（競合調査の並列深掘り）が確定し、
 ```
 agent-team-studio/
 ├── apps/
-│   ├── web/              # Next.js (App Router) — UI
-│   └── api/              # Hono — API サーバー + WebSocket
+│   ├── web/              # React + Vite (SPA)
+│   └── api/              # Hono — API + WebSocket + SPA 配信
 ├── packages/
 │   ├── shared/           # フロント・バックエンド共有の型定義
 │   ├── agent-core/       # エージェント実行エンジン
@@ -137,16 +133,16 @@ packages/db → packages/shared
 
 依存は常に apps → packages、packages → packages の一方向。循環依存は禁止する。
 
-### Next.js + Hono の役割分担
+### React (SPA) + Hono の役割分担
 
-- **Next.js (apps/web)**: UI レンダリング、クライアントサイドの状態管理、WebSocket クライアント。Server Components / Server Actions は UI 層に閉じた利用に留め、ビジネスロジックは置かない
-- **Hono (apps/api)**: REST API、WebSocket サーバー、エージェント実行の制御。ビジネスロジックとデータアクセスはすべて API サーバー経由
+- **React + Vite (apps/web)**: UI レンダリング、クライアントサイドの状態管理、WebSocket クライアント。ビルド成果物は静的ファイルとして Hono から配信される
+- **Hono (apps/api)**: REST API、WebSocket サーバー、エージェント実行の制御、SPA の静的ファイル配信。ビジネスロジックとデータアクセスはすべて API サーバー経由
 
-この分離により、フロントエンドフレームワークの変更がバックエンドに影響しない構造を維持する。
+本番時は Hono が Vite のビルド成果物（静的ファイル）を配信するため、サーバーは 1 プロセスで完結する。開発時は Vite dev server と Hono dev server を並行起動し、Vite のプロキシ機能で API リクエストを Hono に転送する。
 
 ### 開発環境
 
-devcontainer のベースイメージを Bun 公式イメージに変更し、PostgreSQL コンテナを追加する。詳細は #12（CI/CD・開発環境）で定義する。
+devcontainer のベースイメージを Bun 対応に変更し、PostgreSQL コンテナを追加する。詳細は #12（CI/CD・開発環境）で定義する。
 
 ## Consequences
 
@@ -154,16 +150,15 @@ devcontainer のベースイメージを Bun 公式イメージに変更し、Po
 
 - Bun の採用により tsx, vitest 等の追加ツールが不要になり、ツールチェーンが簡素化される
 - TypeScript ファーストのツールチェーン（Bun, Hono, Drizzle, Biome）で統一され、型安全性が高い
-- Bun workspace + Turborepo で、パッケージ間の依存管理とビルド効率が確保される
-- Next.js + Hono の分離構成により、フロントエンドとバックエンドを独立して開発・テスト・デプロイできる
+- React + Vite + Hono の 1 サーバー構成により、CORS 設定不要・デプロイがシンプル
+- SPA 構成により WebSocket 統合が自然で、MVP のリアルタイム中心の特性に最も素直
 - shadcn/ui により UI コンポーネントのカスタマイズ自由度が高く、ライブラリのバージョンロックインがない
 - PostgreSQL + Drizzle により、本格的な RDBMS 運用を学びつつ型安全なデータアクセスが可能
 
 ### ネガティブ / リスク
 
 - Bun は Node.js に比べエコシステムが若く、一部の npm パッケージで互換性問題が起きる可能性がある（Node.js 互換 API でほぼ解消されているが、完全ではない）
-- Next.js App Router は抽象度が高く、フレームワーク固有の学習コストがある（RSC, Server Actions のメンタルモデル習得が必要）
-- Next.js と Hono の 2 サーバー構成により、開発時の起動・CORS 設定・デプロイ構成がやや複雑になる
+- SPA 構成のため、将来 SSR/SEO が必要になった場合はフレームワーク移行が必要（MVP ではシングルユーザー・社内ツールのため不要）
 - PostgreSQL は devcontainer へのコンテナ追加が必要で、SQLite に比べ初期セットアップが重い
-- Hono は急成長中だが Next.js / Express に比べエコシステムが小さく、ニッチな問題の解決策が見つかりにくい場合がある
+- Hono は急成長中だが Express に比べエコシステムが小さく、ニッチな問題の解決策が見つかりにくい場合がある
 - Biome は ESLint ほどのプラグインエコシステムがなく、特殊なルール追加には制約がある
