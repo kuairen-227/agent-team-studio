@@ -2,16 +2,26 @@
   "name": "agent-team-studio",
   "private": true,
   "packageManager": "bun@1.3.12",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "lint": "turbo run lint",
+    "lint:md": "markdownlint-cli2",
+    "lint:secret": "secretlint '**/*'",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
+    "@secretlint/secretlint-rule-preset-recommend": "^12.0.0",
     "@types/bun": "^1.3.12",
+    "husky": "^9.1.7",
+    "markdownlint-cli2": "^0.22.0",
+    "secretlint": "^12.0.0",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3"
   }

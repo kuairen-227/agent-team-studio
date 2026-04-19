@@ -6,6 +6,11 @@ node_modules/
 # Turborepo
 .turbo/
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Claude Code
 .claude/settings.local.json
 

@@ -26,6 +26,17 @@
 - AI特有の冗長な表現（過剰な丁寧語、不要な言い換え、水増し的な修飾）を避ける
 - ドキュメント・コミットメッセージ等、すべてのテキスト出力に適用する
 
+## 主要コマンド
+
+| コマンド | 説明 |
+| --- | --- |
+| `bun run lint` | Biome による静的解析（全ワークスペース、Turborepo 経由） |
+| `bun run lint:md` | Markdown の lint（markdownlint-cli2） |
+| `bun run lint:secret` | 機密情報の検出（secretlint） |
+| `bun run type-check` | TypeScript 型チェック（全ワークスペース、Turborepo 経由） |
+| `bun run test` | テスト実行（全ワークスペース、Turborepo 経由） |
+| `bun run build` | ビルド（依存順に全ワークスペース、Turborepo 経由） |
+
 ## コーディング規約
 
 - **コミット**: conventional commits 形式 — `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`。意味のある単位でコミットする

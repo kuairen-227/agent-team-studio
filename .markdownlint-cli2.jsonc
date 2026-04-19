@@ -1,0 +1,8 @@
+{
+  "config": {
+    // 日本語ドキュメントでは行長制限が厳しすぎるため無効化
+    "MD013": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", "_dev"]
+}
