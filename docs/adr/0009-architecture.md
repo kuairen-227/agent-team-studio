@@ -123,7 +123,7 @@ sequenceDiagram
 
 ### 詳細ディレクトリ構成
 
-```
+```text
 agent-team-studio/
 ├── apps/
 │   ├── web/                          # React + Vite (SPA)

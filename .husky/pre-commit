@@ -1,2 +1,4 @@
 bun run lint
+bun run lint:md
+bun run lint:secret
 bun run type-check
