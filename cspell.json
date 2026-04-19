@@ -13,7 +13,8 @@
     "mstyle",
     "Nygard",
     "oneline",
-    "Turborepo"
+    "Turborepo",
+    "Worktree"
   ],
   "ignoreWords": [],
   "import": []
