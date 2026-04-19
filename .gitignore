@@ -1,5 +1,11 @@
 _dev/
 
+# Dependencies
+node_modules/
+
+# Turborepo
+.turbo/
+
 # Claude Code
 .claude/settings.local.json
 

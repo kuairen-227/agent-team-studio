@@ -1,0 +1,15 @@
+{
+  "name": "@agent-team-studio/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "biome check src/",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agent-team-studio/shared": "workspace:*",
+    "@agent-team-studio/agent-core": "workspace:*",
+    "@agent-team-studio/db": "workspace:*"
+  }
+}
