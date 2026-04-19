@@ -30,12 +30,12 @@
 
 | コマンド | 説明 |
 | --- | --- |
-| `bun run lint` | Biome による静的解析（全ワークスペース） |
-| `bun run type-check` | TypeScript 型チェック（全ワークスペース） |
-| `bun run test` | テスト実行（全ワークスペース） |
-| `bun run build` | ビルド（依存順に全ワークスペース） |
-
-すべて Turborepo 経由で各ワークスペースに対して実行される。
+| `bun run lint` | Biome による静的解析（全ワークスペース、Turborepo 経由） |
+| `bun run lint:md` | Markdown の lint（markdownlint-cli2） |
+| `bun run lint:secret` | 機密情報の検出（secretlint） |
+| `bun run type-check` | TypeScript 型チェック（全ワークスペース、Turborepo 経由） |
+| `bun run test` | テスト実行（全ワークスペース、Turborepo 経由） |
+| `bun run build` | ビルド（依存順に全ワークスペース、Turborepo 経由） |
 
 ## コーディング規約
 
