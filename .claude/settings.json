@@ -8,6 +8,7 @@
       "Skill(create-adr)",
       "Skill(create-issue)",
       "Skill(create-pr)",
+      "Bash(bun run:*)",
       "Bash(git add:*)",
       "Bash(git branch:*)",
       "Bash(git checkout:*)",

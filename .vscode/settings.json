@@ -3,5 +3,8 @@
   "cSpell.enabled": true,
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  },
+  "json.schemaDownload.trustedDomains": {
+    "https://turbo.build/schema.json": true
   }
 }
