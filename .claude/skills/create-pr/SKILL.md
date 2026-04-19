@@ -63,7 +63,7 @@ PR テンプレート:
 | `refactor/` | `chore` |
 | `test/` | `test` |
 
-対応 Issue がある場合は `gh issue view` でフェーズラベル（`phase:*`）を確認し、同じフェーズラベルを PR にも付与する。対応 Issue がない場合はフェーズラベルを省略する。
+対応 Issue がある場合は `gh issue view` でラベルを確認し、タイプラベルを PR にも付与する。
 
 ### 7. リモートへの push
 
@@ -76,5 +76,4 @@ PR テンプレート:
 gh pr create --title "<タイトル>" --body "<本文>" --label "<ラベル>" --assignee @me
 ```
 
-- 対応 Issue のフェーズラベルがある場合は `--label` を複数指定する
 - 作成後、PR の URL を表示する
