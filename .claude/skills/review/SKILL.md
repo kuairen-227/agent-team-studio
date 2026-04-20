@@ -3,7 +3,7 @@ name: review
 description: 成果物のレビューを行う。レビュー対象に応じて適切な専門家エージェント（PO・PM・アーキテクト・QA）を組み合わせて評価する。
 when_to_use: ユーザーが「レビューして」「確認して」「チェックして」「PRレビューして」「設計レビューして」「要件レビューして」「テストレビューして」などと言ったとき
 argument-hint: "[product|design|code|test] [対象（ファイルパス・PR番号・Issue番号）]"
-allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(gh issue view:*) Bash(gh issue comment:*) Bash(gh api:*) Bash(git diff:*) Bash(git log:*) Read Grep Glob Agent
+allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(gh issue view:*) Bash(gh issue comment:*) Bash(git diff:*) Bash(git log:*) Read Grep Glob Agent
 ---
 
 # review

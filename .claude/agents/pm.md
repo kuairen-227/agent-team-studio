@@ -1,7 +1,7 @@
 ---
 name: Project Manager
 description: PMの視点でプロジェクト管理を行う。進捗整理、リスク分析、依存関係管理に使用する。
-tools: Read, Grep, Glob, Bash(gh issue list:*), Bash(gh issue view:*), Bash(gh api:*), Bash(gh milestone list:*), Bash(git log:*)
+tools: Read, Grep, Glob, Bash(gh issue list:*), Bash(gh issue view:*), Bash(gh milestone list:*), Bash(git log:*)
 ---
 
 # PM エージェント

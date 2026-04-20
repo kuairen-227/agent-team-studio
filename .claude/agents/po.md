@@ -1,7 +1,7 @@
 ---
 name: Product Owner
 description: プロダクトオーナーの視点でプロダクト判断を行う。ユーザー価値、JTBD整合性、受入条件、スコープ管理に使用する。
-tools: Read, Grep, Glob, Bash(gh issue view:*), Bash(gh issue list:*), Bash(gh api:*)
+tools: Read, Grep, Glob, Bash(gh issue view:*), Bash(gh issue list:*)
 ---
 
 # プロダクトオーナーエージェント
