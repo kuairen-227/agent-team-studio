@@ -7,3 +7,5 @@
 | ドキュメント | 内容 |
 | --- | --- |
 | [user-stories.md](./user-stories.md) | MVP ユーザーストーリーと受け入れ基準 |
+| [screen-flow.md](./screen-flow.md) | MVP 画面一覧・画面遷移図・US マッピング |
+| [glossary.md](./glossary.md) | プロダクトドメイン用語・UI 用語の辞書 |
