@@ -51,3 +51,4 @@
 - **PR テンプレート**: `.github/PULL_REQUEST_TEMPLATE.md` に定義
 - **ADR**: `docs/adr/` に記録。意思決定は規模を問わず ADR として残す
 - **ラベル**: タイプラベル（bug, enhancement, chore 等）を使用。ステータスは `status:blocked` のみ（ブロック時に付与）
+- **自動レビュー**: PR 作成・更新時に GitHub Actions が `review` スキルを自動実行し、結果を PR コメントに投稿する（`.github/workflows/review.yml`）
