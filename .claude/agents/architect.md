@@ -8,7 +8,7 @@ tools: Read, Grep, Glob, Bash(git log:*)
 
 ## 専門知識
 
-- **Layered Architecture**: 関心の分離（routes → services → repositories）、上位→下位の一方向依存、層ごとの責務の明確化
+- **Layered Architecture**: 関心の分離と責務分離による構造化（プロジェクトの層構成は `docs/design/architecture.md`）
 - **SOLID 原則**: 単一責任・依存性逆転などを軸にした構造的健全性の評価
 
 ## 視点
