@@ -7,9 +7,3 @@
 | ドキュメント | 内容 |
 | --- | --- |
 | [user-stories.md](./user-stories.md) | MVP ユーザーストーリーと受け入れ基準 |
-
-## 位置付け
-
-- **product/**: ユーザーが何を達成したいか（What / Why）
-- **design/**: それをどう実現するか（How）
-- **adr/**: なぜその判断に至ったか（Decision / Rationale）
