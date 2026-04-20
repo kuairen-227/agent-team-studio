@@ -22,8 +22,7 @@ jobs:
       - name: Run Claude Code review
         uses: anthropics/claude-code-action@v1
         with:
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             /review pr ${{ github.event.pull_request.number }}
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
