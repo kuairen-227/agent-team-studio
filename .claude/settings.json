@@ -8,6 +8,8 @@
       "Skill(create-adr)",
       "Skill(create-issue)",
       "Skill(create-pr)",
+      "Skill(manage-task)",
+      "Skill(review)",
       "Bash(bun run:*)",
       "Bash(git add:*)",
       "Bash(git branch:*)",
@@ -31,7 +33,8 @@
       "Bash(gh label list:*)",
       "Bash(gh milestone list:*)",
       "Bash(gh pr create:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
