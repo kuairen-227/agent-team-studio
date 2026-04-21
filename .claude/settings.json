@@ -1,5 +1,5 @@
 {
-  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["context7"],
   "statusLine": {
     "type": "command",
     "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
