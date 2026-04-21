@@ -27,5 +27,7 @@ jobs:
           track_progress: true
           prompt: |
             /review pr ${{ github.event.pull_request.number }}
+
+            念のため `.claude/skills/review/SKILL.md` を読み込み、記載された手順と出力フォーマットに従ってレビューを実施してください。
           claude_args: |
             --max-turns 10
