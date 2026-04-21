@@ -1,4 +1,5 @@
 {
+  "enabledMcpjsonServers": ["context7"],
   "statusLine": {
     "type": "command",
     "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
@@ -9,6 +10,7 @@
       "Skill(create-issue)",
       "Skill(create-pr)",
       "Skill(manage-task)",
+      "Skill(resolve-review)",
       "Skill(review)",
       "Bash(bun run:*)",
       "Bash(ls:*)",
