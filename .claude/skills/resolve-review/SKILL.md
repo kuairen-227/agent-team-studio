@@ -19,7 +19,7 @@ gh pr view <pr-number> --json number,title,headRefName,baseRefName,state,url
 ```
 
 - PR が open であることを確認する。closed/merged の場合は報告して終了
-- 現在のブランチと `headRefName` を比較する。異なる場合はユーザーに通知し `git switch <headRefName>` を提案する。自動切り替えはしない
+- `git branch --show-current` で現在のブランチと `headRefName` を比較する。異なる場合はユーザーに通知し `git switch <headRefName>` を提案する。自動切り替えはしない
 - `git status` で未コミット変更を確認する。ある場合は警告する
 
 ### 2. レビューコメントの取得
@@ -27,8 +27,8 @@ gh pr view <pr-number> --json number,title,headRefName,baseRefName,state,url
 `gh pr view` でコメントとレビューを取得する:
 
 ```bash
-# PR のコメント・レビュー情報を取得
-gh pr view <pr-number> --json comments,reviews
+# PR のコメント・レビュー・インラインコメントを取得
+gh pr view <pr-number> --json comments,reviews,reviewThreads
 
 # 読みやすい形式でコメントを確認
 gh pr view <pr-number> --comments
