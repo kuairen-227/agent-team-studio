@@ -14,7 +14,7 @@
 
 ## 配置ガイドライン
 
-[ADR-0012](../adr/0012-doc-placement-policy.md) に基づく。
+[ADR-0013](../adr/0013-doc-placement-policy.md) に基づく。
 
 ### SSoT の原則
 

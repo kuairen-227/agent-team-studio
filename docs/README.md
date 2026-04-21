@@ -20,7 +20,7 @@
 
 ## 配置ポリシー
 
-[ADR-0012](./adr/0012-doc-placement-policy.md) で定めた 2 つの原則に従う。
+[ADR-0013](./adr/0013-doc-placement-policy.md) で定めた 2 つの原則に従う。
 
 ### 原則 1: 読み手テスト
 
