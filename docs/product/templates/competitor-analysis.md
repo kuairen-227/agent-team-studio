@@ -99,7 +99,7 @@ MVP では下記 4 観点を**固定**で提示する。ユーザーによる追
 - `perspective`: 本エージェントが担当する観点キー
 - `findings`: 競合企業ごとの調査結果配列（企業名・要点リスト・根拠レベル・補足）
 
-正式な JSON Schema は [Investigation Agent 出力スキーマ](../../design/templates/competitor-analysis.md#investigation-agent-出力) を参照。実行時にはスキーマ定義をこの位置に展開してプロンプトに含める。
+正式な JSON Schema は [Investigation Agent 出力スキーマ](../../design/templates/competitor-analysis.md#investigation-agent-出力) を参照。実行時の動作: 実装側が design/ のスキーマをここに自動展開してプロンプトを構築する。product ドキュメントの手動編集は不要。展開方式は A2（[Issue #52](https://github.com/kuairen-227/agent-team-studio/issues/52)）で確定する。
 ````
 
 ### Investigation Agent の specialization
@@ -143,7 +143,7 @@ MVP では下記 4 観点を**固定**で提示する。ユーザーによる追
 - `overall_insights`: 観点横断の全体所見
 - `missing`: 欠落した観点とその理由
 
-正式な JSON Schema は [Integration Agent 出力スキーマ](../../design/templates/competitor-analysis.md#integration-agent-出力内部保持用-json) を参照。実行時にはスキーマ定義をこの位置に展開してプロンプトに含める。
+正式な JSON Schema は [Integration Agent 出力スキーマ](../../design/templates/competitor-analysis.md#integration-agent-出力内部保持用-json) を参照。実行時の動作: 実装側が design/ のスキーマをここに自動展開してプロンプトを構築する。product ドキュメントの手動編集は不要。展開方式は A2（[Issue #52](https://github.com/kuairen-227/agent-team-studio/issues/52)）で確定する。
 ````
 
 ## 出力（ユーザー向け Markdown）
