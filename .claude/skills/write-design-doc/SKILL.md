@@ -70,6 +70,6 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 ## 注意点
 
-- このスキルは `docs/design/` 配下のみを対象とする。`docs/product/` の編集が必要な場合は `write-product-doc` スキルを使用する
+- このスキルは `docs/design/` 配下のみを対象とする。対応する `docs/product/` 側も更新が必要な場合は `write-product-doc` スキルを併用する
 - テンプレート I/O スキーマは本ディレクトリが正式定義（実装前）。product/ 側にスキーマの重複記述を作らない
 - 実装後にコードが SSoT となった場合、ドキュメントをコード参照に更新する（陳腐化防止）

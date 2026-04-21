@@ -74,6 +74,6 @@ design/ への参照リンクがある場合、リンク先のファイルとア
 
 ## 注意点
 
-- このスキルは `docs/product/` 配下のみを対象とする。`docs/design/` の編集が必要な場合は `write-design-doc` スキルを使用する
+- このスキルは `docs/product/` 配下のみを対象とする。対応する `docs/design/` 側も更新が必要な場合は `write-design-doc` スキルを併用する
 - 新しい用語を導入する場合は `docs/product/glossary.md` への追加も行う
 - テンプレート仕様を新規作成する場合、対応する I/O スキーマが `docs/design/templates/` に必要。存在しない場合はユーザーに確認する
