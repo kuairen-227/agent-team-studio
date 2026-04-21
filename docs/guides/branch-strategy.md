@@ -28,3 +28,7 @@ main ─────────────────────────
   └── feat/add-auth ── PR #3 ── merge ──┘
   └── fix/login-bug ── PR #4 ── merge ───┘
 ```
+
+## 並行作業
+
+複数ブランチで同時に作業する場合は Git Worktree を使用する。詳細は [worktree.md](./worktree.md) を参照。
