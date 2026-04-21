@@ -3,7 +3,7 @@ name: resolve-review
 description: PR のレビュー指摘を読み取り、各指摘を評価・対応する。
 when_to_use: ユーザーが「レビュー対応して」「レビューコメント処理して」「指摘対応して」「レビュー修正して」「PR指摘直して」などと言ったとき
 argument-hint: "<pr-number>"
-allowed-tools: Bash(gh api:*) Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git switch:*) Bash(git branch:*) Bash(git add:*) Bash(git commit:*) Bash(bun run:*) Read Grep Glob Edit Write
+allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git branch:*) Bash(git add:*) Bash(git commit:*) Bash(bun run:*) Read Grep Glob Edit Write
 ---
 
 # resolve-review
@@ -24,19 +24,17 @@ gh pr view <pr-number> --json number,title,headRefName,baseRefName,state,url
 
 ### 2. レビューコメントの取得
 
-2種類のソースからコメントを取得する:
+`gh pr view` でコメントとレビューを取得する:
 
 ```bash
-# 一般コメント（CI レビューボット含む）
-gh api repos/{owner}/{repo}/issues/<pr-number>/comments \
-  --jq '.[] | {id, user: .user.login, body, created_at}'
+# PR のコメント・レビュー情報を取得
+gh pr view <pr-number> --json comments,reviews
 
-# インラインレビューコメント（ファイル・行番号付き）
-gh api repos/{owner}/{repo}/pulls/<pr-number>/comments \
-  --jq '.[] | {id, user: .user.login, body, path, line, diff_hunk, created_at}'
+# 読みやすい形式でコメントを確認
+gh pr view <pr-number> --comments
 ```
 
-コメントが存在しない場合は「レビューコメントがありません」と報告して終了。
+コメントが存在しない場合は報告して終了。
 
 ### 3. コメントの解析と分類
 
@@ -61,6 +59,7 @@ review スキルの出力形式（`🔴 Must` / `🟡 Should` / `⚪ Nit` テー
 - LGTM、承認コメント
 - ボットのステータス通知（CI 結果等）
 - 質問のみで改善要求を含まないコメント
+- resolved 済みのレビュースレッド
 
 ### 4. 各指摘のコード文脈確認と判定
 
@@ -113,6 +112,7 @@ review スキルの出力形式（`🔴 Must` / `🟡 Should` / `⚪ Nit` テー
 3. `bun run lint` / `bun run type-check` で検証する（プロダクトコードの変更がある場合）
 4. CLAUDE.md のコミット規約に従いコミットする
    - プレフィックス: `fix:` または `refactor:`（修正内容に応じて選択）
+   - スコープは変更対象に応じて付与する（例: `fix(project):`, `refactor(api):`）
    - コミットメッセージに `#<pr-number>` を含める
 
 ### 7. 完了報告と結果投稿
