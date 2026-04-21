@@ -2,6 +2,8 @@
 
 Claude API を用いた LLM 呼び出しの設計方針。`packages/agent-core/src/llm-client.ts` の実装根拠となる。
 
+**呼び出し構造**: `engine.ts`（チーム実行制御）→ `agent.ts`（個別エージェント実行）→ `llm-client.ts`（LLM API 呼び出し）。`llm-client.ts` を直接呼ぶのは `agent.ts` のみ。
+
 ## モデル選定
 
 全エージェントで **Claude Sonnet 4.6**（`claude-sonnet-4-6`）を使用する。
@@ -38,18 +40,21 @@ Anthropic SDK の streaming API を使い、トークン単位でクライアン
 ```text
 Claude API (SSE)
   → Anthropic SDK stream
-    → agent-core: トークンチャンク受信
-      → execution.service: WebSocket メッセージ送信
+    → agent-core (agent.ts): トークンチャンク受信、コールバック呼び出し
+      → apps/api (execution.service): WebSocket メッセージ送信
         → クライアント: リアルタイム表示
 ```
+
+**依存方向の維持**: `agent-core` は `apps/api` に依存しない（ADR-0009）。`apps/api` 側が `agent-core` にコールバックを注入し、`agent-core` はそのコールバックを呼び出すことで WebSocket 送信をトリガーする。依存方向は `apps/api → agent-core` の一方向を保つ。
 
 ### 実装方針
 
 1. **Anthropic SDK の `stream` オプション**を使用（`client.messages.stream()`）
-2. `content_block_delta` イベントごとに `agent:output` WebSocket メッセージを送信
-3. `message_stop` イベントで `agent:status = completed` を送信
+2. `content_block_delta` イベントごとにコールバック経由で `agent:output` を通知
+3. `message_stop` イベントで `agent:status = completed` を通知
 4. **バッファリングは行わない** — トークン到着即転送でレイテンシを最小化
 5. 完了後、全テキストを結合して JSON パース → DB 保存
+6. **ストリーミング中断時** — 部分出力済みでエラーが発生した場合、当該エージェントを失敗扱いとし `agent:status = failed` を通知する。部分出力は保存しない
 
 ## エラーハンドリング・リトライ
 
@@ -72,15 +77,9 @@ Claude API (SSE)
 | バックオフ倍率 | 2（指数バックオフ） | 1s → 2s → 4s |
 | 最大待機時間 | 30 秒 | 429 の `retry-after` ヘッダーがあればそちらを優先 |
 
-### Anthropic SDK のリトライ機能
+### リトライの実装方針
 
-Anthropic SDK はデフォルトで 2 回のリトライを内蔵している。SDK のリトライ設定を活用し、独自リトライロジックの重複を避ける。
-
-```typescript
-const anthropic = new Anthropic({
-  maxRetries: 3,
-});
-```
+Anthropic SDK 内蔵のリトライ機能に委任する。独自リトライロジックは実装しない（二重リトライによる意図しない試行回数の増加を防ぐため）。SDK の `maxRetries` を 3 に設定し、上記のリトライ設定に相当する挙動を SDK 側で実現する。
 
 ### エージェント単位の障害隔離
 
@@ -99,7 +98,7 @@ Hero UC（3 競合 × 4 観点）1 回の実行で想定されるトークン量
 | system prompt | ~500 | 役割定義 + 出力フォーマット指示 |
 | user message | ~3,000 | 競合リスト + 参考情報（最大 10,000 文字 ≒ 3,000 トークン） |
 | **入力合計** | **~3,500** | |
-| 出力（JSON） | ~800 | 競合 3 件 × 3〜5 ポイント |
+| 出力（JSON） | ~800 | 競合 3 件 × 3〜5 ポイント（`max_tokens: 2048` で上限制御） |
 | **入出力合計** | **~4,300** | |
 
 ### Integration Agent（1 エージェント）
@@ -107,7 +106,7 @@ Hero UC（3 競合 × 4 観点）1 回の実行で想定されるトークン量
 | 項目 | トークン数（概算） | 内訳 |
 | --- | --- | --- |
 | system prompt | ~600 | 役割定義 + 出力フォーマット指示 |
-| user message | ~3,800 | 競合リスト + Investigation 出力 4 件（各 ~800 トークン） |
+| user message | ~3,800 | 競合リスト + Investigation 出力 4 件（各 ~800 トークン。`max_tokens` で上限制御されるため大幅超過はない） |
 | **入力合計** | **~4,400** | |
 | 出力（Markdown + JSON） | ~2,000 | マトリクス + 所見 + 内部 JSON |
 | **入出力合計** | **~6,400** | |
