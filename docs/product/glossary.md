@@ -38,7 +38,7 @@ MVP のコア概念。ADR-0005 の MVP 機能一覧と [user-stories.md](./user-
 | Agent | エージェント | LLM を駆動する役割単位の実行主体。本用語集では総称として使用し、具体型は下記 2 種（Investigation Agent / Integration Agent） | [ADR-0005](../adr/0005-mvp-scope.md), [US-3](./user-stories.md#us-3-エージェントの進捗をリアルタイムで見る) |
 | Investigation Agent | 調査エージェント | 観点ごとに独立して競合を調査する並列実行エージェント | [ADR-0005 エージェントチーム実行基盤](../adr/0005-mvp-scope.md) |
 | Integration Agent | 統合エージェント | 各調査エージェントの出力を統合し、観点×競合のマトリクスを生成する役割 | [ADR-0005](../adr/0005-mvp-scope.md), [US-4](./user-stories.md#us-4-統合結果を閲覧しエクスポートする) |
-| Perspective | 観点 | 競合を評価する切り口。調査エージェントの分担単位。MVP では「戦略 / 製品 / 投資 / パートナーシップ」の 4 観点をデフォルト提示する。ユーザー編集可否（固定か可変か）は design doc で確定 | [ADR-0004 JTBD](../adr/0004-target-users.md), [ADR-0005](../adr/0005-mvp-scope.md) |
+| Perspective | 観点 | 競合を評価する切り口。調査エージェントの分担単位。MVP では「戦略 / 製品 / 投資 / パートナーシップ」の固定 4 観点（ユーザー編集は v2 以降、詳細は [templates/competitor-analysis.md](./templates/competitor-analysis.md)） | [ADR-0004 JTBD](../adr/0004-target-users.md), [ADR-0005](../adr/0005-mvp-scope.md) |
 | Reference | 参考情報 | ユーザーが入力フォームで任意添付するテキスト。LLM に渡る調査コンテキストとして利用される。URL を貼り付けた場合も Web 取得は行わず、入力文字列をそのまま LLM に渡す | [US-2](./user-stories.md#us-2-調査パラメータを入力して実行する) |
 | Result | 結果 | 実行完了後の統合レポート。観点×競合のマトリクス形式で Markdown エクスポート可能 | [US-4](./user-stories.md#us-4-統合結果を閲覧しエクスポートする) |
 | Matrix | マトリクス | 結果の固定フォーマット。行＝観点、列＝競合企業。カスタマイズは v2 以降 | [US-4](./user-stories.md#us-4-統合結果を閲覧しエクスポートする) |
