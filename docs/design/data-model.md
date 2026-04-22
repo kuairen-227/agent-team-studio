@@ -32,12 +32,12 @@ erDiagram
         identifier id
         string name
         string description
-        structured definition
+        json definition
     }
     Execution {
         identifier id
         reference template
-        structured parameters
+        json parameters
         enum status
     }
     AgentExecution {
@@ -46,13 +46,13 @@ erDiagram
         string agent_id
         enum role
         enum status
-        structured output
+        json output
     }
     Result {
         identifier id
         reference execution
         string markdown
-        structured structured
+        json structured
     }
 ```
 
@@ -70,7 +70,7 @@ erDiagram
 
 ## 4. エンティティ属性
 
-論理レベルの属性定義。データ型は論理種別で示す（`identifier` / `string` / `structured` / `enum` / `datetime` / `reference`）。
+論理レベルの属性定義。データ型は論理種別で示す（`identifier` / `string` / `structured` / `enum` / `datetime` / `reference`）。`structured` は §2 ER 図では Mermaid 記法の都合で `json` と表記している（同一の論理種別）。
 
 ### 4.1 Template
 
