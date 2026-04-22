@@ -93,11 +93,11 @@ sequenceDiagram
     API->>Eng: run(executionId)
 
     Eng->>DB: UPDATE Execution.status = running
-    Eng-->>API: emit agent_started × 4 (Investigation)
 
     par Investigation × 4 (settle)
         Eng->>Ag: run(investigation:strategy)
         Ag->>DB: UPDATE AgentExecution.status = running
+        Ag-->>Eng: emit agent_started
         Ag->>LLM: stream
         LLM-->>Ag: chunk*
         Ag-->>Eng: emit agent_output_chunk*
@@ -105,13 +105,13 @@ sequenceDiagram
         Ag-->>Eng: emit agent_completed
     and
         Eng->>Ag: run(investigation:product)
-        Note over Ag: 同上
+        Note over Ag: 同上（agent_started を含む）
     and
         Eng->>Ag: run(investigation:investment)
-        Note over Ag: 同上
+        Note over Ag: 同上（agent_started を含む）
     and
         Eng->>Ag: run(investigation:partnership)
-        Note over Ag: 同上
+        Note over Ag: 同上（agent_started を含む）
     end
 
     Eng->>Eng: settle 結果を集計（§6 へ）
@@ -219,10 +219,11 @@ flowchart TD
 | 部分 Investigation 失敗 + Integration 成功 | `completed` | 作成 | 失敗観点を `{ perspective, reason: "agent_failed" }` で追記 |
 | 全 Investigation 失敗 | `failed`（`error_message: "all_investigations_failed"`） | 未作成 | — |
 | Integration のみ失敗 | `failed`（`error_message: "integration_failed"`） | 未作成 | — |
+| Execution 全体タイムアウト（§7） | `failed`（`error_message: "timeout"`） | 未作成 | — |
 
 ### Integration 失敗時の個別 Investigation 結果の保持
 
-Integration が失敗した場合も、個別 Investigation の `output` は `AgentExecution.output` に残る（[data-model.md §3 不変条件](./data-model.md) で `completed` 時に保持）。Result は作成されないが、UI 側は Execution 配下の AgentExecution を辿って個別結果を表示できる（[US-4 受入基準](../product/user-stories.md#us-4-統合結果を閲覧しエクスポートする)）。
+Integration が失敗した場合も、個別 Investigation の `output` は `AgentExecution.output` に残る（[data-model.md §3 不変条件](./data-model.md) で `completed` 時に保持）。Result は作成されない。表示判断は [docs/product/templates/competitor-analysis.md](../product/templates/competitor-analysis.md) を参照。
 
 ### `missing[].reason` の使い分け
 
@@ -235,14 +236,14 @@ Integration が失敗した場合も、個別 Investigation の `output` は `Ag
 
 | 階層 | 値 | 根拠 |
 | --- | --- | --- |
-| LLM 呼び出し単体 | 120 秒 | SDK 側タイムアウト。リトライ 3 回（[llm-integration.md §リトライ設定](./llm-integration.md)）込みで最大 ~7 分 |
-| エージェント単位（engine ラップ） | 300 秒（5 分） | リトライ込み上限。超過時は LLM 呼び出しをキャンセル |
-| Execution 全体 | 1500 秒（25 分） | MVP 30 分制約に対し 5 分のバッファ。超過時は実行中の全エージェントをキャンセル |
+| LLM 呼び出し単体 | 120 秒 | SDK 側タイムアウト。リトライ 3 回（[llm-integration.md §リトライ設定](./llm-integration.md)）込みでは最大約 487 秒に達しうるが、次段の「エージェント単位」で中断するため上限は次段に一任する |
+| エージェント単位（engine ラップ） | 300 秒（5 分） | 当該エージェントの上限時間。SDK のリトライ中であっても `AbortSignal` で LLM 呼び出しを中断する（§8）。LLM 単体タイムアウトとの合算ではなく、この値が実効上限となる |
+| Execution 全体 | 1500 秒（25 分） | MVP 30 分制約に対し 5 分のバッファ。超過時は実行中の全エージェントを `AbortSignal` で中断する |
 
 ### 超過時のふるまい
 
-- エージェント単位タイムアウト → 当該 `AgentExecution.status = failed`、`AgentEvent.agent_failed`（`reason: "timeout"`）
-- Execution 全体タイムアウト → 残実行を全停止、`Execution.status = failed`、`AgentEvent.execution_failed`（`reason: "timeout"`）
+- エージェント単位タイムアウト → `AbortSignal` で進行中の LLM 呼び出し（SDK リトライ含む）を中断、当該 `AgentExecution.status = failed`、`AgentEvent.agent_failed`（`reason: "timeout"`）
+- Execution 全体タイムアウト → 残実行中の全エージェントを `AbortSignal` で中断、`Execution.status = failed`、`AgentEvent.execution_failed`（`reason: "timeout"`）。個別 AgentExecution は各自のエージェント単位タイムアウト処理と同じ経路で `failed` に至る
 
 ### 値の SSoT
 
