@@ -55,6 +55,7 @@ type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | 
 - `agentId` の表記規則は [agent-execution.md §3](./agent-execution.md)（`<role>:<key>` 形式）に従う
 - `reason` の語彙は [agent-execution.md §5](./agent-execution.md) の `AgentFailReason` / `ExecutionFailReason` と一致させる
 - `timestamp` は `agent_started/agent_completed/agent_failed` のいずれかの発火時刻を 1 フィールドに集約
+- `reason?` は暫定表現。実装時（`ws-types.ts`）に `status: "failed"` の専用バリアントへ分離して型安全性を高めることを推奨する（本 doc スコープ外の実装判断）
 
 ## AgentEvent → WsMessage 写像
 
@@ -67,6 +68,8 @@ type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | 
 | `execution_completed` | `{ type: "execution:completed", executionId, resultId }` | `executionId` は接続コンテキストから付与 |
 | `execution_failed` | `{ type: "execution:failed", executionId, reason }` | `executionId` は接続コンテキストから付与 |
 
+`status = "pending"` は本写像表に対応する `AgentEvent` を持たない — 初期スナップショット（接続直後の現状態通知）でのみ送信される。実装時に `agent_pending` イベントを新設する必要はない。
+
 ## 接続ライフサイクル
 
 ```mermaid
@@ -78,7 +81,11 @@ sequenceDiagram
     C->>S: GET /ws?executionId=<id> (Upgrade)
     alt executionId が存在しない / 不正
         S-->>C: close(4404, "execution_not_found")
-    else 正常
+    else Execution.status が completed / failed
+        S-->>C: 各 AgentExecution の最終 agent:status を送信
+        S-->>C: execution:completed または execution:failed を送信
+        S-->>C: close(1000, "normal")
+    else 進行中
         S-->>C: 各 AgentExecution の現状態を agent:status で 1 件ずつ送信
         loop AgentEvent ごと
             E->>S: AgentEvent
@@ -90,10 +97,11 @@ sequenceDiagram
 ```
 
 1. **ハンドシェイク**: クライアントが `ws://.../ws?executionId=<id>` に接続。サーバは `executionId` の存在と形式を検証し、不正なら close code `4404`（reason: `execution_not_found`）で切断する
-2. **初期スナップショット**: 接続確立直後、サーバは現時点の各 `AgentExecution` について `agent:status` を 1 件ずつ送信する（`Execution.status = pending` 中なら全 agent が `pending`、進行中なら実状態）
-3. **進行中**: agent-core が `AgentEvent` を発火するたび、写像表に従って `WsMessage` を配信する
-4. **正常終了**: `execution:completed` または `execution:failed` を送信後、サーバ主導で close code `1000` で切断する
-5. **クライアント主導の切断**: ブラウザリロードや遷移で切断された場合、サーバは復旧処理を行わず以後のメッセージは破棄する（[user-stories.md US-3](../product/user-stories.md) 注記「実行中のリロード復旧は対象外」と整合）
+2. **初期スナップショット**: 接続確立直後、サーバは現時点の各 `AgentExecution` について `agent:status` を 1 件ずつ送信する（`Execution.status = pending` 中なら全 agent が `pending`、進行中なら実状態、完了済みなら最終状態）
+3. **完了済み Execution への接続**: `Execution.status ∈ {completed, failed}` の場合、初期スナップショット送信後に対応する `execution:completed` / `execution:failed` メッセージを 1 件送信し、close code `1000` で切断する（以降の進行中フローは発生しない）。クライアントは進行中・完了後で同一のハンドリングコードを使えるため分岐が不要
+4. **進行中**: agent-core が `AgentEvent` を発火するたび、写像表に従って `WsMessage` を配信する
+5. **正常終了**: `execution:completed` または `execution:failed` を送信後、サーバ主導で close code `1000` で切断する
+6. **クライアント主導の切断**: ブラウザリロードや遷移で切断された場合、サーバは復旧処理を行わず以後のメッセージは破棄する（[user-stories.md US-3](../product/user-stories.md) 注記「実行中のリロード復旧は対象外」と整合）
 
 ## エラーイベント
 
