@@ -16,7 +16,7 @@ MVP のドメインモデル。エンティティ・関連・状態遷移・JSON
 - [ADR-0005 MVP スコープ](../adr/0005-mvp-scope.md)（テンプレート概念モデル・Hero UC）
 - [ADR-0008 技術スタック](../adr/0008-tech-stack.md) / [ADR-0009 アーキテクチャ](../adr/0009-architecture.md)
 - [ADR-0014 MVP データモデル設計方針](../adr/0014-mvp-data-model-design.md)（本 doc の設計判断・代案・トレードオフ）
-- [api-design.md](./api-design.md)（REST API 設計規約）/ [ws-messages.md](./ws-messages.md)（WebSocket メッセージ設計）
+- [api-design.md](./api-design.md)（REST API 設計規約）/ [websocket-design.md](./websocket-design.md)（WebSocket メッセージ設計）
 - [llm-integration.md](./llm-integration.md)（部分出力は保存しない方針）
 - [templates/competitor-analysis.md](./templates/competitor-analysis.md)（テンプレート固有の I/O スキーマ）
 

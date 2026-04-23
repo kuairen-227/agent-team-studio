@@ -97,4 +97,4 @@ MVP のコア概念。ADR-0005 の MVP 機能一覧と [user-stories.md](./user-
 | WebSocket | WebSocket | エージェント進捗のリアルタイム表示に用いる双方向通信プロトコル | [ADR-0005](../adr/0005-mvp-scope.md), [ADR-0009](../adr/0009-architecture.md) |
 | Streaming | ストリーミング | LLM 出力をトークン単位もしくは短いチャンク単位で逐次表示すること | [US-3](./user-stories.md#us-3-エージェントの進捗をリアルタイムで見る) |
 
-詳細なデータモデル・API 定義は `docs/design/data-model.md`・`docs/design/api-design.md`・`docs/design/ws-messages.md` を参照。
+詳細なデータモデル・API 定義は `docs/design/data-model.md`・`docs/design/api-design.md`・`docs/design/websocket-design.md` を参照。
