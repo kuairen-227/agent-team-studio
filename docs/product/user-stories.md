@@ -167,5 +167,5 @@ ADR-0005「スコープ外」の具体化。
 
 ### 後続で詰める（実装 Issue と並走可）
 
-- [ ] API / WebSocket メッセージの型定義 → 既存 `docs/design/api-design.md` を実装 Issue 時に具体化
+- [ ] API / WebSocket メッセージの型定義 → `docs/design/api-design.md`（REST）/ `docs/design/ws-messages.md`（WebSocket）を実装 Issue 時に具体化
 - [ ] 実行履歴の保持件数上限 → 運用ポリシー（ADR 化 or guides/）
