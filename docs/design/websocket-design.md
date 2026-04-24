@@ -73,6 +73,8 @@ type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | 
 
 `status = "pending"` は本写像表に対応する `AgentEvent` を持たない — 初期スナップショット（接続直後の現状態通知）でのみ送信される。実装時に `agent_pending` イベントを新設する必要はない。
 
+`agent:status` / `agent:output` の `agentId` は対応する `AgentEvent.agentId` のパススルー。`execution:completed` / `execution:failed` の `executionId` は接続コンテキスト（ハンドシェイク時のクエリパラメータ）から付与する。
+
 ## 接続ライフサイクル
 
 ```mermaid
@@ -129,10 +131,9 @@ sequenceDiagram
 
 ## メッセージ順序保証
 
-- 同一 `agentId` 内の `agent:output` chunk は送信順が保持される（単一 WS 接続なので TCP 順序に従う）
-- 異なる `agentId` 間の相対順序は保証しない（Investigation Agent は並列実行のため、[agent-execution.md §4](./agent-execution.md)）
-- 同一 agent 内で `agent:status running` は最初の `agent:output` より必ず先に届く（`agent_started` → `agent_output_chunk` の発行順と副作用順序、[agent-execution.md §5](./agent-execution.md) 準拠）
-- 同一 agent 内では `agent:status` と `agent:output` が以降インタリーブしうる。`agent:output` 受信時点で当該 agent を `running` とみなしてよい（先行する `agent:status running` を取りこぼしても実害はない。UI バッジが `pending → running` へ切り替わるタイミングが数 ms 遅れるだけで、機能的影響はない）
+- 同一 `agentId` 内のメッセージ順序は決定論的: `agent:status running → agent:output × N → agent:status completed/failed`（`agent_started` → `agent_output_chunk` → `agent_completed/failed` の発行順と副作用順序、[agent-execution.md §5](./agent-execution.md) 準拠）。単一 WS 接続のため TCP 順序で保持される
+- 異なる `agentId` のメッセージは同一 WS 接続上で混在しうる（Investigation Agent は並列実行のため、[agent-execution.md §4](./agent-execution.md)）。異なる agent 間の相対順序は保証しない
+- クライアントは `agent:output` 受信時点で当該 agent を `running` とみなしてよい（先行する `agent:status running` を取りこぼしても実害はない。UI バッジが `pending → running` へ切り替わるタイミングが数 ms 遅れるだけで、機能的影響はない）
 
 ## 型共有
 
