@@ -127,8 +127,10 @@ agent-core 内で発生する内部例外（DB 書き込み失敗・予期せぬ
 
 | スコープ | 条件 | 表現 |
 | --- | --- | --- |
-| agent スコープ | 当該 `AgentExecution` に閉じた例外（他 agent は継続可能） | `agent:status status="failed"` + `reason: "internal_error"` を経由して通知し、engine は settle 判定を継続 |
-| engine スコープ | `AgentEvent` 発行不能・engine 自体の状態破損 | `close(1011, "server_error")` で切断（接続を維持するとクライアントが無期限待機に陥るため。MVP の「自動再接続なし」ポリシーと整合） |
+| agent スコープ | 当該 `AgentExecution` に閉じた例外で、`status = failed` への遷移（DB UPDATE + イベント発行）が成功する | `agent:status status="failed"` + `reason: "internal_error"` を経由して通知し、engine は settle 判定を継続 |
+| engine スコープ | `AgentEvent` 発行不能・`AgentExecution.status` UPDATE 自体の失敗（settle 判定不能）・engine 自体の状態破損 | `close(1011, "server_error")` で切断（接続を維持するとクライアントが無期限待機に陥るため。MVP の「自動再接続なし」ポリシーと整合） |
+
+判定軸は **「settle 判定を継続できるか」**。当該 agent を `failed` として確定できる（DB 永続化 + イベント配信が成功する）限りは agent スコープ、それが不能な場合は engine スコープに昇格する。
 
 いずれの場合も DB は真の状態を保持している（[agent-execution.md §副作用の順序](./agent-execution.md)）。クライアントが手動リロード後に再接続すれば初期スナップショットで現状態が復元される。
 
