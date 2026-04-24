@@ -152,7 +152,8 @@ type AgentEvent =
 type AgentFailReason =
   | "llm_error"          // SDK リトライ後も失敗
   | "output_parse_error" // 出力 JSON パース失敗
-  | "timeout";           // §7 のいずれか
+  | "timeout"            // §7 のいずれか
+  | "internal_error";    // agent-core 内部例外（当該 AgentExecution の DB 書き込み失敗・予期せぬ throw 等）
 
 type ExecutionFailReason =
   | "all_investigations_failed"
