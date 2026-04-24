@@ -5,10 +5,10 @@
 ## 接続
 
 ```text
-ws://localhost:3000/ws?executionId=<id>
+/ws?executionId=<id>
 ```
 
-実行開始（`POST /api/executions` で 202 を受領）後、`executionId` をクエリに付けて接続する。MVP では認証なし（ローカル前提）。
+実行開始（`POST /api/executions` で 202 を受領）後、`executionId` をクエリに付けて接続する。絶対 URL（スキーム・ホスト・ポート）は環境依存のため本 doc では規定しない。MVP では認証なし（ローカル前提）。
 
 ## メッセージ方向
 
@@ -59,6 +59,8 @@ type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | 
 
 ## AgentEvent → WsMessage 写像
 
+本表は Investigation / Integration を問わず、すべての `AgentExecution` に一律適用する（`agentId` の `<role>:<key>` 表記のみ異なる）。
+
 | `AgentEvent.kind` | `WsMessage` | 写像内容 |
 | --- | --- | --- |
 | `agent_started` | `{ type: "agent:status", status: "running", timestamp: startedAt }` | — |
@@ -97,7 +99,7 @@ sequenceDiagram
 ```
 
 1. **ハンドシェイク**: クライアントが `ws://.../ws?executionId=<id>` に接続。サーバは `executionId` の存在と形式を検証し、不正なら close code `4404`（reason: `execution_not_found`）で切断する
-2. **初期スナップショット**: 接続確立直後、サーバは現時点の各 `AgentExecution` について `agent:status` を 1 件ずつ送信する（`Execution.status = pending` 中なら全 agent が `pending`、進行中なら実状態、完了済みなら最終状態）
+2. **初期スナップショット**: 接続確立直後、サーバは現時点の各 `AgentExecution` について `agent:status` を 1 件ずつ送信する（`Execution.status = pending` 中なら全 agent が `pending`、進行中なら実状態、完了済みなら最終状態）。MVP では Investigation 4 件 + Integration 1 件の計 5 件が送信される
 3. **完了済み Execution への接続**: `Execution.status ∈ {completed, failed}` の場合、初期スナップショット送信後に対応する `execution:completed` / `execution:failed` メッセージを 1 件送信し、close code `1000` で切断する（以降の進行中フローは発生しない）。クライアントは進行中・完了後で同一のハンドリングコードを使えるため分岐が不要
 4. **進行中**: agent-core が `AgentEvent` を発火するたび、写像表に従って `WsMessage` を配信する
 5. **正常終了**: `execution:completed` または `execution:failed` を送信後、サーバ主導で close code `1000` で切断する
@@ -113,6 +115,8 @@ sequenceDiagram
 | 個別エージェント失敗 | `agent:status` の `status="failed"` + `reason` | `llm_error` / `output_parse_error` / `timeout` |
 | 接続レベルのエラー | WebSocket close code + reason | `4404 execution_not_found` |
 
+複数種別が共存するケースは [`agent-execution.md §6`](./agent-execution.md) のフローに準拠する。例として全 Investigation 失敗時は `agent:status failed × 4 → execution:failed` の順で届く（クライアントは agent レベルの失敗を受信しても終端処理を待ち、`execution:failed` / `execution:completed` を受け取ってから確定処理に入る）。
+
 サーバ内部例外で `AgentEvent` の発行に失敗しても DB が真の状態を保持する（[agent-execution.md §副作用の順序](./agent-execution.md)）。クライアントが再接続すれば初期スナップショットで現状態が復元される。
 
 ## 再接続ポリシー（MVP）
@@ -125,7 +129,8 @@ sequenceDiagram
 
 - 同一 `agentId` 内の `agent:output` chunk は送信順が保持される（単一 WS 接続なので TCP 順序に従う）
 - 異なる `agentId` 間の相対順序は保証しない（Investigation Agent は並列実行のため、[agent-execution.md §4](./agent-execution.md)）
-- 同一 agent 内では `agent:status` と `agent:output` がインタリーブしうる。クライアントは `agent:output` を受信した時点で当該 agent を `running` とみなしてよい
+- 同一 agent 内で `agent:status running` は最初の `agent:output` より必ず先に届く（`agent_started` → `agent_output_chunk` の発行順と副作用順序、[agent-execution.md §5](./agent-execution.md) 準拠）
+- 同一 agent 内では `agent:status` と `agent:output` が以降インタリーブしうる。`agent:output` 受信時点で当該 agent を `running` とみなしてよい（先行する `agent:status running` を取りこぼしても実害はない）
 
 ## 型共有
 
