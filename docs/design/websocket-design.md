@@ -90,7 +90,7 @@ sequenceDiagram
         S-->>C: 各 AgentExecution の最終 agent:status を送信
         S-->>C: execution:completed または execution:failed を送信
         S-->>C: close(1000, "normal")
-    else 進行中
+    else Execution.status が pending または running
         S-->>C: 各 AgentExecution の現状態を agent:status で 1 件ずつ送信
         loop AgentEvent ごと
             E->>S: AgentEvent
