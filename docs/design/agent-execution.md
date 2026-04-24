@@ -21,7 +21,7 @@
 | ユーザー視点の進捗表示・失敗時 UX | [docs/product/templates/competitor-analysis.md](../product/templates/competitor-analysis.md) |
 | LLM モデル・パラメータ・SDK リトライ・ストリーミング方式 | [llm-integration.md](./llm-integration.md) |
 | エンティティ属性・状態値・JSON 出力スキーマ | [data-model.md](./data-model.md) / [templates/competitor-analysis.md](./templates/competitor-analysis.md) |
-| WebSocket メッセージ最終型・接続ライフサイクル | [api-design.md](./api-design.md)（A5 [Issue #54](https://github.com/kuairen-227/agent-team-studio/issues/54) で確定） |
+| WebSocket メッセージ最終型・接続ライフサイクル | [websocket-design.md](./websocket-design.md)（A5 [Issue #54](https://github.com/kuairen-227/agent-team-studio/issues/54) で確定） |
 | 本ドキュメント | 並列実行制御・内部イベント契約・状態確定フロー・タイムアウト・cleanup 方針 |
 
 ### SSoT の原則
@@ -173,16 +173,9 @@ type ExecutionFailReason =
 | `execution_completed` | Result INSERT・`Execution.status = completed` UPDATE 直後 |
 | `execution_failed` | `Execution.status = failed` UPDATE 直後 |
 
-### A5 への引き継ぎ
+### WS メッセージへの写像
 
-WebSocket メッセージの最終型・接続ライフサイクル・再接続ポリシーは A5 [Issue #54](https://github.com/kuairen-227/agent-team-studio/issues/54) で確定する。本イベントを以下のように WS 型へ写像する想定だが、最終確定は A5 に委ねる。
-
-| AgentEvent | 既存 [api-design.md](./api-design.md) の WsMessage |
-| --- | --- |
-| `agent_started` / `agent_completed` / `agent_failed` | `agent:status` |
-| `agent_output_chunk` | `agent:output` |
-| `execution_completed` | `execution:completed` |
-| `execution_failed` | `execution:error` |
+WebSocket メッセージの最終型・接続ライフサイクル・再接続ポリシーは [websocket-design.md](./websocket-design.md)（A5 [Issue #54](https://github.com/kuairen-227/agent-team-studio/issues/54) で確定）を SSoT とする。本イベントから `WsMessage` への写像表は [websocket-design.md §AgentEvent → WsMessage 写像](./websocket-design.md) を参照。
 
 ## 6. エラーハンドリングと状態確定
 
@@ -262,7 +255,8 @@ MVP 段階は本ドキュメントが暫定 SSoT。実装先ヒントとして `
 - [llm-integration.md](./llm-integration.md) — モデル・パラメータ・SDK リトライ・障害隔離
 - [data-model.md](./data-model.md) — Execution / AgentExecution / Result の状態遷移
 - [templates/competitor-analysis.md](./templates/competitor-analysis.md) — Investigation / Integration の I/O スキーマ・`missing[]` の意味
-- [api-design.md](./api-design.md) — REST / WebSocket（A5 で本 doc のイベントから写像）
+- [api-design.md](./api-design.md) — REST API 設計規約
+- [websocket-design.md](./websocket-design.md) — WebSocket メッセージ契約（A5 で本 doc のイベントから写像）
 - [docs/product/user-stories.md](../product/user-stories.md) — US-3 / US-4 受入基準
 - [docs/product/templates/competitor-analysis.md](../product/templates/competitor-analysis.md) — 失敗時 UX
 - [ADR-0005 MVP スコープ](../adr/0005-mvp-scope.md) / [ADR-0009 アーキテクチャ](../adr/0009-architecture.md)
