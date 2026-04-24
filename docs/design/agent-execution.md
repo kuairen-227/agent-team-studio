@@ -153,7 +153,7 @@ type AgentFailReason =
   | "llm_error"          // SDK リトライ後も失敗
   | "output_parse_error" // 出力 JSON パース失敗
   | "timeout"            // §7 のいずれか
-  | "internal_error";    // agent-core 内部例外（当該 AgentExecution の DB 書き込み失敗・予期せぬ throw 等）
+  | "internal_error";    // agent-core 内部例外（output 書き込み失敗・予期せぬ throw 等。status UPDATE 自体の失敗は engine スコープ、websocket-design.md §内部例外の境界 参照）
 
 type ExecutionFailReason =
   | "all_investigations_failed"
