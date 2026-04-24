@@ -230,7 +230,7 @@ ADR-0008 で定義した依存方向を維持する。循環依存は禁止。
 
 - リソース指向の URL 設計（`/api/templates`, `/api/executions`）
 - HTTP メソッドで操作を表現（GET: 取得, POST: 作成）
-- レスポンスは JSON。エラーは `{ error: string, details?: unknown }` 形式
+- レスポンスは JSON。エラーレスポンスの型・語彙・HTTP ステータス対応は [api-design.md §エラーレスポンス](../design/api-design.md) を参照（`errorCode` による discriminated union）
 - 型定義は `packages/shared/src/api-types.ts` で一元管理し、フロント・バックエンド双方から参照
 
 ### WebSocket 設計方針

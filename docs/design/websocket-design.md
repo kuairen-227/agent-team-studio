@@ -45,7 +45,7 @@ type WsMessage =
       reason: ExecutionFailReason;
     };
 
-type AgentFailReason = "llm_error" | "output_parse_error" | "timeout";
+type AgentFailReason = "llm_error" | "output_parse_error" | "timeout" | "internal_error";
 type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | "timeout";
 ```
 
@@ -115,13 +115,24 @@ sequenceDiagram
 | 種別 | 表現 | 例 |
 | --- | --- | --- |
 | ドメイン失敗（実行が確定的に失敗） | `execution:failed` メッセージ | `all_investigations_failed` / `integration_failed` / `timeout` |
-| 個別エージェント失敗 | `agent:status` の `status="failed"` + `reason` | `llm_error` / `output_parse_error` / `timeout` |
-| サーバ内部例外（`AgentEvent` 発行失敗等） | WebSocket close code + reason | `1011 server_error` |
+| 個別エージェント失敗 | `agent:status` の `status="failed"` + `reason` | `llm_error` / `output_parse_error` / `timeout` / `internal_error` |
+| engine 内部例外（`AgentEvent` 発行不能等） | WebSocket close code + reason | `1011 server_error` |
 | 接続レベルのエラー（不正 executionId 等） | WebSocket close code + reason | `4404 execution_not_found` |
 
 複数種別が共存するケースは [`agent-execution.md §6`](./agent-execution.md) のフローに準拠する。例として全 Investigation 失敗時は `agent:status failed × 4 → execution:failed` の順で届く（クライアントは agent レベルの失敗を受信しても終端処理を待ち、`execution:failed` / `execution:completed` を受け取ってから確定処理に入る）。
 
-サーバ内部例外で `AgentEvent` の発行に失敗した場合は `close(1011, "server_error")` で切断する（接続を維持するとクライアントが無期限待機に陥るため。MVP の「自動再接続なし」ポリシーと整合）。DB は真の状態を保持しているため（[agent-execution.md §副作用の順序](./agent-execution.md)）、クライアントが手動リロード後に再接続すれば初期スナップショットで現状態が復元される。
+### 内部例外の agent スコープ / engine スコープ境界
+
+agent-core 内で発生する内部例外（DB 書き込み失敗・予期せぬ throw）の扱いは、engine が `AgentEvent` を発行できる状態か否かで分岐する。
+
+| スコープ | 条件 | 表現 |
+| --- | --- | --- |
+| agent スコープ | 当該 `AgentExecution` に閉じた例外で、`status = failed` への遷移（DB UPDATE + イベント発行）が成功する | `agent:status status="failed"` + `reason: "internal_error"` を経由して通知し、engine は settle 判定を継続 |
+| engine スコープ | `AgentEvent` 発行不能・`AgentExecution.status` UPDATE 自体の失敗（settle 判定不能）・engine 自体の状態破損 | `close(1011, "server_error")` で切断（接続を維持するとクライアントが無期限待機に陥るため。MVP の「自動再接続なし」ポリシーと整合） |
+
+判定軸は **「settle 判定を継続できるか」**。当該 agent を `failed` として確定できる（DB 永続化 + イベント配信が成功する）限りは agent スコープ、それが不能な場合は engine スコープに昇格する。
+
+いずれの場合も DB は真の状態を保持している（[agent-execution.md §副作用の順序](./agent-execution.md)）。クライアントが手動リロード後に再接続すれば初期スナップショットで現状態が復元される。
 
 ## 再接続ポリシー（MVP）
 
