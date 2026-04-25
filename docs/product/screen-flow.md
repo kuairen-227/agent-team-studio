@@ -87,7 +87,12 @@ flowchart LR
 
 ## 未決事項
 
-- **グローバルナビの配置**: ヘッダー固定か、サイドバーか、画面単位のリンクか。UI 設計（design 側）で決定
 - **空状態の表現**: 履歴 0 件以外にもテンプレート 0 件等の空状態があり得るが、MVP では履歴のみ想定（テンプレートはシードで常に 1 件以上）
-- **ローディング中・エラー表示の共通パターン**: 各画面のローディング／失敗表示の UI パターンは design 側で統一
-- **実行開始後の URL / 画面識別方法**: URL ルーティング設計は [design](../design/README.md) 側で決定
+
+### 解消済み
+
+design 側で確定した項目（[ui-patterns.md](../design/ui-patterns.md) を参照）。
+
+- **グローバルナビの配置** → [ui-patterns.md §3](../design/ui-patterns.md) でヘッダー固定に確定
+- **ローディング中・エラー表示の共通パターン** → [ui-patterns.md §2](../design/ui-patterns.md) で loading / empty / error / partial-failure を統一
+- **実行開始後の URL / 画面識別方法** → [ui-patterns.md §7](../design/ui-patterns.md) で `/executions/:id` 等のルートを確定
