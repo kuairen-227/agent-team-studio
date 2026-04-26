@@ -13,6 +13,7 @@
       "Skill(resolve-review)",
       "Skill(review)",
       "Bash(bun run:*)",
+      "Bash(cat:*)",
       "Bash(ls:*)",
       "Bash(wc:*)",
       "Bash(git add:*)",
