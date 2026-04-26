@@ -2,7 +2,7 @@
 
 MVP で提供する画面の一覧・遷移・US マッピング。web 実装 Issue 分解時の粒度合わせと、画面名・役割の共通参照を目的とする。
 
-本ドキュメントは UX の構造（画面・遷移）のみを扱う。URL ルートや画面識別子等の技術詳細は [design/](../design/README.md) 側で定義する。前提は [ADR-0005 MVP スコープ](../adr/0005-mvp-scope.md) と [user-stories.md](./user-stories.md)。
+本ドキュメントは UX の構造（画面・遷移）のみを扱う。URL ルートや画面識別子等の技術詳細は [design/ui-patterns.md](../design/ui-patterns.md) 側で定義する。前提は [ADR-0005 MVP スコープ](../adr/0005-mvp-scope.md) と [user-stories.md](./user-stories.md)。
 
 ## 画面一覧
 
@@ -88,11 +88,3 @@ flowchart LR
 ## 未決事項
 
 - **空状態の表現**: 履歴 0 件以外にもテンプレート 0 件等の空状態があり得るが、MVP では履歴のみ想定（テンプレートはシードで常に 1 件以上）
-
-### 解消済み
-
-design 側で確定した項目（[ui-patterns.md](../design/ui-patterns.md) を参照）。
-
-- **グローバルナビの配置** → [ui-patterns.md §3](../design/ui-patterns.md) でヘッダー固定に確定
-- **ローディング中・エラー表示の共通パターン** → [ui-patterns.md §2](../design/ui-patterns.md) で loading / empty / error / partial-failure を統一
-- **実行開始後の URL / 画面識別方法** → [ui-patterns.md §7](../design/ui-patterns.md) で `/executions/:id` 等のルートを確定
