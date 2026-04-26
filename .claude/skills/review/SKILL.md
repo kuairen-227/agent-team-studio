@@ -1,8 +1,8 @@
 ---
 name: review
-description: 成果物のレビューを行う。レビュー対象に応じて適切な専門家エージェント（PO・PM・アーキテクト・QA）を組み合わせて評価する。
-when_to_use: ユーザーが「レビューして」「確認して」「チェックして」「PRレビューして」「設計レビューして」「要件レビューして」「テストレビューして」などと言ったとき
-argument-hint: "[product|design|code|test] [対象（ファイルパス・PR番号・Issue番号）]"
+description: 成果物のレビューを行う。レビュー対象に応じて適切な専門家エージェント（PO・PM・アーキテクト・QA・デザイナー）を組み合わせて評価する。
+when_to_use: ユーザーが「レビューして」「確認して」「チェックして」「PRレビューして」「設計レビューして」「要件レビューして」「テストレビューして」「UX レビューして」などと言ったとき
+argument-hint: "[product|design|code|test|ux] [対象（ファイルパス・PR番号・Issue番号）]"
 allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(gh issue view:*) Bash(gh issue comment:*) Bash(git diff:*) Bash(git log:*) Read Grep Glob Agent
 ---
 
@@ -24,6 +24,7 @@ allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(
 | `design ...` | 設計レビュー |
 | `code ...` | コードレビュー |
 | `test ...` | テストレビュー |
+| `ux ...` | UX レビュー |
 
 **対象から推測する場合**:
 
@@ -31,6 +32,8 @@ allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(
 | ------ | ------------- |
 | Issue 番号（`#XX`）、要件ドキュメント | プロダクトレビュー |
 | `docs/adr/*`, `docs/design/*` | 設計レビュー |
+| `docs/design/ui-patterns.md`, `docs/product/brand.md`, `docs/product/screen-flow.md` | UX レビュー |
+| `apps/web/src/...` の React コンポーネント | UX レビュー（コードレビューと併用可） |
 | PR 番号、ソースコードファイル | コードレビュー |
 | `*.test.*` ファイル | テストレビュー |
 
@@ -51,10 +54,11 @@ allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(
 
 | 種別 | エージェント | 各エージェントの役割 |
 | ------ | ----------- | ----------------- |
-| プロダクトレビュー | `po` + `pm` | po: ユーザー価値・JTBD整合・受入条件・スコープ / pm: 実現可能性・依存関係・リスク |
+| プロダクトレビュー | `po` + `pm` | po: ユーザー価値・JTBD整合・受入条件・スコープ・ブランド軸整合 / pm: 実現可能性・依存関係・リスク |
 | 設計レビュー | `architect` | ADR間整合性・構造の妥当性・トレードオフ |
 | コードレビュー | `architect` + `qa` | architect: コード構造・型安全性・命名・規約 / qa: エラー処理・セキュリティ・テスト充足度 |
 | テストレビュー | `qa` | テスト設計・カバレッジ・境界値・テスト品質 |
+| UX レビュー | `designer` | UX 整合・ブランド軸の UI 反映・状態パターン・コンポーネント選定・アクセシビリティ |
 
 エージェントへの委譲時に以下を渡す:
 
@@ -69,10 +73,11 @@ allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(
 
 | 種別 | 焦点（指摘する） | 除外（指摘しない） |
 | --- | --- | --- |
-| プロダクトレビュー | ユーザー価値・JTBD 整合・受入条件の妥当性・スコープの過不足 | 技術的な実現方法・API 設計・データ構造 |
+| プロダクトレビュー | ユーザー価値・JTBD 整合・受入条件の妥当性・スコープの過不足・ブランド軸との整合 | 技術的な実現方法・API 設計・データ構造・UI 実装の細部 |
 | 設計レビュー | 方針・判断の妥当性・ADR 間の整合性・トレードオフの明示・欠落した観点 | 実装の詳細（関数シグネチャ・エラーハンドリングの具体的手順・コード構造） |
 | コードレビュー | 実装の正確性・型安全性・規約準拠・エラー処理・セキュリティ | ビジネス要件の妥当性（設計済みの前提） |
 | テストレビュー | テスト設計・カバレッジ・境界値・テストの保守性 | プロダクションコードの設計判断 |
+| UX レビュー | ブランド軸との整合・状態パターン・コンポーネント選定・アクセシビリティ・ボイス&トーン | バックエンド設計・データ構造・API のエラーコード設計 |
 
 エージェントへの委譲プロンプトに「焦点」と「除外」を含めること。例: 設計レビューの場合、「方針・判断・ADR 整合性を評価してください。実装の詳細（関数の具体的な引数・エラー処理の手順等）には踏み込まないでください。」
 

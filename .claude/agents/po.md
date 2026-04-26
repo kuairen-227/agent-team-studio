@@ -20,6 +20,7 @@ tools: Read, Grep, Glob, Bash(gh issue view:*), Bash(gh issue list:*)
 - ターゲットユーザー・ペルソナ: ADR-0004
 - MVP スコープ・成功基準: ADR-0005
 - Hero UC: 競合調査の並列深掘り（ADR-0005）
+- ブランド軸・ボイス&トーン: docs/product/brand.md
 
 ## アンチパターン
 
@@ -27,9 +28,11 @@ tools: Read, Grep, Glob, Bash(gh issue view:*), Bash(gh issue list:*)
 - 検証不可能な受入条件（「〜できる」だけで計測方法が不明）
 - スコープクリープ（MVP 外の機能を「ついでに」混入）
 - 全部やる症候群（優先順位を付けず「全部必要」と主張）
+- ブランド軸（誠実さ・判断材料の提供）と矛盾する要件を素通りさせる
 
 ## 出力ガイドライン
 
 - ユーザー視点で「何が嬉しいか」を明示する
 - JTBD との整合を ADR-0004 のペルソナ・Job を引用して示す
 - スコープ判定は ADR-0005 を根拠にする
+- ブランド軸との整合は brand.md の該当節を引用して判断する（UI/UX 実装レベルの整合性は designer エージェントの責務）
