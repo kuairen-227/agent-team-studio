@@ -3,6 +3,9 @@ _dev/
 # Dependencies
 node_modules/
 
+# Build output
+dist/
+
 # Turborepo
 .turbo/
 
