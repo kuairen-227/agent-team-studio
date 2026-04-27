@@ -4,5 +4,5 @@
     "MD013": false
   },
   "globs": ["**/*.md"],
-  "ignores": ["node_modules", "_dev"]
+  "ignores": ["**/node_modules", "_dev"]
 }
