@@ -85,9 +85,9 @@ ADR-0008 で技術スタックを確定した時点で、PostgreSQL を DevConta
 
 ADR-0012 で採用済みの `claude -w` と手動 `git worktree add` の使い分けに、本決定で導入する DB 隔離モード・ポート割当を組み合わせた運用ルールを `docs/guides/worktree.md` に明記する。判断軸は以下の通り：
 
-- **main 単一作業 / 軽量タスク** → 単一 DevContainer
-- **AI 並行・短命タスク・読取中心 / 軽微な DB 変更** → `claude -w`（DB 共有モード）
-- **DB 破壊的変更 / Playwright 視覚デバッグ / 並行 E2E / 大規模リファクタ** → `git worktree add` + 別 DevContainer + DB 隔離モード
+- **main 単一作業 / 軽量タスク** → 単一 DevContainer（`solo`）
+- **AI 並行・短命タスク・読取中心 / 軽微な DB 変更** → `claude -w`（`nested`、DB 共有モード）
+- **DB 破壊的変更 / Playwright 視覚デバッグ / 並行 E2E / 大規模リファクタ** → `git worktree add` + 別 DevContainer + DB 隔離モード（`split`）
 
 ## Consequences
 
