@@ -74,6 +74,7 @@ ADR-0008 で技術スタックを確定した時点で、PostgreSQL を DevConta
 - `.devcontainer/.env` の `DB_VOLUME` で PostgreSQL の named volume を選択
   - 共有モード: `DB_VOLUME=pgdata-main`（複数 worktree で同一 DB を参照）
   - 隔離モード: `DB_VOLUME=pgdata-<worktree-name>`（破壊的スキーマ変更を main から隔離）
+- 併せて `WORKTREE_ID` をコンテナに環境変数として渡す。将来のアプリケーション側 worktree 識別（`search_path` の動的切替・`CREATE DATABASE wt_<id>` の自動化等）を想定した予約変数で、現時点ではアプリ参照箇所なし
 - 切替手順は `docs/guides/devcontainer.md` に明記する
 
 ### ポート割当（B 案）

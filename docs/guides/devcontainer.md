@@ -99,10 +99,17 @@ worktree のライフサイクル: `git worktree remove` する **前に** `dock
 ```bash
 # ホスト側ターミナルから実行
 
+# 0. 実際の compose プロジェクト名を確認（VS Code Dev Containers 経由で起動した場合は
+#    devcontainercli が独自形式のプロジェクト名を生成しているため、standalone と一致しないことがある）
+docker compose ls
+# または: docker ps --filter name=feat-auth
+
 # 1. 畳む worktree ディレクトリで compose を停止
-#    （リポジトリルートから実行すると compose プロジェクト名が main を指してしまう）
+#    standalone で起動した場合はカレントディレクトリ名がプロジェクト名になる
 cd ../agent-team-studio--feat-auth
 docker compose -f .devcontainer/docker-compose.yml down
+# VS Code から起動した場合で down が空振りする場合は、VS Code の
+# 「Dev Containers: Stop Container」コマンドで停止したうえで volume だけ手動削除する
 docker volume rm pgdata-feat-auth
 
 # 2. メインリポジトリへ戻って worktree を削除
