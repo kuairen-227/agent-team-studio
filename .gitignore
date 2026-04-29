@@ -13,6 +13,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.devcontainer/.env
 
 # Claude Code
 .claude/settings.local.json

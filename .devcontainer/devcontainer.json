@@ -1,11 +1,16 @@
 {
   "name": "agent-team-studio",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/agent-team-studio",
+  "remoteUser": "node",
   "features": {
     "ghcr.io/devcontainers-extra/features/gh-cli:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/shyim/devcontainers-features/bun:0": {}
   },
+  "forwardPorts": [3000, 5432],
+  "postCreateCommand": "bun install",
   "customizations": {
     "vscode": {
       "extensions": [
