@@ -9,16 +9,10 @@ dist/
 # Turborepo
 .turbo/
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# DevContainer (.env.example と追跡対象ファイル以外を ignore)
-.devcontainer/*
-!.devcontainer/.env.example
-!.devcontainer/devcontainer.json
-!.devcontainer/docker-compose.yml
+# Environment variables (.env.example 以外はどのディレクトリでも ignore)
+**/.env
+**/.env.*
+!**/.env.example
 
 # Claude Code
 .claude/settings.local.json
