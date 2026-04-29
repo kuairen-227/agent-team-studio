@@ -13,7 +13,12 @@ dist/
 .env
 .env.local
 .env.*.local
-.devcontainer/.env
+
+# DevContainer (.env.example と追跡対象ファイル以外を ignore)
+.devcontainer/*
+!.devcontainer/.env.example
+!.devcontainer/devcontainer.json
+!.devcontainer/docker-compose.yml
 
 # Claude Code
 .claude/settings.local.json

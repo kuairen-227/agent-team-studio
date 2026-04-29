@@ -61,7 +61,7 @@ ADR-0008 で技術スタックを確定した時点で、PostgreSQL を DevConta
 - `.devcontainer/devcontainer.json` で `dockerComposeFile` を参照
 - `.devcontainer/docker-compose.yml` に以下のサービスを定義
   - `app`: `mcr.microsoft.com/devcontainers/javascript-node:24` をベースに features で `gh-cli` / `claude-code` / `bun` を追加
-  - `db`: `postgres:17`、healthcheck 付き
+  - `db`: `postgres:18`、healthcheck 付き
 - `.devcontainer/.env`（gitignore 対象）で worktree 単位の値を上書き
 
 ### 認証共有（B 案 = named volume）
