@@ -212,7 +212,7 @@ isolation: worktree
 - **認証は共有**: すべての DevContainer で `claude-auth` named volume をマウント（再ログイン不要）
 - **nested の DB 安全策**: カテゴリ C の DB 改修で nested を選ぶときは前述の前提（`search_path` 分離 or `CREATE DATABASE wt_<name>`）を必ず適用
 - **split のリソース上限**: split worktree は同時 2 つまでを目安にする（main と合わせて最大 3 コンテナ。`docker compose stop` で休眠も活用）
-- **Playwright のポート設定**: `.devcontainer/.env` の `APP_PORT` で worktree ごとに切替（Playwright 正式導入時に `APP_URL` 等の設定を [devcontainer.md](./devcontainer.md) に追記予定）
+- **Playwright のポート設定**: `.devcontainer/.env` の `APP_PORT` でホスト側公開ポートを worktree ごとに切替（コンテナ内 listen ポートは 3000 固定。Playwright 正式導入時に詳細を [devcontainer.md](./devcontainer.md) に追記予定）
 
 ## 注意事項
 
