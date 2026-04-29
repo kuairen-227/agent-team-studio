@@ -34,7 +34,7 @@ DevContainer × Worktree の利用パターンは 3 種類。
    NO  → solo
 ```
 
-判断軸は **main 作業を止められるか / DB を破壊的に変更するか / Playwright で視覚デバッグや並行 E2E が必要か / 複数 Claude セッションを並行させたいか** の 4 つ。
+判断軸は **並行作業または使い捨て空間が欲しいか / DB を破壊的に変更するか / Playwright で視覚デバッグや並行 E2E が必要か / 複数 Claude セッションを並行させたいか** の 4 つ。
 
 Issue 番号から自動判断するには `/judge-dev-mode <番号>` を使う。
 

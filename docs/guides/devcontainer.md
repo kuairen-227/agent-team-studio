@@ -97,15 +97,19 @@ DB_PORT=5442
 worktree のライフサイクル: `git worktree remove` する **前に** `docker volume rm <DB_VOLUME>` を実行して volume を削除する。残したまま worktree を消すと孤立 volume が増殖する。
 
 ```bash
-# ホスト側ターミナルで、畳む worktree ディレクトリから実行
-# （リポジトリルートから実行すると compose プロジェクト名が main を指してしまう）
+# ホスト側ターミナルから実行
+
+# 1. 畳む worktree ディレクトリで compose を停止
+#    （リポジトリルートから実行すると compose プロジェクト名が main を指してしまう）
 cd ../agent-team-studio--feat-auth
 docker compose -f .devcontainer/docker-compose.yml down
 docker volume rm pgdata-feat-auth
-cd -
+
+# 2. メインリポジトリへ戻って worktree を削除
+cd ../agent-team-studio
+# 未コミット変更がある場合は先に git -C ../agent-team-studio--feat-auth stash を実行
+# （失われても問題なければ git worktree remove --force ... で強制削除も可）
 git worktree remove ../agent-team-studio--feat-auth
-# 未コミット変更がある場合は git -C ../agent-team-studio--feat-auth stash してから実行するか、
-# 残しても問題なければ git worktree remove --force ... で強制削除する
 ```
 
 ## ポート割当
@@ -133,9 +137,9 @@ const port = 3000;
 
 ## Playwright の利用
 
-Playwright を AI ワークフローで動かすときは、`.devcontainer/.env` のポート設定をそのまま `playwright.config.ts` の dev server に渡す。詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
+Playwright は本 ADR-0016 のスコープ外（後続 Issue で導入予定）。正式導入後は `.devcontainer/.env` のポート設定を `playwright.config.ts` の dev server に渡す構成を想定する。詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
 
-ブラウザの依存パッケージは Playwright の正式導入時（後続 Issue）に DevContainer の features またはイメージに追加する。本 ADR-0016 のスコープでは導入しない。
+ブラウザの依存パッケージとイメージへの組み込みも、Playwright 正式導入時に DevContainer の features またはイメージに追加する。
 
 ## トラブルシューティング
 
