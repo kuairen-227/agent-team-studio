@@ -104,15 +104,19 @@ worktree のライフサイクル: `git worktree remove` する **前に** `dock
 docker compose ls
 # または: docker ps --filter name=feat-auth
 
-# 1. 畳む worktree ディレクトリで compose を停止
-#    standalone で起動した場合はカレントディレクトリ名がプロジェクト名になる
+# 1. コンテナを停止する（停止後でないと volume 削除は volume is in use エラーになる）
+#
+#    (a) standalone で起動した場合
 cd ../agent-team-studio--feat-auth
 docker compose -f .devcontainer/docker-compose.yml down
-# VS Code から起動した場合で down が空振りする場合は、VS Code の
-# 「Dev Containers: Stop Container」コマンドで停止したうえで volume だけ手動削除する
+#
+#    (b) VS Code Dev Containers から起動して上の down が空振りする場合
+#        VS Code コマンドパレットから「Dev Containers: Stop Container」を実行する
+
+# 2. named volume は down では削除されないので明示的に削除
 docker volume rm pgdata-feat-auth
 
-# 2. メインリポジトリへ戻って worktree を削除
+# 3. メインリポジトリへ戻って worktree を削除
 cd ../agent-team-studio
 # 未コミット変更がある場合は先に git -C ../agent-team-studio--feat-auth stash を実行
 # （失われても問題なければ git worktree remove --force ... で強制削除も可）
