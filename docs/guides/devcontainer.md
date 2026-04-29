@@ -82,6 +82,8 @@ docker volume rm claude-auth
 DB_VOLUME=pgdata-main
 ```
 
+> nested で DB スキーマを変更する場合は main DB を汚さないように `search_path` を worktree 名で切るか `CREATE DATABASE wt_<name>` で別 DB を作ること。詳細は [worktree.md](./worktree.md) のカテゴリ C を参照。
+
 ### 隔離モード
 
 worktree ごとに独立した DB を起動する。破壊的スキーマ変更・マイグレーション rollback 検証・大規模 seed の試行に使う。
@@ -95,6 +97,7 @@ DB_PORT=5442
 worktree のライフサイクル: `git worktree remove` する **前に** `docker volume rm <DB_VOLUME>` を実行して volume を削除する。残したまま worktree を消すと孤立 volume が増殖する。
 
 ```bash
+# ホスト側ターミナルで、リポジトリルートから実行
 # split worktree を畳むときの順序
 docker compose -f .devcontainer/docker-compose.yml down
 docker volume rm pgdata-feat-auth
@@ -135,10 +138,10 @@ Playwright を AI ワークフローで動かすときは、`.devcontainer/.env`
 | 症状 | 対処 |
 | --- | --- |
 | ポートが衝突する | `.devcontainer/.env` の `APP_PORT` / `DB_PORT` をオフセットする |
-| DB に接続できない | `docker compose ps` で `db` の healthcheck 状態を確認 |
+| DB に接続できない | `docker compose -f .devcontainer/docker-compose.yml ps` で `db` の healthcheck 状態を確認 |
 | 認証が切れた | `claude logout && claude login` で `claude-auth` volume を更新 |
 | DB を初期化したい | `docker volume rm <DB_VOLUME>` してから DevContainer を再起動 |
-| イメージを作り直したい | `docker compose -f .devcontainer/docker-compose.yml down && docker compose -f .devcontainer/docker-compose.yml up --build` |
+| コンテナを作り直したい | VS Code コマンドパレットから「Dev Containers: Rebuild Container」を実行 |
 | worktree が増えてリソース不足 | 使わない DevContainer は `docker compose stop` で休眠（削除はしない） |
 
 > ⚠️ **`docker compose down -v` の注意**: `-v` オプションは compose ファイルで宣言した named volume をすべて削除する。`claude-auth` も対象に含まれるため、誤って実行すると認証情報が消えて全 DevContainer で再ログインが必要になる。`-v` を付けるのは DB を初期化したい時だけにし、`claude-auth` を残したい場合は `docker volume rm pgdata-<name>` で個別に削除する。
