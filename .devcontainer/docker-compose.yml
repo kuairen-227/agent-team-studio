@@ -37,4 +37,5 @@ volumes:
   claude-auth:
     name: claude-auth
   pgdata:
+    # compose 内の論理名は pgdata 固定だが、実 volume 名は DB_VOLUME で動的に切替（worktree 単位の DB 隔離用）
     name: ${DB_VOLUME:-pgdata-main}

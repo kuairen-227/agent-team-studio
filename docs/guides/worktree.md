@@ -17,7 +17,7 @@ DevContainer × Worktree の利用パターンは 3 種類。
 ## 判断フロー
 
 ```text
-1. 今の作業を止めずに別タスクを並行したいか？
+1. 並行作業をしたい、または使い捨ての作業空間が欲しいか？
    YES → 2 へ
    NO  → solo
 
@@ -211,7 +211,7 @@ isolation: worktree
 
 - **認証は共有**: すべての DevContainer で `claude-auth` named volume をマウント（再ログイン不要）
 - **nested の DB 安全策**: カテゴリ C の DB 改修で nested を選ぶときは前述の前提（`search_path` 分離 or `CREATE DATABASE wt_<name>`）を必ず適用
-- **split のリソース上限**: 同時 2 並行までを目安にする（`docker compose stop` で休眠も活用）
+- **split のリソース上限**: split worktree は同時 2 つまでを目安にする（main と合わせて最大 3 コンテナ。`docker compose stop` で休眠も活用）
 - **Playwright の `PORT` / `APP_URL`**: `.devcontainer/.env` で worktree ごとに切替（[devcontainer.md](./devcontainer.md) 参照）
 
 ## 注意事項

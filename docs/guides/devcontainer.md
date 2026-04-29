@@ -92,10 +92,13 @@ DB_VOLUME=pgdata-feat-auth
 DB_PORT=5442
 ```
 
-worktree を破棄するときに DB のデータも消したい場合：
+worktree のライフサイクル: `git worktree remove` する **前に** `docker volume rm <DB_VOLUME>` を実行して volume を削除する。残したまま worktree を消すと孤立 volume が増殖する。
 
 ```bash
+# split worktree を畳むときの順序
+docker compose -f .devcontainer/docker-compose.yml down
 docker volume rm pgdata-feat-auth
+git worktree remove ../agent-team-studio--feat-auth
 ```
 
 ## ポート割当
@@ -137,3 +140,5 @@ Playwright を AI ワークフローで動かすときは、`.devcontainer/.env`
 | DB を初期化したい | `docker volume rm <DB_VOLUME>` してから DevContainer を再起動 |
 | イメージを作り直したい | `docker compose -f .devcontainer/docker-compose.yml down && docker compose -f .devcontainer/docker-compose.yml up --build` |
 | worktree が増えてリソース不足 | 使わない DevContainer は `docker compose stop` で休眠（削除はしない） |
+
+> ⚠️ **`docker compose down -v` の注意**: `-v` オプションは compose ファイルで宣言した named volume をすべて削除する。`claude-auth` も対象に含まれるため、誤って実行すると認証情報が消えて全 DevContainer で再ログインが必要になる。`-v` を付けるのは DB を初期化したい時だけにし、`claude-auth` を残したい場合は `docker volume rm pgdata-<name>` で個別に削除する。
