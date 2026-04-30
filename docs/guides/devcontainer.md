@@ -50,11 +50,22 @@ VS Code でリポジトリを開き、コマンドパレットから「Dev Conta
 claude login
 ```
 
-認証情報は `claude-auth` volume に書き込まれ、以後すべての DevContainer（worktree 含む）で共有される。
+認証情報は `claude-auth` volume に書き込まれ、以後同じ DevContainer の再起動では再ログイン不要。worktree との共有範囲は次節を参照。
 
 ## 認証情報の共有
 
-Claude Code の認証は `claude-auth` という named volume にマウントされた `/home/node/.claude` で永続化される。OS 非依存で、worktree ごとに DevContainer を起動し直しても再ログインは不要。
+Claude Code の認証は `claude-auth` という named volume にマウントされた `/home/node/.claude` で永続化される。OS 非依存。
+
+共有範囲：
+
+| 操作 | 再ログインの要否 |
+| --- | --- |
+| 同じ DevContainer の再起動・Stop/Start | 不要 |
+| nested モード（`claude -w`、コンテナ内 worktree） | 不要 |
+| **split モード（worktree ごとに新規 DevContainer）** | **必要（コンテナ作成時に 1 回）** |
+| `Rebuild Container` した場合 | 必要 |
+
+split モードと Rebuild で再ログインが必要になる理由は、Claude Code が **ログイン状態の一部を `~/.claude.json`（ホーム直下のファイル）に保存している** ため。このファイルは `/home/node/.claude/` ディレクトリの **外** にあり、named volume の共有対象外。本ファイルをコンテナ間で共有する案（symlink 等）は Claude Code の書き込み挙動により壊れるリスクがあり、現段階では運用で許容する判断（詳細は [ADR-0016](../adr/0016-devcontainer-integration.md) Consequences 参照）。
 
 トークンが期限切れになった場合：
 
@@ -62,7 +73,7 @@ Claude Code の認証は `claude-auth` という named volume にマウントさ
 # どれか1つの DevContainer で
 claude logout
 claude login
-# → claude-auth volume が更新され、全コンテナに反映
+# → claude-auth volume が更新され、認証トークンは全コンテナに反映
 ```
 
 認証を完全リセットしたい場合：
