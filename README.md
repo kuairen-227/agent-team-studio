@@ -16,6 +16,18 @@ AI駆動開発の実践プロジェクト。企画から運用保守まで一気
 - **チーム**: PM 1人 + エンジニア 1人（エンジニアが AI と協働して開発）
 - **制約**: 標準的な社内制約（クラウド承認制、セキュリティレビューあり、ただし柔軟性あり）
 
+## セットアップ
+
+DevContainer（VS Code Dev Containers）での開発を標準とします。詳細は [docs/guides/devcontainer.md](./docs/guides/devcontainer.md) を参照。
+
+```bash
+# 環境変数テンプレートをコピー
+cp .env.example .env
+cp .devcontainer/.env.example .devcontainer/.env
+```
+
+VS Code でリポジトリを開き「Dev Containers: Reopen in Container」を実行すると、`app` と `db`（PostgreSQL 18）が起動します。DB 接続情報の詳細は [docs/guides/env.md](./docs/guides/env.md#postgresql-接続) を参照。
+
 ## ドキュメント
 
 詳細は [docs/README.md](./docs/README.md) を参照してください。
