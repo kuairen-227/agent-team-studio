@@ -52,23 +52,4 @@ postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@<host>:<port>/<POSTGRES_DB>
 
 `.env.example` には DevContainer 内向けの既定値が入っている。ホストから接続する場合はコメント側の値に置き換える。`.devcontainer/.env` の `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` を変更した場合は `.env` の `DATABASE_URL` も合わせて更新する。
 
-### 起動・停止・リセット
-
-VS Code「Dev Containers: Reopen in Container」で開いている場合は VS Code 側のライフサイクルに従う。CLI から操作する場合は以下：
-
-```bash
-# 起動（db サービスのみ）
-docker compose -f .devcontainer/docker-compose.yml up -d db
-
-# 状態確認（healthcheck の状況）
-docker compose -f .devcontainer/docker-compose.yml ps
-
-# 停止（コンテナのみ削除、データは残る）
-docker compose -f .devcontainer/docker-compose.yml down
-
-# リセット（named volume を削除してデータを破棄）
-docker compose -f .devcontainer/docker-compose.yml down
-docker volume rm agent-team-studio-pgdata-main
-```
-
-worktree 単位で DB を分離する場合の `DB_VOLUME` 切替や、DevContainer 全体の運用詳細は [devcontainer.md](./devcontainer.md) を参照。
+DB の起動・停止・リセット手順、worktree 単位の `DB_VOLUME` 切替などの運用は [devcontainer.md](./devcontainer.md) を参照。
