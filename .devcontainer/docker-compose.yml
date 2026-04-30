@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    command: sleep infinity
+    init: true
+    volumes:
+      - ..:/workspaces/agent-team-studio:cached
+      - claude-auth:/home/node/.claude
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-agent_team_studio}
+      WORKTREE_ID: ${WORKTREE_ID:-main}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-agent_team_studio}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agent_team_studio}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  claude-auth:
+    name: claude-auth
+  pgdata:
+    # compose 内の論理名は pgdata 固定だが、実 volume 名は DB_VOLUME で動的に切替（worktree 単位の DB 隔離用）
+    name: ${DB_VOLUME:-pgdata-main}
