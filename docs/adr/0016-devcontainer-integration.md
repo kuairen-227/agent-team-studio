@@ -28,7 +28,7 @@ ADR-0008 で技術スタックを確定した時点で、PostgreSQL を DevConta
 | A | features 単独（現行） | 却下 — 設定は最小だが、PostgreSQL 等の複数サービス統合が不可能 |
 | B | Dockerfile | 却下 — ビルド完全制御は得られるが、外部サービス統合は別途必要で利点が少ない |
 | C | docker-compose 単独 | 却下 — 複数サービス統合は容易だが、CLI ツール（gh, claude-code, bun）導入が手間 |
-| D | docker-compose + features ハイブリッド | **採用** — app コンテナはベースイメージ + features で軽量に組み、db や将来追加サービスは compose で統合する。両者の利点を活かせる |
+| D | docker-compose + features ハイブリッド | **採用** — app コンテナはベースイメージ + features で軽量に組み、db や将来追加サービスは compose で統合する。両者の利点を活かせる。なお、後述する named volume の所有権継承の都合で薄い `Dockerfile` を併用する（B 案を全面採用するわけではなく、ベースイメージへの最小限の追加に限定） |
 
 ### Claude Code の認証共有方式
 
@@ -60,14 +60,17 @@ ADR-0008 で技術スタックを確定した時点で、PostgreSQL を DevConta
 
 - `.devcontainer/devcontainer.json` で `dockerComposeFile` を参照
 - `.devcontainer/docker-compose.yml` に以下のサービスを定義
-  - `app`: `mcr.microsoft.com/devcontainers/javascript-node:24` をベースに features で `gh-cli` / `claude-code` / `bun` を追加
+  - `app`: `.devcontainer/Dockerfile` でビルド（ベース `mcr.microsoft.com/devcontainers/javascript-node:24` + `/home/node/.claude` の事前作成）。features で `gh-cli` / `claude-code` / `bun` を追加
   - `db`: `postgres:18`（2025 年秋 GA 版を採用）、healthcheck 付き
 - `.devcontainer/.env`（gitignore 対象）で worktree 単位の値を上書き
+
+Dockerfile を導入する理由は次節「認証共有」を参照（named volume の所有権継承のため image 内に node 所有のディレクトリを事前作成する必要がある）。
 
 ### 認証共有（B 案 = named volume）
 
 - compose で `claude-auth` という named volume を定義し、`/home/node/.claude` にマウント
 - すべての DevContainer（main / 各 worktree）が同じ volume を参照することで、初回 OAuth ログイン後は再ログイン不要
+- Docker は named volume 初回マウント時に **image 内マウント先ディレクトリの所有権を volume にコピー** するため、image 段階で `mkdir -p /home/node/.claude && chown node:node /home/node/.claude` を実行する（実装は `.devcontainer/Dockerfile`）。これがないと volume が root:root で作られ、`node` ユーザーから書き込めず `claude login` が silent fail する
 
 ### DB の隔離モード切替（B 案）
 

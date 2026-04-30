@@ -1,6 +1,6 @@
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/javascript-node:24
+    build: .
     command: sleep infinity
     init: true
     volumes:
