@@ -1,7 +1,9 @@
 {
   "version": "0.2",
   "ignorePaths": [
-    ".devcontainer/devcontainer.json"
+    ".devcontainer/devcontainer.json",
+    ".devcontainer/devcontainer-lock.json",
+    "bun.lock"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -17,7 +19,9 @@
     "Nygard",
     "oneline",
     "Turborepo",
-    "Worktree"
+    "Worktree",
+    "worktreeinclude",
+    "worktrees"
   ],
   "ignoreWords": [],
   "import": []
