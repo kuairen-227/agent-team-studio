@@ -48,3 +48,5 @@
 3. データ型を定義しているか（JSON Schema, enum, 型制約）→ 常に design/（実装後はコードが SSoT）
 
 基準 1 と 2 が両方 Yes の場合は product/ を優先する（ビジネス価値を担う側に配置し、技術詳細は design/ への参照で補う）。
+
+`principles/` はこのテストの対象外。AI エージェントと開発者の判断軸を扱うため、product / design いずれの読み手テストにも当てはまらない第三のカテゴリとして補完する位置付けとする（[ADR-0017](./adr/0017-design-development-principles.md)）。
