@@ -1,4 +1,4 @@
-# 0017. docker-compose / Dockerfile をリポジトリルートに配置し、env を部品方式に統合する
+# 0018. docker-compose / Dockerfile をリポジトリルートに配置し、env を部品方式に統合する
 
 ## Status
 

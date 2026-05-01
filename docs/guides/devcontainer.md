@@ -2,7 +2,7 @@
 
 AI 駆動開発（Claude Code）と PostgreSQL を統合した DevContainer の利用手順。
 
-意思決定の背景は [ADR-0016](../adr/0016-devcontainer-integration.md) と [ADR-0017](../adr/0017-relocate-compose-and-consolidate-env.md) を参照。worktree との使い分けは [worktree.md](./worktree.md) を参照。
+意思決定の背景は [ADR-0016](../adr/0016-devcontainer-integration.md) と [ADR-0018](../adr/0018-relocate-compose-and-consolidate-env.md) を参照。worktree との使い分けは [worktree.md](./worktree.md) を参照。
 
 ## 構成
 

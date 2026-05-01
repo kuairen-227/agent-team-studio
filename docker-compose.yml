@@ -1,6 +1,6 @@
 # 必須 env は `${VAR:?env_required}` 構文で参照する。
 # 未定義 / 空の場合は compose 起動時に即エラー停止（fail fast）。
-# .env が無い場合は `cp .env.example .env` を実行する（[ADR-0017](docs/adr/0017-relocate-compose-and-consolidate-env.md)）。
+# .env が無い場合は `cp .env.example .env` を実行する（[ADR-0018](docs/adr/0018-relocate-compose-and-consolidate-env.md)）。
 
 services:
   app:

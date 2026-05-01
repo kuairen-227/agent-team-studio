@@ -10,6 +10,7 @@
 | [design](./design/README.md) | 設計ドキュメント |
 | [adr](./adr/README.md) | Architecture Decision Records（意思決定記録） |
 | [guides](./guides/README.md) | 運用ガイド（ブランチ戦略、GitHub 運用等） |
+| [principles](./principles/README.md) | 設計・開発原則（領域横断的な判断軸の SSoT） |
 
 ## 位置付け
 
@@ -17,6 +18,7 @@
 - **design/**: それをどう実現するか（How）
 - **adr/**: なぜその判断に至ったか（Decision / Rationale）
 - **guides/**: チームとしてどう運用するか（Operations）
+- **principles/**: どの軸で判断するか（Cross-cutting Principles）
 
 ## 配置ポリシー
 
@@ -46,3 +48,5 @@
 3. データ型を定義しているか（JSON Schema, enum, 型制約）→ 常に design/（実装後はコードが SSoT）
 
 基準 1 と 2 が両方 Yes の場合は product/ を優先する（ビジネス価値を担う側に配置し、技術詳細は design/ への参照で補う）。
+
+`principles/` はこのテストの対象外。AI エージェントと開発者の判断軸を扱うため、product / design いずれの読み手テストにも当てはまらない第三のカテゴリとして補完する位置付けとする（[ADR-0017](./adr/0017-design-development-principles.md)）。

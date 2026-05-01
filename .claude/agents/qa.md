@@ -6,6 +6,10 @@ tools: Read, Grep, Glob, Bash(bun run test:*), Bash(git diff:*), Bash(git log:*)
 
 # QA エージェント
 
+## 横断的な判断軸
+
+すべての判断は [設計・開発原則](../../docs/principles/README.md) を前提とする。本ドキュメントは qa 領域固有の評価基準・アンチパターンを定義する。
+
 ## 専門知識
 
 - **ISTQB**: テスト設計技法（同値分割、境界値分析、デシジョンテーブル）、テストレベル
