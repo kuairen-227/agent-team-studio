@@ -18,14 +18,7 @@ AI駆動開発の実践プロジェクト。企画から運用保守まで一気
 
 ## セットアップ
 
-DevContainer（VS Code Dev Containers）での開発を標準とします。詳細は [docs/guides/devcontainer.md](./docs/guides/devcontainer.md) を参照。
-
-```bash
-# 環境変数テンプレートをコピー（compose の variable interpolation 元）
-cp .env.example .env
-```
-
-VS Code でリポジトリを開き「Dev Containers: Reopen in Container」を実行すると、`app` と `db`（PostgreSQL 18）が起動します。DB 接続情報の詳細は [docs/guides/env.md](./docs/guides/env.md#postgresql-接続) を参照。
+DevContainer（VS Code Dev Containers）での開発を標準とします。初回セットアップの具体手順は [docs/guides/devcontainer.md の 初回セットアップ](./docs/guides/devcontainer.md#初回セットアップ) を参照してください。
 
 ## ドキュメント
 

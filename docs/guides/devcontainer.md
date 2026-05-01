@@ -82,6 +82,44 @@ docker volume rm agent-team-studio-claude-home
 # 次回 claude login から再開
 ```
 
+## DB 接続の構造
+
+### 部品方式
+
+`.env` には DB の部品（接続情報の素材）だけを置き、`DATABASE_URL` は `docker-compose.yml` の `environment:` で組み立てて app コンテナに注入する。
+
+```env
+# .env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=agent_team_studio
+DB_PORT=5432
+```
+
+```yaml
+# docker-compose.yml（抜粋）
+services:
+  app:
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+  db:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+```
+
+これにより app と db が常に同じ部品から派生するため不整合が起きない。アプリ側のルール（`process.env.DATABASE_URL` のみ参照する等）は [env.md のルール](./env.md#ルール) を参照。
+
+### 接続元別の host / port
+
+| 接続元 | host | port |
+| ------ | ---- | ---- |
+| container 内（既定） | `db`（compose のサービス名） | `5432`（コンテナ内 listen ポート、固定） |
+| ホストから直接（psql 等） | `localhost` | `.env` の `DB_PORT`（既定 `5432`） |
+
+ホストから直接接続する場合は、`.env` の部品を組み立てて `psql` の引数に渡すか、必要に応じて手動で `DATABASE_URL` 環境変数を export する。
+
 ## DB のモード切替
 
 ルート `.env` の `DB_VOLUME` で PostgreSQL の named volume を選択する。
