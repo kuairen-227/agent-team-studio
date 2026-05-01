@@ -21,30 +21,42 @@ import type {
 type AgentStatusBase = {
   type: "agent:status";
   agentId: string;
-  /** ISO 8601。発火時刻（agent_started / agent_completed / agent_failed）を集約。 */
+};
+
+/**
+ * timestamp 付きバリアント用の追加プロパティ。
+ * websocket-design.md §AgentEvent → WsMessage 写像 に従い
+ * agent_started / agent_completed / agent_failed の発火時刻を集約する。
+ */
+type WithEventTimestamp = {
+  /** ISO 8601。 */
   timestamp: string;
 };
 
 /**
  * 初期スナップショット時のみ送信される（websocket-design.md §接続ライフサイクル）。
- * 対応する AgentEvent は存在しない。
+ * 対応する AgentEvent は存在せず、pending 時点では started_at が DB に未 INSERT のため
+ * timestamp は持たない。
  */
 export type AgentStatusPendingMessage = AgentStatusBase & {
   status: "pending";
 };
 
-export type AgentStatusRunningMessage = AgentStatusBase & {
-  status: "running";
-};
+export type AgentStatusRunningMessage = AgentStatusBase &
+  WithEventTimestamp & {
+    status: "running";
+  };
 
-export type AgentStatusCompletedMessage = AgentStatusBase & {
-  status: "completed";
-};
+export type AgentStatusCompletedMessage = AgentStatusBase &
+  WithEventTimestamp & {
+    status: "completed";
+  };
 
-export type AgentStatusFailedMessage = AgentStatusBase & {
-  status: "failed";
-  reason: AgentFailReason;
-};
+export type AgentStatusFailedMessage = AgentStatusBase &
+  WithEventTimestamp & {
+    status: "failed";
+    reason: AgentFailReason;
+  };
 
 export type AgentStatusMessage =
   | AgentStatusPendingMessage
