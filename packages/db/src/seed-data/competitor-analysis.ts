@@ -164,6 +164,8 @@ export const competitorAnalysisDefinition: TemplateDefinition = {
     },
   ],
   llm: {
+    // model / temperature / max_tokens の SSoT は docs/design/llm-integration.md。
+    // ここはシードデータへの転記値。SSoT を更新したら本ファイルも合わせて更新する。
     model: "claude-sonnet-4-6",
     temperature_by_role: { investigation: 0.3, integration: 0.2 },
     max_tokens_by_role: { investigation: 2048, integration: 4096 },
