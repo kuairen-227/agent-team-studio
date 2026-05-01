@@ -9,7 +9,10 @@
  * - template への FK は ON DELETE RESTRICT（テンプレート消失で過去実行が宙吊りにならないよう保護）
  */
 
-import type { CompetitorAnalysisParameters } from "@agent-team-studio/shared";
+import {
+  type CompetitorAnalysisParameters,
+  EXECUTION_STATUSES,
+} from "@agent-team-studio/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -19,17 +22,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sqlLiteralList } from "./_helpers.ts";
 import { templates } from "./templates.ts";
-
-// `@agent-team-studio/shared` の `ExecutionStatus` 型 と
-// `agent-executions.ts` の `AGENT_STATUSES` と値が重複している。
-// 一元化（shared に as const 配列を置いて両者から import）は別 Issue で扱う。
-export const EXECUTION_STATUSES = [
-  "pending",
-  "running",
-  "completed",
-  "failed",
-] as const;
 
 export const executions = pgTable(
   "executions",
@@ -52,7 +46,7 @@ export const executions = pgTable(
   (table) => [
     check(
       "executions_status_check",
-      sql`${table.status} IN ('pending', 'running', 'completed', 'failed')`,
+      sql`${table.status} IN (${sqlLiteralList(EXECUTION_STATUSES)})`,
     ),
     // 状態遷移の整合性を DB レベルで防衛する。
     // started_at なしで completed_at が立つ／completed_at が started_at より過去、

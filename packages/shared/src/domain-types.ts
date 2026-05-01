@@ -16,12 +16,36 @@ export type ResultId = string;
 
 // ---------- 共通 enum ----------
 
-/** AgentExecution / Execution の状態（data-model.md §5）。 */
-export type ExecutionStatus = "pending" | "running" | "completed" | "failed";
-export type AgentStatus = "pending" | "running" | "completed" | "failed";
+// SSoT として `as const` 配列を置き、TS union 型と DB schema 用の
+// 値配列の双方をここから派生させる（packages/db の `text("col", { enum })` /
+// CHECK 制約 SQL も import して再利用する）。
+//
+// `EXECUTION_STATUSES` と `AGENT_STATUSES` は MVP 時点では値が完全一致するが、
+// ADR-0014 §中立で Execution 側のみ `partial_failure` 追加が示唆されているため
+// 分離維持する（Issue #97 の方針）。
 
-/** エージェントの役割（data-model.md §4.3）。 */
-export type AgentRole = "investigation" | "integration";
+/** Execution.status の取りうる値（data-model.md §5）。 */
+export const EXECUTION_STATUSES = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+] as const;
+
+/** AgentExecution.status の取りうる値（data-model.md §5）。 */
+export const AGENT_STATUSES = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+] as const;
+
+/** AgentExecution.role の取りうる値（data-model.md §4.3）。 */
+export const AGENT_ROLES = ["investigation", "integration"] as const;
+
+export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
+export type AgentStatus = (typeof AGENT_STATUSES)[number];
+export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /** 個別エージェントの失敗理由（agent-execution.md §5）。 */
 export type AgentFailReason =
