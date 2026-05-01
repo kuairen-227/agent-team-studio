@@ -1,7 +1,3 @@
-# build context をリポジトリルートに置いたため、Docker daemon に送信される
-# ファイルを最小化する。dev 環境では bind mount でソースを共有するのでイメージに
-# 焼き込む必要は無い。
-
 # VCS
 .git
 .gitattributes
@@ -23,7 +19,7 @@ dist
 **/.env.*
 !/.env.example
 
-# Claude Code / 個人作業領域（開発用途のみ、image には不要）
+# Claude Code / 個人作業領域（image には不要）
 .claude
 _dev
 
