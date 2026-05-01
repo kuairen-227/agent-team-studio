@@ -21,6 +21,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { templates } from "./templates.ts";
 
+// `@agent-team-studio/shared` の `ExecutionStatus` 型 と
+// `agent-executions.ts` の `AGENT_STATUSES` と値が重複している。
+// 一元化（shared に as const 配列を置いて両者から import）は別 Issue で扱う。
 export const EXECUTION_STATUSES = [
   "pending",
   "running",

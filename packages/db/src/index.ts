@@ -5,5 +5,5 @@
  * - client: DB 接続（drizzle インスタンス）
  */
 
-export { createDbClient, type DbClient } from "./client.ts";
+export { createDbClient, type DbClient, type DrizzleDb } from "./client.ts";
 export * as schema from "./schema/index.ts";

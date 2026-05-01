@@ -29,8 +29,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { executions } from "./executions.ts";
 
+// `@agent-team-studio/shared` の `AgentRole` 型と値が重複している。
+// 一元化は別 Issue で扱う。
 export const AGENT_ROLES = ["investigation", "integration"] as const;
 
+// `@agent-team-studio/shared` の `AgentStatus` 型と
+// `executions.ts` の `EXECUTION_STATUSES` と値が重複している。
+// 一元化は別 Issue で扱う。
 export const AGENT_STATUSES = [
   "pending",
   "running",

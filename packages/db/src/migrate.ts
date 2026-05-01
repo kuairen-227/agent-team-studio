@@ -20,6 +20,7 @@ if (import.meta.main) {
     throw new Error("DATABASE_URL is not set");
   }
 
+  // migrate には schema バインドが不要なため createDbClient を経由せず Pool を直接使う
   const pool = new Pool({ connectionString: databaseUrl });
   try {
     const db = drizzle(pool);

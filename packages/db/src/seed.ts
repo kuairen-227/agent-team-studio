@@ -9,7 +9,9 @@
  * 冪等性: name を一意キーとして既存チェック。再実行しても重複しない。
  *  - DB レベルの UNIQUE 制約は付けない（MVP は seed 1 件のみで運用上必要なし）
  *  - SELECT → INSERT 間に TOCTOU の隙はあるが、seed は単一プロセス前提のため実害なし。
- *    将来 CI 並列化等で並行実行が発生する前に `ON CONFLICT DO NOTHING` 方式へ切替えること
+ *    将来 CI 並列化等で並行実行が発生する前に `ON CONFLICT DO NOTHING` 方式へ切替えること。
+ *    切替えは構文上 `templates.name` に UNIQUE 制約が必須となるため、
+ *    schema 変更 + migration 追加とセットで行う
  */
 
 import { eq } from "drizzle-orm";
