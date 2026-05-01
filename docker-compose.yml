@@ -4,7 +4,7 @@ services:
     command: sleep infinity
     init: true
     volumes:
-      - ..:/workspaces/agent-team-studio:cached
+      - .:/workspaces/agent-team-studio:cached
       - claude-home:/home/node/.claude
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-agent_team_studio}

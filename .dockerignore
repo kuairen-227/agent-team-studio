@@ -1,0 +1,43 @@
+# build context をリポジトリルートに置いたため、Docker daemon に送信される
+# ファイルを最小化する。dev 環境では bind mount でソースを共有するのでイメージに
+# 焼き込む必要は無い。
+
+# VCS
+.git
+.gitattributes
+.gitignore
+
+# Dependencies / build artifacts（コンテナ起動後に bun install で再生成）
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+**/.turbo
+
+# Local env（誤って image に焼かないよう除外）
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# Claude Code / 個人作業領域
+.claude/settings.local.json
+.claude/worktrees
+_dev
+
+# Editor / OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# DevContainer 設定（コンテナ内に焼き込む必要なし）
+.devcontainer
+
+# Docs / CI（ランタイムには不要）
+docs
+.github
