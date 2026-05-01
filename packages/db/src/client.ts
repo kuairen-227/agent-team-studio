@@ -4,15 +4,28 @@
  * - drizzle-orm/node-postgres + pg を使う（drizzle driver は pg で確定）
  * - DATABASE_URL は呼び出し側（apps/api / scripts）で env から取り出して渡す
  *   → packages/db は env を直接読まない（テスト容易性・依存方向の単純化）
+ *
+ * close ハンドル付きで返す。テストや短命スクリプトで pool.end() を確実に呼べないと
+ * プロセスがハングするため、戻り値経由でクローズ手段を露出する。
  */
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema/index.ts";
 
-export type DbClient = ReturnType<typeof createDbClient>;
+export type DbClient = {
+  db: ReturnType<typeof buildDb>;
+  close: () => Promise<void>;
+};
 
-export function createDbClient(databaseUrl: string) {
-  const pool = new Pool({ connectionString: databaseUrl });
+function buildDb(pool: Pool) {
   return drizzle(pool, { schema });
+}
+
+export function createDbClient(databaseUrl: string): DbClient {
+  const pool = new Pool({ connectionString: databaseUrl });
+  return {
+    db: buildDb(pool),
+    close: () => pool.end(),
+  };
 }
