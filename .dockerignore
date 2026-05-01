@@ -15,10 +15,10 @@ dist
 .turbo
 **/.turbo
 
-# Local env（誤って image に焼かないよう除外）
+# Local env（誤って image に焼かないよう除外。ルートの .env.example のみ追跡対象として復元）
 .env
 .env.*
-!.env.example
+!/.env.example
 **/.env
 **/.env.*
 
