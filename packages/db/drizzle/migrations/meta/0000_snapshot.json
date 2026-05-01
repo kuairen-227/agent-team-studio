@@ -1,5 +1,5 @@
 {
-  "id": "6f9a8491-02f0-432b-a79c-7181064b1428",
+  "id": "07ade821-1233-4c8c-980c-20cf32d24fd2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -50,6 +50,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         },
         "started_at": {
           "name": "started_at",
@@ -113,6 +120,14 @@
         "agent_executions_status_check": {
           "name": "agent_executions_status_check",
           "value": "\"agent_executions\".\"status\" IN ('pending', 'running', 'completed', 'failed')"
+        },
+        "agent_executions_completed_requires_started_check": {
+          "name": "agent_executions_completed_requires_started_check",
+          "value": "\"agent_executions\".\"completed_at\" IS NULL OR \"agent_executions\".\"started_at\" IS NOT NULL"
+        },
+        "agent_executions_completed_after_started_check": {
+          "name": "agent_executions_completed_after_started_check",
+          "value": "\"agent_executions\".\"started_at\" IS NULL OR \"agent_executions\".\"completed_at\" IS NULL OR \"agent_executions\".\"completed_at\" >= \"agent_executions\".\"started_at\""
         }
       },
       "isRLSEnabled": false
@@ -195,6 +210,14 @@
         "executions_status_check": {
           "name": "executions_status_check",
           "value": "\"executions\".\"status\" IN ('pending', 'running', 'completed', 'failed')"
+        },
+        "executions_completed_requires_started_check": {
+          "name": "executions_completed_requires_started_check",
+          "value": "\"executions\".\"completed_at\" IS NULL OR \"executions\".\"started_at\" IS NOT NULL"
+        },
+        "executions_completed_after_started_check": {
+          "name": "executions_completed_after_started_check",
+          "value": "\"executions\".\"started_at\" IS NULL OR \"executions\".\"completed_at\" IS NULL OR \"executions\".\"completed_at\" >= \"executions\".\"started_at\""
         }
       },
       "isRLSEnabled": false

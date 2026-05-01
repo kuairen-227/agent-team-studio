@@ -6,10 +6,13 @@ CREATE TABLE "agent_executions" (
 	"status" text NOT NULL,
 	"output" jsonb,
 	"error_message" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"started_at" timestamp with time zone,
 	"completed_at" timestamp with time zone,
 	CONSTRAINT "agent_executions_role_check" CHECK ("agent_executions"."role" IN ('investigation', 'integration')),
-	CONSTRAINT "agent_executions_status_check" CHECK ("agent_executions"."status" IN ('pending', 'running', 'completed', 'failed'))
+	CONSTRAINT "agent_executions_status_check" CHECK ("agent_executions"."status" IN ('pending', 'running', 'completed', 'failed')),
+	CONSTRAINT "agent_executions_completed_requires_started_check" CHECK ("agent_executions"."completed_at" IS NULL OR "agent_executions"."started_at" IS NOT NULL),
+	CONSTRAINT "agent_executions_completed_after_started_check" CHECK ("agent_executions"."started_at" IS NULL OR "agent_executions"."completed_at" IS NULL OR "agent_executions"."completed_at" >= "agent_executions"."started_at")
 );
 --> statement-breakpoint
 CREATE TABLE "executions" (
@@ -21,7 +24,9 @@ CREATE TABLE "executions" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"started_at" timestamp with time zone,
 	"completed_at" timestamp with time zone,
-	CONSTRAINT "executions_status_check" CHECK ("executions"."status" IN ('pending', 'running', 'completed', 'failed'))
+	CONSTRAINT "executions_status_check" CHECK ("executions"."status" IN ('pending', 'running', 'completed', 'failed')),
+	CONSTRAINT "executions_completed_requires_started_check" CHECK ("executions"."completed_at" IS NULL OR "executions"."started_at" IS NOT NULL),
+	CONSTRAINT "executions_completed_after_started_check" CHECK ("executions"."started_at" IS NULL OR "executions"."completed_at" IS NULL OR "executions"."completed_at" >= "executions"."started_at")
 );
 --> statement-breakpoint
 CREATE TABLE "results" (

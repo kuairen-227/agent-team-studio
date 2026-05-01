@@ -9,6 +9,8 @@
  *   DB レベルでの分岐検証は行わず、TS 側型で担保）
  * - UNIQUE (execution_id, agent_id): data-model.md §3 不変条件「同一 Execution 内で agent_id は一意」を DB で施行
  * - 親 Execution への FK は ON DELETE CASCADE（Execution 削除時に追従）
+ * - createdAt: 親 Execution と同タイミングで一括生成されるが、pending 状態の滞留時間を
+ *   追跡可能にするため独立した列として保持する（他テーブルとの一貫性も確保）
  */
 
 import type {
@@ -50,6 +52,9 @@ export const agentExecutions = pgTable(
       InvestigationAgentOutput | IntegrationAgentOutput
     >(),
     errorMessage: text("error_message"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     startedAt: timestamp("started_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
@@ -65,6 +70,15 @@ export const agentExecutions = pgTable(
     check(
       "agent_executions_status_check",
       sql`${table.status} IN ('pending', 'running', 'completed', 'failed')`,
+    ),
+    // 状態遷移の整合性を DB レベルで防衛する（executions と同じポリシー）。
+    check(
+      "agent_executions_completed_requires_started_check",
+      sql`${table.completedAt} IS NULL OR ${table.startedAt} IS NOT NULL`,
+    ),
+    check(
+      "agent_executions_completed_after_started_check",
+      sql`${table.startedAt} IS NULL OR ${table.completedAt} IS NULL OR ${table.completedAt} >= ${table.startedAt}`,
     ),
   ],
 );

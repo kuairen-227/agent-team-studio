@@ -51,6 +51,17 @@ export const executions = pgTable(
       "executions_status_check",
       sql`${table.status} IN ('pending', 'running', 'completed', 'failed')`,
     ),
+    // 状態遷移の整合性を DB レベルで防衛する。
+    // started_at なしで completed_at が立つ／completed_at が started_at より過去、
+    // のいずれも論理的にあり得ないため CHECK で弾く（直接 SQL 操作・バグ対策）。
+    check(
+      "executions_completed_requires_started_check",
+      sql`${table.completedAt} IS NULL OR ${table.startedAt} IS NOT NULL`,
+    ),
+    check(
+      "executions_completed_after_started_check",
+      sql`${table.startedAt} IS NULL OR ${table.completedAt} IS NULL OR ${table.completedAt} >= ${table.startedAt}`,
+    ),
   ],
 );
 
