@@ -96,6 +96,11 @@ export type Template = {
 export type Execution = {
   id: ExecutionId;
   template_id: TemplateId;
+  /**
+   * MVP はシードテンプレート（競合調査）1 件のみ（ADR-0005）のため、
+   * テンプレート固有型に直接依存させる。複数テンプレート対応時に
+   * generic 化または unknown + Zod バリデーションに切り替える。
+   */
   parameters: CompetitorAnalysisParameters;
   status: ExecutionStatus;
   error_message?: string;
