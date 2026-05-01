@@ -7,14 +7,18 @@
  *
  * close ハンドル付きで返す。テストや短命スクリプトで pool.end() を確実に呼べないと
  * プロセスがハングするため、戻り値経由でクローズ手段を露出する。
+ *
+ * `DrizzleDb` 型を export し、repo 層・seed 関数等で「db のみを受け取る」関数の引数型として使える。
  */
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema/index.ts";
 
+export type DrizzleDb = ReturnType<typeof buildDb>;
+
 export type DbClient = {
-  db: ReturnType<typeof buildDb>;
+  db: DrizzleDb;
   close: () => Promise<void>;
 };
 

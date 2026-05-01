@@ -6,23 +6,26 @@
  *
  * - 専用接続を使い、終了後に Pool を必ず閉じる（プロセスがハングしない）
  * - 適用済み migration は drizzle 内部の `__drizzle_migrations` テーブルで管理される
+ * - CLI 実行時のみ副作用を発生させるため `import.meta.main` ガードで保護する
+ *   （seed.ts と同じパターン。誤 import 時の意図しない migration 実行を防ぐ）
  */
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set");
-}
+if (import.meta.main) {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
-const pool = new Pool({ connectionString: databaseUrl });
-
-try {
-  const db = drizzle(pool);
-  await migrate(db, { migrationsFolder: "./drizzle/migrations" });
-  console.log("migrations applied");
-} finally {
-  await pool.end();
+  const pool = new Pool({ connectionString: databaseUrl });
+  try {
+    const db = drizzle(pool);
+    await migrate(db, { migrationsFolder: "./drizzle/migrations" });
+    console.log("migrations applied");
+  } finally {
+    await pool.end();
+  }
 }

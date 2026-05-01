@@ -13,16 +13,13 @@
  */
 
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { createDbClient, type DrizzleDb } from "./client.ts";
 import { templates } from "./schema/index.ts";
 import {
   COMPETITOR_ANALYSIS_TEMPLATE_NAME,
   competitorAnalysisDefinition,
   competitorAnalysisDescription,
 } from "./seed-data/competitor-analysis.ts";
-
-type DrizzleDb = ReturnType<typeof drizzle>;
 
 export async function seedTemplates(db: DrizzleDb): Promise<void> {
   const existing = await db
@@ -45,7 +42,7 @@ export async function seedTemplates(db: DrizzleDb): Promise<void> {
   console.log(`seed: inserted template "${COMPETITOR_ANALYSIS_TEMPLATE_NAME}"`);
 }
 
-// CLI として直接実行された場合のみ Pool を起こす。
+// CLI として直接実行された場合のみ DB クライアントを起こす。
 // テストや別スクリプトから `seedTemplates(db)` として呼ばれた場合は実行されない。
 if (import.meta.main) {
   const databaseUrl = process.env.DATABASE_URL;
@@ -53,10 +50,10 @@ if (import.meta.main) {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const client = createDbClient(databaseUrl);
   try {
-    await seedTemplates(drizzle(pool));
+    await seedTemplates(client.db);
   } finally {
-    await pool.end();
+    await client.close();
   }
 }
