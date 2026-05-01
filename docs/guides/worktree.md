@@ -178,7 +178,7 @@ cp .env.example .env
 # .env を編集（WORKTREE_ID / APP_PORT / DB_PORT / DB_VOLUME）
 code .
 # Reopen in Container → コンテナ内で bun install
-# 初回のみ claude login を再実行（main と認証共有されない理由は devcontainer.md「認証情報の共有」参照）
+# 初回のみ claude login を再実行（main と認証共有されない理由は devcontainer.md「Claude ホームの共有」参照）
 ```
 
 ## Subagent の Worktree 分離
