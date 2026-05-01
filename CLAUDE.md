@@ -25,8 +25,7 @@
 - 簡潔に書く。前置き・繰り返し・要約を省き、結論から述べる
 - AI特有の冗長な表現（過剰な丁寧語、不要な言い換え、水増し的な修飾）を避ける
 - ドキュメント・コミットメッセージ等、すべてのテキスト出力に適用する
-
-詳細: [principles §6](docs/principles/README.md)
+- 詳細: [principles §6](docs/principles/README.md)
 
 ## 設計・開発原則
 
