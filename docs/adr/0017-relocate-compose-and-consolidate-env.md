@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted
+accepted（部分的に supersedes [ADR-0016](./0016-devcontainer-integration.md)）
 
 - 作成日: 2026-05-01
 - 関連: ADR-0016（supersedes 部分）, Issue #77

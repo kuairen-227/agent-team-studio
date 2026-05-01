@@ -27,10 +27,13 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agent_team_studio}"]
+      # $$ で compose の interpolation を escape し、コンテナ内シェルで POSTGRES_USER / POSTGRES_DB を展開する。
+      # 値の解決元は db コンテナの environment（compose が同じ .env から注入したもの）。
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      start_period: 10s
+      retries: 5
 
 volumes:
   claude-home:
