@@ -36,5 +36,6 @@ volumes:
   claude-home:
     name: agent-team-studio-claude-home
   pgdata:
-    # compose 内の論理名は pgdata 固定だが、実 volume 名は DB_VOLUME で動的に切替（worktree 単位の DB 隔離用）
+    # サービス定義内の論理参照名は pgdata 固定だが、外部 volume 名（Docker が管理する実名）は
+    # DB_VOLUME で動的に切替する（worktree 単位の DB 隔離用）
     name: ${DB_VOLUME:-agent-team-studio-pgdata-main}
