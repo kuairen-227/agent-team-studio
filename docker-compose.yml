@@ -1,0 +1,48 @@
+# 必須 env は `${VAR:?env_required}` 構文で参照する。
+# 未定義 / 空の場合は compose 起動時に即エラー停止（fail fast）。
+# .env が無い場合は `cp .env.example .env` を実行する（[ADR-0018](docs/adr/0018-relocate-compose-and-consolidate-env.md)）。
+
+services:
+  app:
+    build: .
+    command: sleep infinity
+    init: true
+    volumes:
+      - .:/workspaces/agent-team-studio:cached
+      - claude-home:/home/node/.claude
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:?env_required}:${POSTGRES_PASSWORD:?env_required}@db:5432/${POSTGRES_DB:?env_required}
+      WORKTREE_ID: ${WORKTREE_ID:?env_required}
+    ports:
+      - "${APP_PORT:?env_required}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?env_required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?env_required}
+      POSTGRES_DB: ${POSTGRES_DB:?env_required}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    ports:
+      - "${DB_PORT:?env_required}:5432"
+    healthcheck:
+      # $$ で compose の interpolation を escape し、コンテナ内シェルで POSTGRES_USER / POSTGRES_DB を展開する。
+      # 値の解決元は db コンテナの environment（compose が同じ .env から注入したもの）。
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 5
+
+volumes:
+  claude-home:
+    name: agent-team-studio-claude-home
+  pgdata:
+    # サービス定義内の論理参照名は pgdata 固定だが、外部 volume 名（Docker が管理する実名）は
+    # DB_VOLUME で動的に切替する（worktree 単位の DB 隔離用）
+    name: ${DB_VOLUME:?env_required}

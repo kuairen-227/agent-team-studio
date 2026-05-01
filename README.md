@@ -16,6 +16,10 @@ AI駆動開発の実践プロジェクト。企画から運用保守まで一気
 - **チーム**: PM 1人 + エンジニア 1人（エンジニアが AI と協働して開発）
 - **制約**: 標準的な社内制約（クラウド承認制、セキュリティレビューあり、ただし柔軟性あり）
 
+## セットアップ
+
+DevContainer（VS Code Dev Containers）での開発を標準とします。初回セットアップの具体手順は [docs/guides/devcontainer.md の 初回セットアップ](./docs/guides/devcontainer.md#初回セットアップ) を参照してください。
+
 ## ドキュメント
 
 詳細は [docs/README.md](./docs/README.md) を参照してください。

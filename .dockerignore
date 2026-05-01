@@ -1,0 +1,39 @@
+# VCS
+.git
+.gitattributes
+.gitignore
+
+# Dependencies / build artifacts（コンテナ起動後に bun install で再生成）
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+**/.turbo
+
+# Local env（誤って image に焼かないよう除外。ルートの .env.example のみ追跡対象として復元）
+# dockerignore は最後にマッチしたパターンが勝つため、復元の `!` パターンは除外パターンの後に置く。
+.env
+.env.*
+**/.env
+**/.env.*
+!/.env.example
+
+# Claude Code / 個人作業領域（image には不要）
+.claude
+_dev
+
+# Editor / OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# DevContainer 設定（コンテナ内に焼き込む必要なし）
+.devcontainer
+
+# Docs / CI（ランタイムには不要）
+docs
+.github
