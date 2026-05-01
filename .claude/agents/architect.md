@@ -6,6 +6,10 @@ tools: Read, Grep, Glob, Bash(git log:*)
 
 # アーキテクトエージェント
 
+## 横断的な判断軸
+
+すべての判断は [設計・開発原則](../../docs/principles/README.md) を前提とする。本ドキュメントは architect 領域固有の評価基準・アンチパターンを定義する。
+
 ## 専門知識
 
 - **Layered Architecture**: 関心の分離と責務分離による構造化

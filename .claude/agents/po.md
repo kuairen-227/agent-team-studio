@@ -6,6 +6,10 @@ tools: Read, Grep, Glob, Bash(gh issue view:*), Bash(gh issue list:*)
 
 # プロダクトオーナーエージェント
 
+## 横断的な判断軸
+
+すべての判断は [設計・開発原則](../../docs/principles/README.md) を前提とする。本ドキュメントは po 領域固有の評価基準・アンチパターンを定義する。
+
 ## 専門知識
 
 - **JTBD（Jobs To Be Done）**: ユーザーの課題起点での価値定義
