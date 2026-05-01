@@ -2,10 +2,13 @@
 
 ## Status
 
-accepted
+accepted（一部 superseded by [ADR-0017](./0017-relocate-compose-and-consolidate-env.md)）
 
 - 作成日: 2026-04-29
-- 関連: ADR-0008（前提：技術スタック）, ADR-0012（前提：Worktree）, Issue #87, Issue #77（後続）
+- 関連: ADR-0008（前提：技術スタック）, ADR-0012（前提：Worktree）, [ADR-0017](./0017-relocate-compose-and-consolidate-env.md)（compose / Dockerfile / `.env` の配置を上書き）, Issue #87, Issue #77（後続）
+
+> [!NOTE]
+> 本 ADR の決定のうち **compose / Dockerfile / `.env` を `.devcontainer/` 配下に集約する** 部分は ADR-0017 で更新された。Claude ホーム共有 volume・DB 隔離モード・ポート割当の判断は本 ADR のまま有効。
 
 ## Context
 
