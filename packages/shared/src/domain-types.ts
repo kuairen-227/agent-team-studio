@@ -4,6 +4,9 @@
  * SSoT: docs/design/data-model.md / docs/design/templates/competitor-analysis.md
  * 命名規約は data-model.md §6 の TS 例に合わせて snake_case を採用する。
  * REST/WS 境界での camelCase は api-types.ts / ws-types.ts 側で定義する。
+ *
+ * 本ファイルは TS 型と DB CHECK 制約値の双方の SSoT を兼ねる
+ * （`as const` 配列の運用方針は「共通 enum」セクションを参照）。
  */
 
 // ---------- 識別子 ----------
@@ -16,25 +19,54 @@ export type ResultId = string;
 
 // ---------- 共通 enum ----------
 
-/** AgentExecution / Execution の状態（data-model.md §5）。 */
-export type ExecutionStatus = "pending" | "running" | "completed" | "failed";
-export type AgentStatus = "pending" | "running" | "completed" | "failed";
+// SSoT として `as const` 配列を置き、TS union 型と DB schema 用の値配列の双方を
+// ここから派生させる。`packages/db` の schema は同配列を import して
+// `text("col", { enum })` と CHECK 制約 SQL の双方を構築する。
+//
+// `EXECUTION_STATUSES` と `AGENT_STATUSES` は MVP 時点では値が完全一致するが、
+// ADR-0014 §中立で Execution 側のみ `partial_failure` 追加が示唆されているため
+// 分離維持する（Issue #97 の方針）。
 
-/** エージェントの役割（data-model.md §4.3）。 */
-export type AgentRole = "investigation" | "integration";
+/** Execution.status の取りうる値（data-model.md §5）。 */
+export const EXECUTION_STATUSES = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+] as const;
+
+/** AgentExecution.status の取りうる値（data-model.md §5）。 */
+export const AGENT_STATUSES = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+] as const;
+
+/** AgentExecution.role の取りうる値（data-model.md §4.3）。 */
+export const AGENT_ROLES = ["investigation", "integration"] as const;
+
+export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
+export type AgentStatus = (typeof AGENT_STATUSES)[number];
+export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /** 個別エージェントの失敗理由（agent-execution.md §5）。 */
-export type AgentFailReason =
-  | "llm_error"
-  | "output_parse_error"
-  | "timeout"
-  | "internal_error";
+export const AGENT_FAIL_REASONS = [
+  "llm_error",
+  "output_parse_error",
+  "timeout",
+  "internal_error",
+] as const;
 
 /** Execution 全体の失敗理由（agent-execution.md §5）。 */
-export type ExecutionFailReason =
-  | "all_investigations_failed"
-  | "integration_failed"
-  | "timeout";
+export const EXECUTION_FAIL_REASONS = [
+  "all_investigations_failed",
+  "integration_failed",
+  "timeout",
+] as const;
+
+export type AgentFailReason = (typeof AGENT_FAIL_REASONS)[number];
+export type ExecutionFailReason = (typeof EXECUTION_FAIL_REASONS)[number];
 
 // ---------- Template ----------
 

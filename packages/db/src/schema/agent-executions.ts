@@ -13,9 +13,11 @@
  *   追跡可能にするため独立した列として保持する（他テーブルとの一貫性も確保）
  */
 
-import type {
-  IntegrationAgentOutput,
-  InvestigationAgentOutput,
+import {
+  AGENT_ROLES,
+  AGENT_STATUSES,
+  type IntegrationAgentOutput,
+  type InvestigationAgentOutput,
 } from "@agent-team-studio/shared";
 import { sql } from "drizzle-orm";
 import {
@@ -27,21 +29,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sqlLiteralList } from "./_helpers.ts";
 import { executions } from "./executions.ts";
-
-// `@agent-team-studio/shared` の `AgentRole` 型と値が重複している。
-// 一元化は別 Issue で扱う。
-export const AGENT_ROLES = ["investigation", "integration"] as const;
-
-// `@agent-team-studio/shared` の `AgentStatus` 型と
-// `executions.ts` の `EXECUTION_STATUSES` と値が重複している。
-// 一元化は別 Issue で扱う。
-export const AGENT_STATUSES = [
-  "pending",
-  "running",
-  "completed",
-  "failed",
-] as const;
 
 export const agentExecutions = pgTable(
   "agent_executions",
@@ -70,11 +59,11 @@ export const agentExecutions = pgTable(
     ),
     check(
       "agent_executions_role_check",
-      sql`${table.role} IN ('investigation', 'integration')`,
+      sql`${table.role} IN (${sqlLiteralList(AGENT_ROLES)})`,
     ),
     check(
       "agent_executions_status_check",
-      sql`${table.status} IN ('pending', 'running', 'completed', 'failed')`,
+      sql`${table.status} IN (${sqlLiteralList(AGENT_STATUSES)})`,
     ),
     // 状態遷移の整合性を DB レベルで防衛する（executions と同じポリシー）。
     check(
