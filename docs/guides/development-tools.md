@@ -28,7 +28,7 @@ psql --version
 
 ### 基本的な使い方
 
-`DATABASE_URL` は app コンテナに自動注入されるため、引数不要で接続できる。
+`DATABASE_URL` は app コンテナに自動注入されるため、接続情報を個別に指定せず `$DATABASE_URL` 一つで接続できる。
 
 ```bash
 # 接続して対話モードに入る
