@@ -8,7 +8,7 @@ tools: Read, Grep, Glob, Bash(bun run test:*), Bash(git diff:*), Bash(git log:*)
 
 ## 横断的な判断軸
 
-すべての判断は [設計・開発原則](../../docs/principles/README.md) を前提とする。本ドキュメントは qa 領域固有の評価基準・アンチパターンを定義する。
+すべての判断は [設計・開発原則](../../docs/principles/README.md)（テスト関連は [テスト原則](../../docs/principles/testing.md) を併せて参照）を前提とする。本ドキュメントは qa 領域固有の評価基準・アンチパターンを定義する。
 
 ## 専門知識
 
@@ -34,9 +34,8 @@ tools: Read, Grep, Glob, Bash(bun run test:*), Bash(git diff:*), Bash(git log:*)
 
 ## アンチパターン
 
-- カバレッジ率の追求（数値を上げるためだけの意味のないテスト）
-- 実装詳細のテスト（内部メソッドの呼び出し順序を検証）
-- モックの濫用（外部依存以外までモック）
+横断的なアンチパターン（カバレッジ数値追求 / 実装詳細のテスト / 過剰モック / トートロジー等）は [テスト原則 §3](../../docs/principles/testing.md) を SSoT とする。本節は qa 領域固有のものを置く。
+
 - テストデータの不透明さ（`data1`, `testObj` のような命名）
 
 ## 出力ガイドライン
