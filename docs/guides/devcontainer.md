@@ -197,7 +197,7 @@ const port = 3000;
 
 ホスト ↔ コンテナ間のフォワーディング用ポート（`APP_PORT` / `DB_PORT`）は worktree ごとに切替が必要だが、コンテナ内の listen ポート（`@db:5432` / app の 3000）は常に固定。`DATABASE_URL` の `@db:5432` も同様で、`DB_PORT` を変えても変更不要。
 
-`devcontainer.json` の `forwardPorts: [3000, 5432]` は **solo モード向けの定義**。split モードで `APP_PORT=3010` / `DB_PORT=5442` などに変更しても自動追従しないが、compose の `ports` がホストレベルでポートをバインドするため VS Code の `forwardPorts` とは独立して機能し実害はない（VS Code のポート転送 UI に main の値が見えるだけ）。
+`devcontainer.json` の `forwardPorts: [3000, 4983, 5432]` は **solo モード向けの定義**（4983 は Drizzle Studio 用）。split モードで `APP_PORT=3010` / `DB_PORT=5442` などに変更しても自動追従しないが、compose の `ports` がホストレベルでポートをバインドするため VS Code の `forwardPorts` とは独立して機能し実害はない（VS Code のポート転送 UI に main の値が見えるだけ）。
 
 ## Playwright の利用
 

@@ -95,7 +95,7 @@ Drizzle Studio 自体は Beta。複雑な JOIN や `EXPLAIN` などは PostgreSQ
 - `EXPLAIN` のクエリプラン可視化
 - GitHub Copilot 連携（`@pgsql` でスキーマを踏まえた SQL 提案）
 
-`.vscode/settings.json` の `pgsql.connections[].copilotAccessMode` で Copilot のアクセス範囲を制御できる（`rw` / `r` / 無効）。
+`.vscode/settings.json` の `pgsql.connections[].copilotAccessMode` で Copilot のアクセス範囲を制御できる（`rw` / `r` / 無効）。既定値は `rw`。ローカル開発専用かつ非本番 DB のため、Copilot に書込含むスキーマ参照を許容する判断。
 
 ## トラブルシューティング
 
