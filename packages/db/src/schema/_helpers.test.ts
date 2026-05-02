@@ -5,6 +5,9 @@ import { sqlLiteralList } from "./_helpers.ts";
 const dialect = new PgDialect();
 
 describe("sqlLiteralList", () => {
+  // 空配列は型シグネチャ `readonly [string, ...string[]]` でコンパイルエラー
+  // となるため実行時テストは書かない（testing.md §1.3「自明な型同義」）。
+
   test("as const 配列をシングルクォート区切りの SQL リテラル列に展開する", () => {
     const result = sqlLiteralList([
       "pending",
