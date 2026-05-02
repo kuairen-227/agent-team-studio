@@ -2,11 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { sqlLiteralList } from "./_helpers.ts";
 
-const dialect = new PgDialect();
-
 describe("sqlLiteralList", () => {
   // 空配列は型シグネチャ `readonly [string, ...string[]]` でコンパイルエラー
   // となるため実行時テストは書かない（testing.md §1.3「自明な型同義」）。
+  const dialect = new PgDialect();
 
   test("as const 配列をシングルクォート区切りの SQL リテラル列に展開する", () => {
     const result = sqlLiteralList([
@@ -20,7 +19,7 @@ describe("sqlLiteralList", () => {
     );
   });
 
-  test("単一要素でも正しく展開される", () => {
+  test("単一要素のとき区切り文字なしで展開される", () => {
     const result = sqlLiteralList(["investigation"]);
     expect(dialect.sqlToQuery(result).sql).toBe("'investigation'");
   });
