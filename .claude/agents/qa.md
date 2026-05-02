@@ -8,7 +8,7 @@ tools: Read, Grep, Glob, Bash(bun run test:*), Bash(git diff:*), Bash(git log:*)
 
 ## 横断的な判断軸
 
-すべての判断は [設計・開発原則](../../docs/principles/README.md) を前提とする。本ドキュメントは qa 領域固有の評価基準・アンチパターンを定義する。
+すべての判断は [設計・開発原則](../../docs/principles/README.md) と [テスト原則](../../docs/principles/testing.md) を前提とする。本ドキュメントは qa 領域固有の評価基準・アンチパターンを定義する（横断軸は principles 側、領域固有具体例はここ）。
 
 ## 専門知識
 
