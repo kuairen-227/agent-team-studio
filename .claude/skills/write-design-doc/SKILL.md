@@ -65,11 +65,13 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 ### 6. 水平参照の最小化（[ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md)）
 
+ADR・基盤 doc（glossary / principles / 各 README）への参照は本手順の対象外（許容パターン3として常時 OK）。本手順は **横方向（product/ や他 design/）の通常 doc への参照** に対するチェックを扱う。
+
 - 参照リンクを書いた場合、リンク先が実在するか確認する
-- 横方向（product/ や他 design/）への参照は ADR-0021 の許容パターンに該当するもののみ残す:
-  - 基盤ドキュメント（glossary / principles / ADR / 各 README）への参照は自由
+- 横方向の参照は ADR-0021 の許容パターンに該当するもののみ残す:
   - SSoT 接続（例: テンプレート I/O ↔ product/templates 仕様）は片方向で残す。本ディレクトリが I/O スキーマの SSoT のため、product/ 側からの参照に限定し、design/ から product/ への戻り参照は設定しない
 - 双方向リンクは設定しない
+- § アンカー精度の参照は SSoT 側から **初出 1 回のみ** 許容。同一 doc 内で複数回参照しない
 - 「前提」と「関連ドキュメント」の二重列挙はしない。README で語れる関連は README 経由で発見させる
 
 ## 注意点

@@ -53,10 +53,10 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 ### 4. ドキュメントの作成・更新
 
-上記チェックリストを遵守してドキュメントを作成・更新する。
+上記チェックリストを遵守してドキュメントを作成・更新する。本ステップは **作成判断時の指針**（リンクを書くか否か）。
 
 - 用語は `docs/product/glossary.md` に準拠する
-- `docs/design/` への参照は [ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md) の許容パターン（基盤ドキュメント参照・SSoT 接続）に該当する場合のみ追加する。双方向リンクは設定しない
+- `docs/design/` への参照は [ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md) の許容パターン（基盤ドキュメント参照・SSoT 接続）に該当する場合のみ追加する
 
 ### 5. 書いた後のコンプライアンスチェック
 
@@ -68,12 +68,14 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 違反が見つかった場合は、該当箇所を自然言語の説明 + design/ 参照リンクに修正する。
 
-### 6. 水平参照の最小化（[ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md)）
+### 6. 書いた後の参照チェック（[ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md)）
+
+ステップ 4 が作成判断、本ステップは **書いた後の検証**。ADR・基盤 doc（glossary / principles / 各 README）への参照は本手順の対象外（許容パターン 3 として常時 OK）。横方向の通常 doc への参照に対し以下を確認する。
 
 - 参照リンクを書いた場合、リンク先のファイルとアンカーが実在するか Glob / Read で確認する
-- 横方向（design/ や他 product/）への参照は ADR-0021 の許容パターンに該当するもののみ残す
-- 双方向リンクは設定しない（SSoT 側に寄せて片方向化する）
-- 「関連ドキュメント」セクションを設ける場合、README 経由で到達可能な doc は列挙から外す
+- 双方向リンクが生まれていないか確認し、生まれていれば SSoT 側に寄せて片方向化する
+- § アンカー精度の参照は SSoT 側から **初出 1 回のみ** とする。同一 doc 内で複数回参照していれば 1 回に集約する
+- 「関連ドキュメント」セクションを設けた場合、README 経由で到達可能な doc は列挙から外す
 
 ## 注意点
 
