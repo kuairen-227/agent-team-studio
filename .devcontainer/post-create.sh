@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# DevContainer 作成時に 1 回だけ実行される初期化スクリプト。
-# Rebuild Container 時にも再実行される。
+# DevContainer 作成・Rebuild 時に実行される初期化スクリプト。
 # 詳細: docs/guides/development-tools.md
 
 set -euo pipefail
