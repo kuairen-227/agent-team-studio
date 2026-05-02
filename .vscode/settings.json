@@ -7,5 +7,29 @@
   },
   "json.schemaDownload.trustedDomains": {
     "https://turbo.build/schema.json": true
-  }
+  },
+  "pgsql.connections": [
+    {
+      "id": "22EB8319-1282-4B2F-91FB-BE4B95C2DA1B",
+      "groupId": "B0F5590E-A9CB-4574-95ED-1F5559FB289E",
+      "authenticationType": "SqlLogin",
+      "connectTimeout": 15,
+      "applicationName": "vscode-pgsql",
+      "clientEncoding": "utf8",
+      "sslmode": "disable",
+      "sshSavePassword": true,
+      "savePassword": true,
+      "sslRootCertMode": "none",
+      "server": "db",
+      "expiresOn": 0,
+      "emptyPasswordInput": false,
+      "user": "postgres",
+      "password": "",
+      "database": "agent_team_studio",
+      "profileName": "db, agent_team_studio (postgres)",
+      "port": "5432",
+      "copilotAccessMode": "rw",
+      "sshPassword": ""
+    }
+  ]
 }

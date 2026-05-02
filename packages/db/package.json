@@ -12,7 +12,8 @@
     "test": "bun test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/migrate.ts",
-    "db:seed": "bun run src/seed.ts"
+    "db:seed": "bun run src/seed.ts",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@agent-team-studio/shared": "workspace:*",
