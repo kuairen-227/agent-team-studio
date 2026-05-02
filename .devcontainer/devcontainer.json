@@ -10,7 +10,7 @@
     "ghcr.io/shyim/devcontainers-features/bun:0": {}
   },
   "forwardPorts": [3000, 5432],
-  "postCreateCommand": "bun install",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
       "extensions": [
