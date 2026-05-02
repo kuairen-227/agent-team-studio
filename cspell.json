@@ -9,6 +9,8 @@
   "dictionaries": [],
   "words": [
     "bunx",
+    "healthcheck",
+    "isready",
     "ISTQB",
     "JTBD",
     "kuairen",
@@ -18,6 +20,7 @@
     "mstyle",
     "Nygard",
     "oneline",
+    "pgdata",
     "psql",
     "Turborepo",
     "Worktree",
