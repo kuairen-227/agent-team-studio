@@ -38,3 +38,7 @@
 ### プロンプト内出力フォーマットの扱い
 
 システムプロンプトは本ディレクトリに配置する。ただしプロンプト内の出力フォーマット（JSON 構造）は、自然言語での概要説明 + design/ スキーマへの参照に置き換える。JSON Schema の正式定義は [design/templates/](../design/templates/README.md) が Single Source of Truth。
+
+### 参照ルール
+
+ドキュメント間の参照ポリシーは [ADR-0021](../adr/0021-doc-cross-reference-policy.md)（ハブ＆スポーク + 緩い水平参照）に従う。design/ への参照は SSoT 接続（プロンプト出力フォーマット → design/templates 等）が中心。双方向リンクは設定しない。
