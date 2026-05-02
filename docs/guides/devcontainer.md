@@ -120,6 +120,8 @@ services:
 
 ホストから直接接続する場合は、`.env` の部品を組み立てて `psql` の引数に渡すか、必要に応じて手動で `DATABASE_URL` 環境変数を export する。
 
+DB 操作ツール（`psql` / Drizzle Studio / PostgreSQL VSCode 拡張）の使い方は [development-tools.md](./development-tools.md) を参照。
+
 ## DB のモード切替
 
 ルート `.env` の `DB_VOLUME` で PostgreSQL の named volume を選択する。
