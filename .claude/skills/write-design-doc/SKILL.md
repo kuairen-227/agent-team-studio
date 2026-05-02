@@ -63,13 +63,18 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 違反が見つかった場合は、該当箇所を product/ 参照リンクに修正する。
 
-### 6. 相互参照の確認
+### 6. 水平参照の最小化（[ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md)）
 
-- product/ への参照リンクがある場合、リンク先が実在するか確認する
-- テンプレート I/O スキーマの場合、対応する product/ テンプレート仕様が存在し、双方向リンクが設定されているか確認する
+- 参照リンクを書いた場合、リンク先が実在するか確認する
+- 横方向（product/ や他 design/）への参照は ADR-0021 の許容パターンに該当するもののみ残す:
+  - 基盤ドキュメント（glossary / principles / ADR / 各 README）への参照は自由
+  - SSoT 接続（例: テンプレート I/O ↔ product/templates 仕様）は片方向で残す。本ディレクトリが I/O スキーマの SSoT のため、product/ 側からの参照に限定し、design/ から product/ への戻り参照は設定しない
+- 双方向リンクは設定しない
+- 「前提」と「関連ドキュメント」の二重列挙はしない。README で語れる関連は README 経由で発見させる
 
 ## 注意点
 
 - このスキルは `docs/design/` 配下のみを対象とする。対応する `docs/product/` 側も更新が必要な場合は `write-product-doc` スキルを併用する
 - テンプレート I/O スキーマは本ディレクトリが正式定義（実装前）。product/ 側にスキーマの重複記述を作らない
 - 実装後にコードが SSoT となった場合、ドキュメントをコード参照に更新する（陳腐化防止）
+- ドキュメント間の参照ポリシーは [ADR-0021](../../../docs/adr/0021-doc-cross-reference-policy.md)（ハブ＆スポーク + 緩い水平参照）に従う
