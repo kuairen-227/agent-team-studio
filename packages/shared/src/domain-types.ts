@@ -4,6 +4,11 @@
  * SSoT: docs/design/data-model.md / docs/design/templates/competitor-analysis.md
  * 命名規約は data-model.md §6 の TS 例に合わせて snake_case を採用する。
  * REST/WS 境界での camelCase は api-types.ts / ws-types.ts 側で定義する。
+ *
+ * 本ファイルは TS 型と DB CHECK 制約値の両方の SSoT を兼ねる。
+ * 値の取りうる集合（status / role / fail reason 等）は `as const` 配列で定義し、
+ * union 型は `(typeof X)[number]` で派生させる。`packages/db` の schema は
+ * 同配列を import して `text("col", { enum })` と CHECK 制約 SQL の双方を構築する。
  */
 
 // ---------- 識別子 ----------
@@ -48,17 +53,22 @@ export type AgentStatus = (typeof AGENT_STATUSES)[number];
 export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /** 個別エージェントの失敗理由（agent-execution.md §5）。 */
-export type AgentFailReason =
-  | "llm_error"
-  | "output_parse_error"
-  | "timeout"
-  | "internal_error";
+export const AGENT_FAIL_REASONS = [
+  "llm_error",
+  "output_parse_error",
+  "timeout",
+  "internal_error",
+] as const;
 
 /** Execution 全体の失敗理由（agent-execution.md §5）。 */
-export type ExecutionFailReason =
-  | "all_investigations_failed"
-  | "integration_failed"
-  | "timeout";
+export const EXECUTION_FAIL_REASONS = [
+  "all_investigations_failed",
+  "integration_failed",
+  "timeout",
+] as const;
+
+export type AgentFailReason = (typeof AGENT_FAIL_REASONS)[number];
+export type ExecutionFailReason = (typeof EXECUTION_FAIL_REASONS)[number];
 
 // ---------- Template ----------
 
