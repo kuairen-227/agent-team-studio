@@ -38,6 +38,12 @@ Issue [#81](https://github.com/kuairen-227/agent-team-studio/issues/81) の Spik
 - **不正 `executionId` の close タイミング** — `upgradeWebSocket` のコールバックは「アップグレードを受理した後」に `onOpen` が呼ばれる構造。HTTP レイヤで 404 を返すのではなく、WebSocket ハンドシェイク (HTTP 101) 成立直後に close フレーム (4404) を送る挙動になる。クライアントから見ると `WebSocket` の `onclose` が `code=4404` で発火し、`onopen` は発火しない場合と発火直後に close される場合がある (環境依存)。`websocket-design.md` の `close(4404, "execution_not_found")` 表記と機能的には一致するが、HTTP レイヤで弾く実装ではない点を実装メモに残す
 - **`onClose` 内のリソース解放** — push 用の `setInterval` を `onClose` で `clearInterval` する責務はサーバ側に残る。これを怠るとクライアント切断後もタイマが回り続けるリスクあり。Walking Skeleton 実装時は `AbortController` ベースに統一するのが望ましい
 
+### 検証範囲外 (Walking Skeleton で確認する項目)
+
+本 Spike では以下は未検証。Walking Skeleton (#82) 実装時に同等の検証を行うこと:
+
+- **不正 `executionId` の他境界** — Case A は空文字のみ確認。クエリパラメータ自体の欠落 (`/ws`)、65 文字、大文字 (`Spike-B`) など正規表現 `^[a-z0-9-]{1,64}$` の他境界は未検証
+
 ## 検証 2: Anthropic SDK streaming + AbortSignal
 
 ### 検証 2 範囲
@@ -70,6 +76,10 @@ Issue [#81](https://github.com/kuairen-227/agent-team-studio/issues/81) の Spik
 | ユーザー / engine からの明示的キャンセル (MVP では未使用) | (該当なし — MVP スコープ外、[agent-execution.md §8](../agent-execution.md)) |
 
 `APIUserAbortError` 自体には起点情報が含まれないため、**起点判定は engine 側で「どの signal が abort されたか」を保持**する必要がある (`AbortSignal.any` で合成した個別 signal の `aborted` プロパティを参照)。
+
+### 検証 2 範囲外 (Walking Skeleton で確認する項目)
+
+- **SDK リトライ中の AbortSignal 中断** — `maxRetries: 3` を設定したが、本 Spike の 5 ケースは初回呼び出し中の中断のみ観測。リトライ待機中 (指数バックオフ中) に AbortSignal が発火した場合の挙動は未検証。Walking Skeleton 実装時に、429 / 5xx 応答をモックしてリトライ待機を発生させ、その間の `AbortSignal.any` 発火が即時中断につながるかを確認すること
 
 ## 既存 design doc への反映
 
