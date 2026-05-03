@@ -67,6 +67,8 @@ app.get(
               }),
             );
             ws.close(1000, "normal");
+            // onClose でも clearInterval するが、正常終了パスでは setInterval コールバック内で
+            // 即時解放しておくことで「次の tick で push を試みて失敗する」状態を避ける
             if (pushTimer) clearInterval(pushTimer);
           }
         }, 200);
