@@ -13,4 +13,4 @@
 | [devcontainer.md](./devcontainer.md) | DevContainer 構成・DB モード・認証共有 |
 | [development-tools.md](./development-tools.md) | 開発ツール（psql / Drizzle Studio / PostgreSQL 拡張） |
 | [env.md](./env.md) | 環境変数・シークレット管理 |
-| [dependabot-operations.md](./dependabot-operations.md) | Dependabot 運用ガイド（PR 種別ごとの作業・auto-merge・cooldown） |
+| [dependabot.md](./dependabot.md) | Dependabot 運用ガイド（PR 種別ごとの作業・auto-merge・cooldown） |

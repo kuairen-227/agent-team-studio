@@ -5,7 +5,7 @@
 accepted
 
 - 作成日: 2026-05-03
-- 関連: ADR-0002（前提・状況設定）
+- 関連: ADR-0002（前提・状況設定）, ADR-0008（前提: monorepo 構造の根拠）
 
 ## Context
 
@@ -75,6 +75,8 @@ accepted
 `.github/workflows/dependabot-auto-merge.yml` を新設し、`dependabot/fetch-metadata` の `update-type == 'version-update:semver-patch'` の場合のみ `gh pr merge --auto --squash` を実行する。`--auto` は branch protection の必須チェック通過を待つため、CI（lint / type-check / test）が通った場合のみマージされる。
 
 minor / major は手動レビューを維持する。
+
+なお Dependabot が作る PR は同一リポジトリ発のため、fork PR に課される `GITHUB_TOKEN` の read-only 制限を受けない。本ワークフローが要求する `pull-requests: write` / `contents: write` 権限はそのまま付与可能。将来 fork からの PR を本ワークフローの対象に含める場合は、`pull_request_target` トリガーへの切り替えと安全性レビューを別途行う必要がある。
 
 ### 4. groups の分割（patch / minor を別グループ化）
 
