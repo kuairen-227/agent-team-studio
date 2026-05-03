@@ -4,7 +4,7 @@
 //   B. 正常接続 → サーバ主導で全 push 受信後 close 1000
 //   C. 正常接続 → 受信途中でクライアント主導 close (サーバの onClose 発火を確認)
 const PORT = Number.parseInt(process.env.PORT ?? "", 10) || 3100;
-const URL = `ws://localhost:${PORT}/ws`;
+const BASE_URL = `ws://localhost:${PORT}/ws`;
 
 type CaseResult = {
   name: string;
@@ -55,13 +55,15 @@ function runCase(
 const results: CaseResult[] = [];
 
 console.log("=== Case A: invalid executionId ===");
-results.push(await runCase("A:invalid", `${URL}?executionId=`));
+results.push(await runCase("A:invalid", `${BASE_URL}?executionId=`));
 
 console.log("=== Case B: normal full receive ===");
-results.push(await runCase("B:normal-full", `${URL}?executionId=spike-b`));
+results.push(await runCase("B:normal-full", `${BASE_URL}?executionId=spike-b`));
 
 console.log("=== Case C: client-initiated close mid-stream ===");
-results.push(await runCase("C:client-close", `${URL}?executionId=spike-c`, 3));
+results.push(
+  await runCase("C:client-close", `${BASE_URL}?executionId=spike-c`, 3),
+);
 
 console.log("\n=== Summary ===");
 console.table(
