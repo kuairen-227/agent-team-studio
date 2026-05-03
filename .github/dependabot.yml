@@ -22,16 +22,22 @@ updates:
       include:
         - "*"
     groups:
-      production-minor-patch:
+      production-patch:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+      production-minor:
         dependency-type: "production"
         update-types:
           - "minor"
+      development-patch:
+        dependency-type: "development"
+        update-types:
           - "patch"
-      development-minor-patch:
+      development-minor:
         dependency-type: "development"
         update-types:
           - "minor"
-          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -51,7 +57,9 @@ updates:
       include:
         - "*"
     groups:
-      actions-minor-patch:
+      actions-patch:
+        update-types:
+          - "patch"
+      actions-minor:
         update-types:
           - "minor"
-          - "patch"

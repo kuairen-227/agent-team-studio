@@ -44,12 +44,13 @@ accepted
 | B | **patch のみ auto-merge、minor/major は手動** | **採用** — patch は破壊的変更を含まない（semver 規約）ため、CI 通過なら基本安全。minor は API 追加で挙動変化の可能性、major は破壊的変更でレビュー必須 |
 | C | minor まで auto-merge | 却下 — npm エコシステムでは semver 違反の minor リリース（実質的な破壊的変更）が散見される。学習プロジェクトの規模ではレビューコストが許容範囲 |
 
-### major と minor/patch の分離
+### groups の分割粒度
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
 | A | groups で update-types を限定せず全部入り（現状） | 却下 — major が他の更新と束ねられ、破壊的変更レビューが埋もれる |
-| B | **groups を `update-types: ["minor","patch"]` 限定。major は groups 対象外として個別 PR 化** | **採用** — Dependabot の仕様で groups 条件に合わない更新は自動的に個別 PR となる。`ignore` 等の追加設定は不要 |
+| B | groups を `update-types: ["minor","patch"]` で 1 つにまとめ major のみ個別 PR | 却下 — `dependabot/fetch-metadata` の `update-type` は **PR 全体の最大更新タイプ**を返す仕様のため、グループに minor が 1 件でも混入すると `version-update:semver-minor` を返し、patch 自動マージが発火しない週が発生する |
+| C | **groups を patch / minor で別グループに分割し、major は groups 対象外として個別 PR 化** | **採用** — patch グループは確実に `update-type == version-update:semver-patch` となり auto-merge が安定発火。minor グループは PR 単位で手動レビュー、major は個別 PR で別途レビュー、と方針が完全に直交する |
 
 ### cooldown（公開直後リリースの待機）
 
@@ -75,9 +76,14 @@ accepted
 
 minor / major は手動レビューを維持する。
 
-### 4. major と minor/patch の分離
+### 4. groups の分割（patch / minor を別グループ化）
 
-`groups` を `update-types: ["minor","patch"]` 限定に変更し、major は groups 対象外として個別 PR 化する。github-actions ecosystem にも `actions-minor-patch` グループを追加する。
+`groups` を patch / minor で別グループに分割し、major は groups 対象外として個別 PR 化する。
+
+- npm: `production-patch` / `production-minor` / `development-patch` / `development-minor` の 4 グループ
+- github-actions: `actions-patch` / `actions-minor` の 2 グループ
+
+この分割により、patch のみを含むグループ PR では `dependabot/fetch-metadata` の `update-type` が必ず `version-update:semver-patch` となり、Decision §3 の auto-merge が安定発火する。minor グループの PR と major の個別 PR は手動レビュー対象となる。
 
 ### 5. cooldown の設定
 
