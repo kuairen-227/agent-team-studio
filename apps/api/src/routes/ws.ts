@@ -10,6 +10,10 @@
  * Spike (Issue #81) で確認済みの設計前提:
  * - hono/bun の `upgradeWebSocket` は `onOpen` の `ws` 引数経由で push 可能
  * - `onClose` でリソース解放を行う（本ルートでは push 用タイマを持たないため最小限）
+ *
+ * `createTemplatesRoutes({ templatesService })` との DI 非対称（YAGNI で本 Issue では
+ * 引数なし）は US-3（進捗画面）で executionsService / agent-core との配線が必要に
+ * なった時点で `createWsRoutes({ ... })` 形に揃える。
  */
 
 import type { AgentStatusPendingMessage } from "@agent-team-studio/shared";

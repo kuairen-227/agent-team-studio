@@ -14,8 +14,9 @@
  *  - US-1（テンプレート一覧）実装時: 一覧 fetch ロジックを `features/templates/` へ抽出
  *  - US-3（進捗画面）実装時: WS 接続ロジックを `features/executions/` へ抽出し、
  *    型ガード（`packages/shared/src/ws-guards.ts`）を経由して受信メッセージをナローイング
- *  - WS の堅牢化（`message` の `JSON.parse` try/catch、`error` イベント、再接続）も
- *    上記移行と合わせて US-3 で対応する
+ *  - WS の堅牢化（`message` の `JSON.parse` try/catch、`error` イベント、再接続、
+ *    React StrictMode 下での `useEffect` 二重実行への配慮）も上記移行と合わせて US-3
+ *    で対応する
  */
 
 import type {
