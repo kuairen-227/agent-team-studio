@@ -15,6 +15,7 @@
 | [agent-execution.md](./agent-execution.md) | エージェント実行アーキテクチャ（並列実行モデル・進捗イベント契約・状態確定フロー・タイムアウト） |
 | [ui-patterns.md](./ui-patterns.md) | UI/UX デザイン原則・状態パターン・グローバルナビ・shadcn/ui マッピング・Tailwind トークン・アクセシビリティ・URL ルーティング |
 | [templates/](./templates/README.md) | テンプレート固有の I/O スキーマ（入力 JSON Schema・内部 JSON 出力型）。プロダクト視点の仕様は [docs/product/templates/](../product/templates/README.md)、横断事項は A2/A3/A4 側で確定 |
+| [technotes/](./technotes/) | 検証ノート（Spike 結果・実機挙動の記録）。設計 doc の根拠として参照される |
 
 ## 配置ガイドライン
 
