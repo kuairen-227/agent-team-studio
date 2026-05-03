@@ -19,6 +19,9 @@ export default defineConfig({
     },
   },
   server: {
+    // DevContainer の port-forward 経由でホスト側ブラウザから到達できるよう
+    // 全インターフェースに bind する（既定の IPv6 localhost のみだと外部から見えない）。
+    host: true,
     proxy: {
       "/api": {
         target: "http://localhost:3000",
