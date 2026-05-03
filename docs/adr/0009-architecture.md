@@ -2,10 +2,13 @@
 
 ## Status
 
-accepted
+accepted（一部 superseded by [ADR-0023](./0023-repository-layer-placement.md)）
 
 - 作成日: 2026-04-17
-- 関連: ADR-0005（前提）, ADR-0008（前提）, Issue #11
+- 関連: ADR-0005（前提）, ADR-0008（前提）, [ADR-0023](./0023-repository-layer-placement.md)（repo 配置・packages/db 責務を上書き）, Issue #11
+
+> [!NOTE]
+> 本 ADR の決定のうち **repo 層の物理的配置（`apps/api/src/repositories/`）** と **`packages/db` の責務範囲** は ADR-0023 で更新された。レイヤード構造の依存方向（routes → services → repositories）・API 設計・フロント設計の判断は本 ADR のまま有効。
 
 ## Context
 
