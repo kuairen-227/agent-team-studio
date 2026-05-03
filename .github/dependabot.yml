@@ -1,9 +1,13 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -11,19 +15,43 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
     groups:
-      production:
+      production-minor-patch:
         dependency-type: "production"
-      development:
+        update-types:
+          - "minor"
+          - "patch"
+      development-minor-patch:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(ci)"
     labels:
       - "chore"
     assignees:
       - "kuairen-227"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
