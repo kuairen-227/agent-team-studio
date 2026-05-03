@@ -76,7 +76,7 @@ graph TD
 
 ## バックエンド（apps/api）
 
-レイヤードアーキテクチャ（routes → services → repositories）を採用。
+レイヤードアーキテクチャ（routes → services → repositories）を採用。repositories は [packages/db](#データベースpackagesdb) 配下に配置する（[ADR-0023](../adr/0023-repository-layer-placement.md)）。
 
 ```bash
 apps/api/src/
@@ -87,9 +87,6 @@ apps/api/src/
 ├── services/            # ビジネスロジック
 │   ├── execution.service.ts
 │   └── template.service.ts
-├── repositories/        # データアクセス（Drizzle）
-│   ├── execution.repo.ts
-│   └── template.repo.ts
 └── index.ts             # Hono app 組み立て・起動
 ```
 

@@ -17,6 +17,8 @@ packages/db/
     │   ├── agent-executions.ts
     │   ├── results.ts
     │   └── index.ts
+    ├── repositories/          # データアクセス関数（[ADR-0023](../../docs/adr/0023-repository-layer-placement.md)）
+    │   └── templates.ts
     ├── seed-data/             # シード用データ定義
     │   └── competitor-analysis.ts
     ├── client.ts              # DbClient ファクトリ
