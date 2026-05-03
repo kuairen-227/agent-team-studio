@@ -2,7 +2,7 @@
 
 Issue [#81](https://github.com/kuairen-227/agent-team-studio/issues/81) の Spike 検証結果。Walking Skeleton (Issue #82) 着手前に、設計前提が実機で成立するかを確認した。
 
-検証コードは [`spike/`](../../../spike/) を参照。
+検証コードは [`spike/`](../../../spike/) を参照（Walking Skeleton (#82) 着手時に削除予定のため、本リンクは一時参照）。削除時は本 technote のリンクも削除し「検証コードは Issue #81 / PR #113 の履歴を参照」に書き換える。
 
 ## 検証環境
 
