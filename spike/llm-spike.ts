@@ -59,7 +59,7 @@ async function streamWithSignal(
       ) {
         chunkCount += 1;
         totalChars += event.delta.text.length;
-        if (chunkLimit && chunkCount >= chunkLimit) {
+        if (chunkLimit !== undefined && chunkCount >= chunkLimit) {
           // SDK 自身の abort() メソッドの動作も併せて確認
           stream.abort();
         }
