@@ -23,3 +23,10 @@
 - テストファイル配置: co-location（テスト対象と同ディレクトリ）
 - カバレッジ目標: 数値ではなく「Service 層は必ずテストを書く」ルール
 - テストの判定軸（価値あるテストとは何か / 業界標準用語 / アンチパターン）: [テスト原則](../principles/testing.md) を参照
+
+### テストフィクスチャ配置方針
+
+- **co-location を基本とし、共有用フォルダは作らない**: フィクスチャは利用するテストと同じディレクトリの `*.test.ts` 内（インライン）または同ディレクトリの `__fixtures__/` に置く。`tests/` や `test/fixtures/` のような最上位フォルダは作らない（テスト対象との関係が読み取れなくなるため）
+- **Service テストの Repository モック**: 関数注入（`createXxxService({ ... })`）した repo 関数をテスト内で `async () => fixture` 等のインラインモックに差し替える。MSW や jest mocks のような重量級ツールは MVP では導入しない
+- **Route 層 (`app.request()`) の統合テスト**: app の構築を `createApp(deps)` 関数で関数化し、テストでは fake repo を渡して DB 不要で Hono の route → service → repo を貫通させる。テスト用 DB を立ち上げる方式は I/O が重いため MVP では採用せず、必要が確定した時点（CRUD が増え DB 制約検証が要る US-2 以降）で testcontainers 等を再検討する
+- **ひな型の参照先**: `apps/api/src/services/templates.test.ts`（service 単体）と `apps/api/src/app.test.ts`（route 統合）を最小サンプルとする
