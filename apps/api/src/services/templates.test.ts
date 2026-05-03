@@ -4,7 +4,7 @@ import { createTemplatesService } from "./templates.ts";
 
 describe("createTemplatesService", () => {
   test("listTemplates が Repo の戻り値をそのまま返す", async () => {
-    const fixture: TemplateSummary[] = [
+    const repoTemplates: TemplateSummary[] = [
       {
         id: "tpl-1",
         name: "競合調査",
@@ -12,10 +12,10 @@ describe("createTemplatesService", () => {
       },
     ];
     const service = createTemplatesService({
-      listTemplateSummaries: async () => fixture,
+      listTemplateSummaries: async () => repoTemplates,
     });
 
-    expect(await service.listTemplates()).toEqual(fixture);
+    expect(await service.listTemplates()).toEqual(repoTemplates);
   });
 
   test("空配列もそのまま返す（empty 状態を service が握りつぶさない）", async () => {
