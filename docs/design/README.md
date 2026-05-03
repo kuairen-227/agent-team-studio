@@ -41,6 +41,9 @@
 - 失敗時の UX フロー → [product/](../product/README.md)
 - ビジネス上の根拠・優先度判断 → [product/](../product/README.md) or [adr/](../adr/README.md)
 
-### 相互参照ルール
+### 参照ルール
 
-テンプレートの I/O スキーマは本ディレクトリが正式定義（実装前）。product/ 側のプロンプト仕様からは参照リンクで接続する。スキーマの重複記述は禁止（Single Source of Truth）。
+ドキュメント間の参照ポリシーは [ADR-0021](../adr/0021-doc-cross-reference-policy.md)（ハブ＆スポーク + 緩い水平参照）に従う。本ディレクトリ固有の SSoT 接続:
+
+- テンプレートの I/O スキーマは本ディレクトリが正式定義。product/ 側のプロンプト仕様 **から** 本ディレクトリへの片方向参照で接続する（双方向リンクは設定しない）
+- スキーマの重複記述は禁止（Single Source of Truth）
