@@ -48,7 +48,11 @@ function runCase(
         durationMs: Date.now() - start,
       });
     };
-    ws.onerror = (e) => reject(new Error(`ws error: ${String(e)}`));
+    ws.onerror = (e) => {
+      const detail =
+        e instanceof ErrorEvent ? e.message : `event type=${e.type}`;
+      reject(new Error(`ws error: ${detail}`));
+    };
   });
 }
 
