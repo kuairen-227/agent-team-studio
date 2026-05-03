@@ -25,4 +25,19 @@ describe("createTemplatesService", () => {
 
     expect(await service.listTemplates()).toEqual([]);
   });
+
+  // Repo の例外を握りつぶさないことのリグレッション保険。
+  // 現状の service は素通しなので自然に伝播するが、US-1 でロジックが入った時に
+  // 誤って try/catch が挟まれてしまうと route 層の 500 ハンドリングが効かなくなる。
+  test("Repo が例外を投げると service は透過させる", async () => {
+    const service = createTemplatesService({
+      listTemplateSummaries: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    await expect(service.listTemplates()).rejects.toThrow(
+      "DB connection failed",
+    );
+  });
 });
