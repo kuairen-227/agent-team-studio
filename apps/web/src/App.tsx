@@ -9,6 +9,13 @@
  * テキスト主体・節度の判断軸に従い、shadcn コンポーネント未導入分はプレーンな
  * Tailwind で表現する。後続 Issue で `Skeleton` / `Badge` 等を導入した時点で
  * 置き換える。
+ *
+ * 後続 Issue での移行予定（本ファイルは Walking Skeleton 専用の暫定構造）:
+ *  - US-1（テンプレート一覧）実装時: 一覧 fetch ロジックを `features/templates/` へ抽出
+ *  - US-3（進捗画面）実装時: WS 接続ロジックを `features/executions/` へ抽出し、
+ *    型ガード（`packages/shared/src/ws-guards.ts`）を経由して受信メッセージをナローイング
+ *  - WS の堅牢化（`message` の `JSON.parse` try/catch、`error` イベント、再接続）も
+ *    上記移行と合わせて US-3 で対応する
  */
 
 import type {
