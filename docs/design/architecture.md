@@ -150,6 +150,8 @@ packages/agent-core/src/
 
 ## データベース（packages/db）
 
+インフラ層パッケージ。Drizzle スキーマ・DB 接続・データアクセス関数（repositories）の 3 要素を持つ（[ADR-0023](../adr/0023-repository-layer-placement.md)）。
+
 ```bash
 packages/db/
 ├── src/
@@ -157,6 +159,7 @@ packages/db/
 │   │   ├── templates.ts
 │   │   ├── executions.ts
 │   │   └── index.ts
+│   ├── repositories/    # データアクセス関数（Drizzle 経由）
 │   ├── client.ts        # DB 接続
 │   └── index.ts
 ├── drizzle/             # マイグレーションファイル（自動生成）
