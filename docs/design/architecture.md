@@ -94,7 +94,7 @@ apps/api/src/
 | --- | --- | --- |
 | Routes | HTTP/WebSocket リクエストの受信、バリデーション、レスポンス整形 | Services |
 | Services | ビジネスロジック、エージェント実行の制御、トランザクション管理 | Repositories, agent-core |
-| Repositories | Drizzle 経由のデータアクセス、SQL の構築と実行 | packages/db |
+| Repositories | Drizzle 経由のデータアクセス、SQL の構築と実行 | DB client (Drizzle) |
 
 ## フロントエンド（apps/web）
 
