@@ -201,9 +201,16 @@ const port = 3000;
 
 ## Playwright の利用
 
-Playwright は本 ADR-0016 のスコープ外（後続 Issue で導入予定）。正式導入後は ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成を想定する。詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
+Playwright には用途の異なる 2 つの導入線があり、それぞれ別の意思決定で扱う。
 
-ブラウザの依存パッケージとイメージへの組み込みも、Playwright 正式導入時に DevContainer の features またはイメージに追加する。
+| 用途 | 配布形態 | 状況 | 関連 ADR |
+| --- | --- | --- | --- |
+| AI による UI 検証（実装中の動作確認） | `@playwright/mcp` を `.mcp.json` で起動 | **導入済**（2026-05-04） | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) |
+| E2E テスト（リグレッション防止） | `playwright` を `package.json` に追加 + `playwright.config.ts` | 後続 Issue で導入予定（ADR-0010 の見送り判断を再評価する別議論） | ADR-0010 |
+
+`@playwright/mcp` の Chromium 取得は `.devcontainer/post-create.sh` で行うため、DevContainer リビルド時に自動で揃う。E2E 用 `playwright` を導入する際は、ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成、および `@playwright/mcp` との Chromium バイナリ共有（`PLAYWRIGHT_BROWSERS_PATH`）と version pin を後続 ADR で決定する。
+
+詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
 
 ## トラブルシューティング
 
