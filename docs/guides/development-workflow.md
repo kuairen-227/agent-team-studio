@@ -24,6 +24,15 @@
 - カバレッジ目標: 数値ではなく「Service 層は必ずテストを書く」ルール
 - テストの判定軸（価値あるテストとは何か / 業界標準用語 / アンチパターン）: [テスト原則](../principles/testing.md) を参照
 
+### AI による UI 検証ルール（Playwright MCP）
+
+UI 実装中に Claude が動作確認を行うための指針。`@playwright/mcp`（[ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md)）が `.mcp.json` 経由で利用可能。**E2E テストフレームワークではない**ため、`*.spec.ts` の追加・CI への組込は行わず、ADR-0010 の E2E 見送り方針は維持する。
+
+- **使う**: UI を伴う Issue（US-1〜US-5 等）の完了報告前 / WebSocket ストリーム挙動の検証 / 画面遷移を伴う動作確認
+- **使わない**: docs / ADR / 型のみの変更 / Service 層単体の変更 / API 単独の変更（curl で十分）
+- **検証手順**: `bun run dev`（`apps/web` + `apps/api`）→ Playwright MCP で `localhost:5173`（`apps/web` のデフォルト。`bun run dev` の出力で確認）を開き手順を再現 → 期待状態のスクリーンショットまたはアクセシビリティツリーで確認
+- **注意**: 些末な変更で過剰検証に陥らないこと。型チェック・単体テストで十分な変更にはブラウザを開かない
+
 ### テストフィクスチャ配置方針
 
 - **co-location を基本とし、共有用フォルダは作らない**: フィクスチャは利用するテストと同じディレクトリの `*.test.ts` 内（インライン）または同ディレクトリの `__fixtures__/` に置く。`tests/` や `test/fixtures/` のような最上位フォルダは作らない（テスト対象との関係が読み取れなくなるため）

@@ -1,5 +1,5 @@
 {
-  "enabledMcpjsonServers": ["context7"],
+  "enabledMcpjsonServers": ["context7", "playwright"],
   "statusLine": {
     "type": "command",
     "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
@@ -13,6 +13,7 @@
       "Skill(resolve-review)",
       "Skill(review)",
       "mcp__context7",
+      "mcp__playwright",
       "Bash(bun run:*)",
       "Bash(cat:*)",
       "Bash(bunx biome check:*)",

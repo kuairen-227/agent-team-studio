@@ -18,6 +18,9 @@ dist/
 .claude/settings.local.json
 .claude/worktrees/
 
+# Playwright MCP (実行時 snapshot / console / network ログ。ADR-0024)
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db

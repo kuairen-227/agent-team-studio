@@ -8,3 +8,7 @@ sudo apt-get install -y --no-install-recommends postgresql-client
 sudo install -d -o node -g node -m 700 /home/node/.config /home/node/.config/gh
 
 bun install
+
+# @playwright/mcp が使う Chrome for Testing と system 依存パッケージを事前取得（ADR-0024）。
+sudo npx --yes playwright install-deps chromium
+npx --yes @playwright/mcp@latest install-browser chrome-for-testing
