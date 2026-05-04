@@ -30,7 +30,7 @@ UI 実装中に Claude が動作確認を行うための指針。`@playwright/mc
 
 - **使う**: UI を伴う Issue（US-1〜US-5 等）の完了報告前 / WebSocket ストリーム挙動の検証 / 画面遷移を伴う動作確認
 - **使わない**: docs / ADR / 型のみの変更 / Service 層単体の変更 / API 単独の変更（curl で十分）
-- **検証手順**: `bun run dev`（`apps/web` + `apps/api`）→ Playwright MCP で `localhost:5173` を開き手順を再現 → 期待状態のスクリーンショットまたはアクセシビリティツリーで確認
+- **検証手順**: `bun run dev`（`apps/web` + `apps/api`）→ Playwright MCP で `localhost:5173`（`apps/web` のデフォルト。`bun run dev` の出力で確認）を開き手順を再現 → 期待状態のスクリーンショットまたはアクセシビリティツリーで確認
 - **注意**: 些末な変更で過剰検証に陥らないこと。型チェック・単体テストで十分な変更にはブラウザを開かない
 
 ### テストフィクスチャ配置方針

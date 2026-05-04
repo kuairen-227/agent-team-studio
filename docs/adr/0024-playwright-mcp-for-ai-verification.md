@@ -36,7 +36,14 @@ ADR-0010 では「E2E は MVP では見送り（3 画面、手動確認で十分
 
 ### 3. DevContainer の Chromium 依存
 
-`@playwright/mcp` は初回起動時に Chromium を取得するが、Linux の system 依存パッケージが不足することがあるため、`.devcontainer/post-create.sh` に `npx --yes playwright install --with-deps chromium` を追記する。ADR-0016 の DevContainer 統合方針には抵触しない（features 追加なし、postCreate の拡張のみ）。
+`@playwright/mcp` は初回起動時に Chromium を取得するが、Linux の system 依存パッケージが不足することがあるため、`.devcontainer/post-create.sh` に以下の 2 コマンドを追記する。`install-deps` は apt パッケージ操作のため sudo が必要、`install`（Chromium バイナリ取得）はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
+
+```bash
+sudo npx --yes playwright install-deps chromium
+npx --yes playwright install chromium
+```
+
+ADR-0016 の DevContainer 統合方針には抵触しない（features 追加なし、postCreate の拡張のみ）。
 
 ### 4. 運用ルールは `development-workflow.md` に記載
 
@@ -61,3 +68,4 @@ ADR-0010 では「E2E は MVP では見送り（3 画面、手動確認で十分
 - `.claude/settings.json` の MCP allow 追加により Claude の利用可能ツール表面が広がる。運用ルールで「いつ使う／使わない」を明示しないと、些末な変更でもブラウザを開く過剰検証に陥る恐れがある
 - Plugin 方式や E2E フレームワーク採否は本 ADR の射程外として未決のまま残る。判断時期は (a) 公式 Plugin に skill / agent が同梱されるなど機能差が顕在化した時点、(b) リグレッション検知が必要なほど画面・機能が増えた時点、を目安とする
 - `playwright` を `package.json` に E2E 用途で追加する将来時点で、Chromium バイナリが MCP と重複する可能性がある。`PLAYWRIGHT_BROWSERS_PATH` の共有や version pin の方針は E2E 導入 ADR の検討事項として明示的に未決のまま残す
+- `@playwright/mcp@latest` の version pin は当面行わない。固定する判断時期の目安は (a) E2E 導入 ADR の検討時に E2E 側 `playwright` の version と揃えるタイミング、(b) MCP 側のバージョン変更で動作の揺れ（API 変更・ブラウザ起動失敗等）が発生した時点、のいずれか早い方
