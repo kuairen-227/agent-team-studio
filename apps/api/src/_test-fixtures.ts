@@ -1,9 +1,6 @@
 /**
- * テスト用の共通 fixture。
- *
- * `app.test.ts` と `services/templates.test.ts` の両方で同じ Template 値を
- * 参照する必要があり、独立定義しておくと `description` 等の些細な差分が紛れ込む
- * （レビュー指摘 #6）ため、本ファイルに集約する。
+ * テスト用の共通 Template fixture。複数テストファイルで独立定義すると
+ * `description` 等の些細な差分が紛れ込むため、本ファイルに集約する。
  *
  * `_` プレフィックスはテスト専用ヘルパであることを示すローカル規約
  * （`packages/db/src/schema/_helpers.ts` と同じ運用）。

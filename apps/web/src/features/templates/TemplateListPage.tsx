@@ -1,14 +1,14 @@
 /**
  * テンプレート一覧画面（[US-1](docs/product/user-stories.md#us-1-テンプレートを選んで調査を始める)）。
  *
- * 一覧 fetch（`GET /api/templates`）に加え、各テンプレートのエージェント構成を
- * 表示するため詳細 fetch（`GET /api/templates/:id`）を行う。MVP は 1 テンプレート
- * 前提（ADR-0005）のため N+1 を許容する。テンプレート数が増えた段階で
- * `TemplateSummary` 拡張または専用の集約エンドポイントで再考する。
+ * 各カードにエージェント構成を出すために詳細 fetch を 1 件ずつ追加で叩く N+1 を
+ * 許容している。MVP は 1 テンプレ前提（ADR-0005）。件数が増えた段階で
+ * `TemplateSummary` 拡張または集約エンドポイントで再考する。
  *
- * fetch ロジックは Router 固有 API（loader）に寄せず素 `fetch` + `useEffect`
- * とする方針（[ADR-0025](docs/adr/0025-spa-routing-library.md) Decision）。
- * StrictMode 下で useEffect が二度実行される件は cancellation フラグで対処する。
+ * Router 固有 API（loader）には寄せず素 `fetch` を `useEffect` 内に閉じる方針
+ * （[ADR-0025](docs/adr/0025-spa-routing-library.md) Decision）。StrictMode の
+ * useEffect 二重実行と再読み込み連打の race condition は `reloadTokenRef` の
+ * token 番号方式で破棄する。
  */
 
 import type {
