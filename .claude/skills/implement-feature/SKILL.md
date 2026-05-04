@@ -3,7 +3,7 @@ name: implement-feature
 description: 機能実装・改修を type-first + テストファーストの手順（Step 0 で型差分確認 → RED → GREEN → リファクタリング → 統合確認）で進める。enhancement / bug ラベルの Issue 実装で使う。
 when_to_use: ユーザーが「実装して」「機能追加して」「修正して」「TDD で進めて」などと言ったとき、または process-issue から実装フェーズに入るとき
 argument-hint: "[issue-number-or-context]"
-allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git:*) Bash(gh:*) Read Grep Glob Edit Write Agent
+allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(git switch:*) Bash(gh issue view:*) Bash(gh issue list:*) Read Grep Glob Edit Write Agent
 ---
 
 # implement-feature
