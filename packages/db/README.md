@@ -17,6 +17,8 @@ packages/db/
     │   ├── agent-executions.ts
     │   ├── results.ts
     │   └── index.ts
+    ├── repositories/          # データアクセス関数（[ADR-0023](../../docs/adr/0023-repository-layer-placement.md)）
+    │   └── templates.ts
     ├── seed-data/             # シード用データ定義
     │   └── competitor-analysis.ts
     ├── client.ts              # DbClient ファクトリ
@@ -123,5 +125,6 @@ MVP は **truncate-per-test** を採用する。
 
 - [ADR-0008](../../docs/adr/0008-tech-stack.md) 技術スタック
 - [ADR-0009](../../docs/adr/0009-architecture.md) アーキテクチャ
+- [ADR-0023](../../docs/adr/0023-repository-layer-placement.md) repo 層の物理配置（packages/db 採用）
 - [ADR-0014](../../docs/adr/0014-mvp-data-model-design.md) MVP データモデル設計方針
 - [docs/design/data-model.md](../../docs/design/data-model.md) 論理モデル SSoT

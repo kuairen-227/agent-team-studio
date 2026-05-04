@@ -76,7 +76,7 @@ graph TD
 
 ## バックエンド（apps/api）
 
-レイヤードアーキテクチャ（routes → services → repositories）を採用。
+レイヤードアーキテクチャ（routes → services → repositories）を採用。repositories は [packages/db](#データベースpackagesdb) 配下に配置する（[ADR-0023](../adr/0023-repository-layer-placement.md)）。
 
 ```bash
 apps/api/src/
@@ -87,9 +87,6 @@ apps/api/src/
 ├── services/            # ビジネスロジック
 │   ├── execution.service.ts
 │   └── template.service.ts
-├── repositories/        # データアクセス（Drizzle）
-│   ├── execution.repo.ts
-│   └── template.repo.ts
 └── index.ts             # Hono app 組み立て・起動
 ```
 
@@ -97,7 +94,7 @@ apps/api/src/
 | --- | --- | --- |
 | Routes | HTTP/WebSocket リクエストの受信、バリデーション、レスポンス整形 | Services |
 | Services | ビジネスロジック、エージェント実行の制御、トランザクション管理 | Repositories, agent-core |
-| Repositories | Drizzle 経由のデータアクセス、SQL の構築と実行 | packages/db |
+| Repositories | Drizzle 経由のデータアクセス、SQL の構築と実行 | DB client (Drizzle) |
 
 ## フロントエンド（apps/web）
 
@@ -150,6 +147,8 @@ packages/agent-core/src/
 
 ## データベース（packages/db）
 
+インフラ層パッケージ。Drizzle スキーマ・DB 接続・データアクセス関数（repositories）の 3 要素を持つ（[ADR-0023](../adr/0023-repository-layer-placement.md)）。
+
 ```bash
 packages/db/
 ├── src/
@@ -157,6 +156,7 @@ packages/db/
 │   │   ├── templates.ts
 │   │   ├── executions.ts
 │   │   └── index.ts
+│   ├── repositories/    # データアクセス関数（Drizzle 経由）
 │   ├── client.ts        # DB 接続
 │   └── index.ts
 ├── drizzle/             # マイグレーションファイル（自動生成）
