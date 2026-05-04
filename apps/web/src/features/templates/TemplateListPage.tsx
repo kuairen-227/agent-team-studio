@@ -17,8 +17,10 @@ import type {
   GetTemplatesResponse,
   TemplateSummary,
 } from "@agent-team-studio/shared";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -33,7 +35,7 @@ type EnrichedTemplate = TemplateSummary & { agents: AgentDefinition[] };
 type State =
   | { kind: "loading" }
   | { kind: "ready"; items: EnrichedTemplate[] }
-  | { kind: "error"; message: string };
+  | { kind: "error" };
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -56,38 +58,62 @@ async function loadTemplates(): Promise<EnrichedTemplate[]> {
 export function TemplateListPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
   const navigate = useNavigate();
+  // ui-patterns.md §7 / WCAG 2.1 SC 2.4.3: 画面遷移直後は <h1> に focus。
+  // tabIndex={-1} でプログラムからのみ focus 可能とし、tab 順には載せない。
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // 再読み込み時の race condition 対策。発行ごとに token を更新し、
+  // 戻ってきた fetch の token と現在値を比較して古いレスポンスを破棄する。
+  const reloadTokenRef = useRef(0);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(() => {
+    const token = ++reloadTokenRef.current;
+    setState({ kind: "loading" });
     loadTemplates()
       .then((items) => {
-        if (!cancelled) setState({ kind: "ready", items });
+        if (reloadTokenRef.current === token) {
+          setState({ kind: "ready", items });
+        }
       })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setState({
-            kind: "error",
-            message: err instanceof Error ? err.message : String(err),
-          });
+      .catch(() => {
+        // 内部表現（"status=404" 等）は UI に出さない（ui-patterns.md §3.3）。
+        if (reloadTokenRef.current === token) {
+          setState({ kind: "error" });
         }
       });
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <section>
-      <h1 className="mb-4 text-xl font-semibold">テンプレート一覧</h1>
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mb-4 text-xl font-semibold focus:outline-none"
+      >
+        テンプレート一覧
+      </h1>
       {state.kind === "loading" && <TemplateListSkeleton />}
       {state.kind === "error" && (
-        <p className="text-sm text-destructive">
-          読み込みに失敗しました: {state.message}
-        </p>
+        <Alert variant="destructive">
+          <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
+          <AlertDescription>
+            <p>時間をおいて再度お試しください。</p>
+            <Button variant="outline" size="sm" onClick={load}>
+              再読み込み
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
       {state.kind === "ready" && state.items.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          テンプレートがありません
+          まだテンプレートがありません。管理者にお問い合わせください。
         </p>
       )}
       {state.kind === "ready" && state.items.length > 0 && (
@@ -159,6 +185,9 @@ function describeAgent(agent: AgentDefinition): string {
   return "統合役";
 }
 
+// Skeleton 件数は固定（2 枚）。実テンプレ件数に合わせて変動させると、
+// fetch 中の見え方が読み込みごとに変わって「読み込み中である」というシグナルが
+// 弱まる。MVP は 1 件確定（ADR-0005）だが本コンポーネントは件数中立に保つ。
 function TemplateListSkeleton() {
   return (
     <ul className="grid gap-4 md:grid-cols-2">
