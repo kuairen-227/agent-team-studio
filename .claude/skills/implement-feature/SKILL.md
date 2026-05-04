@@ -3,7 +3,7 @@ name: implement-feature
 description: 機能実装・改修を type-first + テストファーストの手順（Step 0 で型差分確認 → RED → GREEN → リファクタリング → 統合確認）で進める。enhancement / bug ラベルの Issue 実装で使う。
 when_to_use: ユーザーが「実装して」「機能追加して」「修正して」「TDD で進めて」などと言ったとき、または process-issue から実装フェーズに入るとき
 argument-hint: "[issue-number-or-context]"
-allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(gh issue view:*) Bash(gh issue list:*) Read Grep Glob Edit Write Agent mcp__playwright__*
+allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx shadcn:*) Bash(bunx biome:*) Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(gh issue view:*) Bash(gh issue list:*) Read Grep Glob Edit Write Agent Skill(create-adr) mcp__playwright__*
 ---
 
 # implement-feature
@@ -46,7 +46,7 @@ API 変更を含む場合:
 - `bun run test` で **失敗することを確認してから Step 2 に進む**
 - テスト追加は独立コミットにする（推奨）。タイトル例: `test(api): xxx の service テストを追加`
 
-Step 1 を skip して Step 2 に進む場合（自明なリファクタで振る舞いが変わらない場合等）は、ユーザーに理由を通知（承認待ちなし可）したうえで、コミットメッセージまたは PR 本文に同じ理由を残す。
+Step 1 を skip して Step 2 に進む場合（例: 自明なリファクタで振る舞いが変わらない / 設定値や依存の追加のみで振る舞いに影響しない）は、ユーザーに理由を通知（承認待ちなし可）したうえで、コミットメッセージまたは PR 本文に同じ理由を残す。
 
 UI のみの変更:
 

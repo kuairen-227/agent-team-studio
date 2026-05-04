@@ -3,7 +3,7 @@ name: process-issue
 description: GitHub Issue の内容を読み取り、作業計画を立てて実装を行う。Issue 番号を引数に指定する。
 when_to_use: ユーザーが「Issue対応して」「Issue処理して」「#XX やって」「このIssueやって」などと言ったとき
 argument-hint: "<issue-number>"
-allowed-tools: Bash(gh issue view:*) Bash(gh issue list:*) Bash(gh issue comment:*) Bash(gh api:*) Bash(git checkout:*) Bash(git switch:*) Bash(git branch:*) Read Grep Glob Edit Write Agent Skill
+allowed-tools: Bash(gh issue view:*) Bash(gh issue list:*) Bash(gh issue comment:*) Bash(git checkout:*) Bash(git switch:*) Bash(git branch:*) Read Grep Glob Edit Write Agent Skill
 ---
 
 # process-issue
