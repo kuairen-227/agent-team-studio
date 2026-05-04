@@ -189,14 +189,9 @@ URL ルーティングを本節で確定する（§4 で参照した screen-flow
 
 ### 8.4 ライブラリ選定
 
-ルーティングライブラリは MVP 実装 Issue で確定する（本 doc の責務は URL 設計のみ）。候補と選定基準:
+[ADR-0025](../adr/0025-spa-routing-library.md) で **React Router v7** を採用。判断基準（①バンドルサイズ、②型安全性、③将来 SSR 移行の余地）と不採用案（wouter / TanStack Router / Next.js）の評価は ADR-0025 に集約する。
 
-| 候補 | 想定理由 |
-| --- | --- |
-| React Router v7 | de facto。SSR 等の将来拡張余地あり |
-| wouter / TanStack Router | バンドル軽量・型安全 |
-
-判断基準: ①バンドルサイズ、②型安全性、③将来 SSR 移行の余地。MVP 段階では React Router v7 を第一候補として実装 Issue で最終決定する。
+US-1（Issue #117）段階では、TanStack Router 等への乗り換えコストを低位に保つため `loader` / `action` 等の Router 固有 API は使わず、`fetch` は `useEffect` 内に留める方針を取る（詳細は ADR-0025 Decision 参照）。
 
 ### 8.5 ルート不在時の挙動
 

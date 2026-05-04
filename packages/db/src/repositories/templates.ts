@@ -1,15 +1,15 @@
 /**
  * `templates` テーブルの読み出し repo。
  *
- * MVP は一覧（`TemplateSummary`）のみ。詳細取得（`definition` を含む）は
- * GET /api/templates/:id 実装時（US-2）に追加する。
+ * - `listTemplateSummaries`: 一覧（`TemplateSummary`）。`definition` を含めない軽量表現
+ * - `getTemplateById`: 詳細（`Template`）。`definition` と timestamps を含む
  *
- * 戻り値の `id` は schema 側で uuid 型のため string にキャストせず、
- * `TemplateSummary` の `TemplateId = string` と互換になる。
+ * Drizzle の column 名は camelCase（schema 定義と一致）だが、ドメイン型 `Template`
+ * は data-model.md §6 に従い snake_case。境界で明示的にマッピングする。
  */
 
-import type { TemplateSummary } from "@agent-team-studio/shared";
-import { asc } from "drizzle-orm";
+import type { Template, TemplateSummary } from "@agent-team-studio/shared";
+import { asc, eq } from "drizzle-orm";
 import type { DrizzleDb } from "../client.ts";
 import { templates } from "../schema/index.ts";
 
@@ -24,4 +24,26 @@ export async function listTemplateSummaries(
     })
     .from(templates)
     .orderBy(asc(templates.createdAt));
+}
+
+export async function getTemplateById(
+  db: DrizzleDb,
+  id: string,
+): Promise<Template | null> {
+  // id は PK のため実害はないが、意図（高々 1 件）を明示するため limit(1) を付ける。
+  const rows = await db
+    .select()
+    .from(templates)
+    .where(eq(templates.id, id))
+    .limit(1);
+  const [row] = rows;
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    definition: row.definition,
+    created_at: row.createdAt.toISOString(),
+    updated_at: row.updatedAt.toISOString(),
+  };
 }

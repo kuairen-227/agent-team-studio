@@ -10,6 +10,7 @@ ADR-0008 で決定した技術スタックの一覧。
 | 言語 | TypeScript (strict) | 全パッケージ共通 |
 | モノレポ | Bun workspace + Turborepo | workspace によるパッケージ管理、Turborepo によるビルドキャッシュ・タスクオーケストレーション |
 | フロントエンド | React + Vite (SPA) | UI レンダリング。ビルド成果物は Hono から静的配信 |
+| ルーティング | React Router v7 | SPA のクライアントサイドルーティング（[ADR-0025](../adr/0025-spa-routing-library.md)） |
 | UI コンポーネント | shadcn/ui + Tailwind CSS v4 | Radix UI ベースのコンポーネントをプロジェクトにコピーして使用 |
 | バックエンド | Hono | REST API、WebSocket、SPA 配信を 1 サーバーで提供 |
 | WebSocket | Hono 組み込み WebSocket | エージェント実行のリアルタイム進捗配信 |
