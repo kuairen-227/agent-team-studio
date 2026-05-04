@@ -38,6 +38,8 @@ ADR-0010 では「E2E は MVP では見送り（3 画面、手動確認で十分
 
 `@playwright/mcp` の起動には Chromium と Linux system 依存パッケージが必要だが、DevContainer 内では不足することがある。`.devcontainer/post-create.sh` に以下の 2 コマンドを追記し、リビルド時に確実に揃える。`install-deps` は apt パッケージ操作のため sudo が必要、`install`（Chromium バイナリ取得）はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
 
+なお `@playwright/mcp` は既定で `chrome` チャンネル（システム Google Chrome）を参照するため、Playwright がバンドルする Chromium を使うよう `.mcp.json` の args に `--browser chromium` を明示する。これにより DevContainer に Google Chrome を別途導入する必要がない。
+
 ```bash
 sudo npx --yes playwright install-deps chromium
 npx --yes playwright install chromium
