@@ -5,7 +5,7 @@
 accepted
 
 - 作成日: 2026-05-04
-- 関連: [ADR-0010](./0010-development-workflow.md)（前提：E2E は見送り）, [ADR-0016](./0016-devcontainer-integration.md)（前提：DevContainer 統合）, Issue #116, Issue #123
+- 関連: [ADR-0010](./0010-development-workflow.md)（前提：E2E は見送り）, [ADR-0016](./0016-devcontainer-integration.md)（前提：DevContainer 統合。ADR-0018 は compose 構成のみが対象であり、postCreate の判断は ADR-0016 が引き続き有効）, Issue #116, Issue #123
 
 ## Context
 
@@ -36,7 +36,7 @@ ADR-0010 では「E2E は MVP では見送り（3 画面、手動確認で十分
 
 ### 3. DevContainer の Chromium 依存
 
-`@playwright/mcp` は初回起動時に Chromium を取得するが、Linux の system 依存パッケージが不足することがあるため、`.devcontainer/post-create.sh` に以下の 2 コマンドを追記する。`install-deps` は apt パッケージ操作のため sudo が必要、`install`（Chromium バイナリ取得）はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
+`@playwright/mcp` の起動には Chromium と Linux system 依存パッケージが必要だが、DevContainer 内では不足することがある。`.devcontainer/post-create.sh` に以下の 2 コマンドを追記し、リビルド時に確実に揃える。`install-deps` は apt パッケージ操作のため sudo が必要、`install`（Chromium バイナリ取得）はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
 
 ```bash
 sudo npx --yes playwright install-deps chromium
