@@ -40,4 +40,4 @@ app の構築を `createApp(deps)` 関数で関数化し、テストでは fake 
 
 ## UI 動作検証
 
-React コンポーネントの単体テストは MVP 範囲外（[ADR-0010](../adr/0010-development-workflow.md)）。代わりに Playwright MCP で受入条件を再現確認する。運用ルールは [ai-ui-verification.md](./ai-ui-verification.md) を参照。
+React コンポーネントの単体テストは MVP 範囲外。代わりに Playwright MCP で受入条件を再現確認する。運用ルールは [ai-ui-verification.md](./ai-ui-verification.md) を参照。

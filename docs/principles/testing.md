@@ -40,7 +40,7 @@
 ### 構造パターン
 
 - **AAA（Arrange-Act-Assert）**: テストコード本体の物理構造（準備 / 実行 / 検証の 3 ブロック）[^aaa]
-- **Given-When-Then**: 仕様記述の意味構造（BDD framing）。本プロジェクトでは `describe`/`it` のテキストに採用する（[ADR-0010 §3](../adr/0010-development-workflow.md)）。Cucumber 等の Gherkin フレームワークは導入しない
+- **Given-When-Then**: 仕様記述の意味構造（BDD framing）。本プロジェクトでは `describe`/`it` のテキストに採用する（[ADR-0010](../adr/0010-development-workflow.md)）。Cucumber 等の Gherkin フレームワークは導入しない
 - 両者は粒度が異なり共存する（Given ≈ Arrange / When ≈ Act / Then ≈ Assert）。AAA でコードを分け、describe/it に GWT 語彙を使う併用が標準
 
 ### FIRST 原則

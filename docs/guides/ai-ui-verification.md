@@ -14,7 +14,7 @@
 
 - docs / ADR / 型のみの変更
 - Service 層単体の変更
-- API 単独の変更（単体・統合テストで担保。`curl` は `.claude/settings.json` の deny 済みのため、API 動作確認はテストで賄う）
+- API 単独の変更（API レスポンスの動作確認は単体・統合テストで担保する。`curl` は `.claude/settings.json` で deny 済みのため代替手段なし）
 
 ## 検証手順
 
