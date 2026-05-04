@@ -42,6 +42,7 @@
       "Bash(gh milestone list:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr comment:*)",
+      "Bash(gh pr edit:*)",
       "Bash(gh pr diff:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)"
