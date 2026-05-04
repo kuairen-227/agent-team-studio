@@ -52,7 +52,9 @@
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",
       "Bash(curl:*)",
-      "Bash(wget:*)"
+      "Bash(wget:*)",
+      "mcp__playwright__browser_run_code_unsafe",
+      "mcp__playwright__browser_evaluate"
     ]
   }
 }

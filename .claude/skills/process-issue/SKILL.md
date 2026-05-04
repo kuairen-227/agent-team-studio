@@ -57,7 +57,12 @@ Issue のラベルから実装フェーズの進め方を決める:
 
 #### 5a. enhancement / bug の場合
 
-`implement-feature` skill を呼び出す。Issue の文脈と Step 3 で合意した計画を引き継ぐ。
+`implement-feature` skill を呼び出す。引き継ぐ情報:
+
+- Issue 番号
+- Step 3 で合意した計画の全文（変更対象ファイル / 作業ステップ / 判断ポイント）
+
+`implement-feature` 側は計画を受領済みとして Step 0 の型差分確認から開始する（再 `gh issue view` は不要）。
 
 #### 5b. chore / documentation / decision の場合
 
@@ -66,6 +71,11 @@ Issue のラベルから実装フェーズの進め方を決める:
 - CLAUDE.md のコーディング規約・コミット規約に従う
 - 意味のある単位でコミットする
 - コミットメッセージに `#<issue-number>` を含めて Issue と紐付ける
+
+完了前に最低限の品質確認を行う:
+
+- 常に: `bun run lint:md && bun run lint:secret`
+- コードまたは設定に変更がある場合: 加えて `bun run lint && bun run type-check && bun run test && bun run build`
 
 ### 6. 完了報告
 

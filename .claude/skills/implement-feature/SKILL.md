@@ -3,7 +3,7 @@ name: implement-feature
 description: 機能実装・改修を type-first + テストファーストの手順（Step 0 で型差分確認 → RED → GREEN → リファクタリング → 統合確認）で進める。enhancement / bug ラベルの Issue 実装で使う。
 when_to_use: ユーザーが「実装して」「機能追加して」「修正して」「TDD で進めて」などと言ったとき、または process-issue から実装フェーズに入るとき
 argument-hint: "[issue-number-or-context]"
-allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(git switch:*) Bash(gh issue view:*) Bash(gh issue list:*) Read Grep Glob Edit Write Agent mcp__playwright__*
+allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*) Bash(gh issue view:*) Bash(gh issue list:*) Read Grep Glob Edit Write Agent mcp__playwright__*
 ---
 
 # implement-feature
@@ -24,7 +24,7 @@ allowed-tools: Bash(bun run:*) Bash(bun add:*) Bash(bunx:*) Bash(git add:*) Bash
 実装着手前のチェックポイント。**ここを飛ばさない**ことが本 skill の核。
 
 1. **要件の確認**
-   - `process-issue` から呼ばれた場合: 引き継いだ Issue 内容を再確認
+   - `process-issue` から呼ばれた場合: Issue 番号と合意済み計画を受領済みのため、再 `gh issue view` は不要。受領内容を頭出しで確認
    - 直接呼ばれた場合: `gh issue view <issue-number>` または `$ARGUMENTS` から要件を整理
 
 2. **型差分の特定**
@@ -46,7 +46,7 @@ API 変更を含む場合:
 - `bun run test` で **失敗することを確認してから Step 2 に進む**
 - テスト追加は独立コミットにする（推奨）。タイトル例: `test(api): xxx の service テストを追加`
 
-「Step 1 を skip して Step 2 に進む」必要がある場合は理由を明示し、コミットメッセージまたは PR 本文に残す（自明なリファクタで振る舞いが変わらない場合等）。
+Step 1 を skip して Step 2 に進む場合（自明なリファクタで振る舞いが変わらない場合等）は、ユーザーに理由を通知（承認待ちなし可）したうえで、コミットメッセージまたは PR 本文に同じ理由を残す。
 
 UI のみの変更:
 
