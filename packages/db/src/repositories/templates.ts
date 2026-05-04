@@ -30,8 +30,13 @@ export async function getTemplateById(
   db: DrizzleDb,
   id: string,
 ): Promise<Template | null> {
-  const rows = await db.select().from(templates).where(eq(templates.id, id));
-  const row = rows[0];
+  // id は PK のため実害はないが、意図（高々 1 件）を明示するため limit(1) を付ける。
+  const rows = await db
+    .select()
+    .from(templates)
+    .where(eq(templates.id, id))
+    .limit(1);
+  const [row] = rows;
   if (!row) return null;
   return {
     id: row.id,
