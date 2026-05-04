@@ -9,6 +9,7 @@
 
 import {
   createDbClient,
+  createExecution,
   getTemplateById,
   listTemplateSummaries,
 } from "@agent-team-studio/db";
@@ -25,6 +26,7 @@ const { db } = createDbClient(databaseUrl);
 const app = createApp({
   listTemplateSummaries: () => listTemplateSummaries(db),
   getTemplateById: (id) => getTemplateById(db, id),
+  createExecution: (input) => createExecution(db, input),
 });
 
 const port = Number.parseInt(process.env.PORT ?? "", 10) || 3000;

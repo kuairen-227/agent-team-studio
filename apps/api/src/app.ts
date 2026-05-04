@@ -11,16 +11,26 @@
  * エラーは `lib/errors.ts` の onError で `ApiNotFoundError` / `ApiInternalError` 形に整形する。
  */
 
-import type { Template, TemplateSummary } from "@agent-team-studio/shared";
+import type { CreateExecutionInput } from "@agent-team-studio/db";
+import type {
+  CreateExecutionResponse,
+  Template,
+  TemplateSummary,
+} from "@agent-team-studio/shared";
 import { Hono } from "hono";
 import { onError } from "./lib/errors.ts";
+import { createExecutionsRoutes } from "./routes/executions.ts";
 import { createTemplatesRoutes } from "./routes/templates.ts";
 import { createWsRoutes } from "./routes/ws.ts";
+import { createExecutionsService } from "./services/executions.ts";
 import { createTemplatesService } from "./services/templates.ts";
 
 export type AppDeps = {
   listTemplateSummaries: () => Promise<TemplateSummary[]>;
   getTemplateById: (id: string) => Promise<Template | null>;
+  createExecution: (
+    input: CreateExecutionInput,
+  ) => Promise<CreateExecutionResponse>;
 };
 
 export function createApp(deps: AppDeps) {
@@ -35,6 +45,13 @@ export function createApp(deps: AppDeps) {
     getTemplateById: deps.getTemplateById,
   });
   app.route("/api/templates", createTemplatesRoutes({ templatesService }));
+
+  const executionsService = createExecutionsService({
+    getTemplateById: deps.getTemplateById,
+    createExecution: deps.createExecution,
+  });
+  app.route("/api/executions", createExecutionsRoutes({ executionsService }));
+
   app.route("/ws", createWsRoutes());
 
   return app;

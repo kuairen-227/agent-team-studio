@@ -14,6 +14,7 @@
     "@agent-team-studio/agent-core": "workspace:*",
     "@agent-team-studio/db": "workspace:*",
     "@agent-team-studio/shared": "workspace:*",
-    "hono": "^4.12.15"
+    "hono": "^4.12.15",
+    "zod": "^4.3.6"
   }
 }

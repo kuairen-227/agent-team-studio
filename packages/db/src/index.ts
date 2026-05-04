@@ -7,5 +7,6 @@
  */
 
 export { createDbClient, type DbClient, type DrizzleDb } from "./client.ts";
+export * from "./repositories/executions.ts";
 export * from "./repositories/templates.ts";
 export * as schema from "./schema/index.ts";
