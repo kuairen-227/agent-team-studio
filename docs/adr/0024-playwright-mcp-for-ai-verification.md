@@ -51,7 +51,7 @@ ADR-0016 の DevContainer 統合方針には抵触しない（features 追加な
 
 ### 5. devcontainer.md の Playwright 記述との関係
 
-`docs/guides/devcontainer.md` 既存の「Playwright の利用」セクション（L202-206）は **E2E 用 `playwright` 導入を後続 Issue で扱う前提** で書かれている。本 ADR の MCP（`@playwright/mcp`）と E2E 用 `playwright` を読者が混同しないよう、同セクションに 1 段落の補足を追加し両者を区別する。
+`docs/guides/devcontainer.md` 既存の「Playwright の利用」セクションは **E2E 用 `playwright` 導入を後続 Issue で扱う前提** で書かれている。本 ADR の MCP（`@playwright/mcp`）と E2E 用 `playwright` を読者が混同しないよう、同セクションに 1 段落の補足を追加し両者を区別する。
 
 ## Consequences
 
@@ -68,4 +68,4 @@ ADR-0016 の DevContainer 統合方針には抵触しない（features 追加な
 - `.claude/settings.json` の MCP allow 追加により Claude の利用可能ツール表面が広がる。運用ルールで「いつ使う／使わない」を明示しないと、些末な変更でもブラウザを開く過剰検証に陥る恐れがある
 - Plugin 方式や E2E フレームワーク採否は本 ADR の射程外として未決のまま残る。判断時期は (a) 公式 Plugin に skill / agent が同梱されるなど機能差が顕在化した時点、(b) リグレッション検知が必要なほど画面・機能が増えた時点、を目安とする
 - `playwright` を `package.json` に E2E 用途で追加する将来時点で、Chromium バイナリが MCP と重複する可能性がある。`PLAYWRIGHT_BROWSERS_PATH` の共有や version pin の方針は E2E 導入 ADR の検討事項として明示的に未決のまま残す
-- `@playwright/mcp@latest` の version pin は当面行わない。固定する判断時期の目安は (a) E2E 導入 ADR の検討時に E2E 側 `playwright` の version と揃えるタイミング、(b) MCP 側のバージョン変更で動作の揺れ（API 変更・ブラウザ起動失敗等）が発生した時点、のいずれか早い方
+- `@playwright/mcp@latest` の version pin は当面行わない。固定する判断時期の目安は (a) E2E 導入 ADR の検討時に E2E 側 `playwright` の version と揃えるタイミング、(b) MCP 側のバージョン変更で動作の揺れ（API 変更・ブラウザ起動失敗等）が発生した時点、のいずれか早い方。なお `.mcp.json` の MCP サーバは `package.json` の依存ではないため [ADR-0022](./0022-dependabot-operational-policy.md) の Dependabot 監視対象外であり、更新は手動である点も pin 判断時の考慮要素となる
