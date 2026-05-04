@@ -103,7 +103,7 @@ MVP は **truncate-per-test** を採用する。
 
 - 各テストの `beforeEach` で全テーブルを `TRUNCATE ... CASCADE`
 - 並列実行は当面想定しない（テスト数が少ないうち）
-- 設定は最小限。テストフィクスチャ配置方針は Walking Skeleton（[Issue #82](https://github.com/kuairen-227/agent-team-studio/issues/82)）の R1 で `docs/guides/development-workflow.md` に追記
+- 設定は最小限。テストフィクスチャ配置方針は [docs/guides/testing.md](../../docs/guides/testing.md) を参照
 
 将来の拡張パス（必要になった時点で切替）:
 

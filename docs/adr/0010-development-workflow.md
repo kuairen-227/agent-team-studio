@@ -36,7 +36,7 @@ Issue での却下理由は「Gherkin のフォーマル記法は 1人+AI チー
 
 **型駆動 + 軽量 TDD** を採用する。AI駆動開発の枠組み（ADR-0007）の中で、実装フェーズの具体的な進め方を定める。
 
-具体的な実装ワークフローとテスト戦略は [開発ワークフローガイド](../guides/development-workflow.md) に記載する。
+具体的な実装ワークフローは [implement-feature skill](../../.claude/skills/implement-feature/SKILL.md)、テスト戦略は [guides/testing.md](../guides/testing.md) に記載する。
 
 実装フェーズを通じてワークフローの改善が必要になった場合は、本 ADR を更新する。
 

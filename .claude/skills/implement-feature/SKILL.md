@@ -77,7 +77,7 @@ Web 変更:
 ### Step 4. 統合確認
 
 - `bun run lint && bun run lint:md && bun run lint:secret && bun run type-check && bun run test && bun run build` が全緑であることを確認
-- UI を伴う変更の場合: `bun run dev`（apps/web + apps/api）→ Playwright MCP で受入条件を再現確認（[ai-ui-verification.md](../../../docs/guides/ai-ui-verification.md) ※未整備の場合は [ADR-0024](../../../docs/adr/0024-playwright-mcp-for-ai-verification.md) を参照）
+- UI を伴う変更の場合: `bun run dev`（apps/web + apps/api）→ Playwright MCP で受入条件を再現確認（[ai-ui-verification.md](../../../docs/guides/ai-ui-verification.md)）
 
 ### Step 5. 完了報告
 

@@ -47,9 +47,9 @@ npx --yes @playwright/mcp@latest install-browser chrome-for-testing
 
 ADR-0016 の DevContainer 統合方針には抵触しない（features 追加なし、postCreate の拡張のみ）。
 
-### 4. 運用ルールは `development-workflow.md` に記載
+### 4. 運用ルールは `ai-ui-verification.md` に記載
 
-「いつ使う／使わない」の使用基準は `docs/guides/development-workflow.md` に 1 セクション追加する。CLAUDE.md は起動時ガイダンスとして要点のみ残す方針（principles/README.md が SSoT）に従い変更しない。
+「いつ使う／使わない」の使用基準は [docs/guides/ai-ui-verification.md](../guides/ai-ui-verification.md) に集約する。CLAUDE.md は起動時ガイダンスとして要点のみ残す方針（principles/README.md が SSoT）に従い変更しない。
 
 ### 5. devcontainer.md の Playwright 記述との関係
 
