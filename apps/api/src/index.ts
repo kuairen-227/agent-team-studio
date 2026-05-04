@@ -7,7 +7,11 @@
  * Bun の serve には `fetch` と `websocket` の双方を渡す必要がある（hono/bun の規約）。
  */
 
-import { createDbClient, listTemplateSummaries } from "@agent-team-studio/db";
+import {
+  createDbClient,
+  getTemplateById,
+  listTemplateSummaries,
+} from "@agent-team-studio/db";
 import { createApp } from "./app.ts";
 import { websocket } from "./lib/ws.ts";
 
@@ -20,6 +24,7 @@ const { db } = createDbClient(databaseUrl);
 
 const app = createApp({
   listTemplateSummaries: () => listTemplateSummaries(db),
+  getTemplateById: (id) => getTemplateById(db, id),
 });
 
 const port = Number.parseInt(process.env.PORT ?? "", 10) || 3000;

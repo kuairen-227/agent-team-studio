@@ -1,22 +1,26 @@
 /**
  * テンプレート Service 層。
  *
- * Service の責務は「Repo の戻り値を API レスポンス形（`TemplateSummary[]`）へ整える」。
- * MVP では Repo の戻り値が既に `TemplateSummary[]` 型なので変換は不要だが、
- * 後続の filtering / sorting / 派生フィールド付与の入り口として層を残す。
+ * Service の責務は「Repo の戻り値を API レスポンス形へ整える」ことと
+ * 「不在を `NotFoundError` として表す」こと。
  *
- * 依存は関数注入（`deps.listTemplateSummaries`）にして、単体テストで Repo を
- * モック差し替えできるようにする。
+ * - listTemplates: `TemplateSummary[]` を返す（MVP では変換なし）
+ * - getTemplate: `Template` を返す。不在時は NotFoundError を throw（route で 404 へ）
+ *
+ * 依存は関数注入（`deps.*`）にして、単体テストで Repo をモック差し替えできるようにする。
  */
 
-import type { TemplateSummary } from "@agent-team-studio/shared";
+import type { Template, TemplateSummary } from "@agent-team-studio/shared";
+import { NotFoundError } from "../lib/errors.ts";
 
 export type TemplatesService = {
   listTemplates: () => Promise<TemplateSummary[]>;
+  getTemplate: (id: string) => Promise<Template>;
 };
 
 export type TemplatesServiceDeps = {
   listTemplateSummaries: () => Promise<TemplateSummary[]>;
+  getTemplateById: (id: string) => Promise<Template | null>;
 };
 
 export function createTemplatesService(
@@ -24,5 +28,10 @@ export function createTemplatesService(
 ): TemplatesService {
   return {
     listTemplates: () => deps.listTemplateSummaries(),
+    async getTemplate(id) {
+      const template = await deps.getTemplateById(id);
+      if (!template) throw new NotFoundError("template", id);
+      return template;
+    },
   };
 }

@@ -7,25 +7,32 @@
  *
  * 依存（templates の repo 関数）は引数で受け取り、内部で service を生成する。
  * route → service → repo の 3 層を貫通する点は ADR-0010 開発ワークフローに準拠。
+ *
+ * エラーは `lib/errors.ts` の onError で `ApiNotFoundError` / `ApiInternalError` 形に整形する。
  */
 
-import type { TemplateSummary } from "@agent-team-studio/shared";
+import type { Template, TemplateSummary } from "@agent-team-studio/shared";
 import { Hono } from "hono";
+import { onError } from "./lib/errors.ts";
 import { createTemplatesRoutes } from "./routes/templates.ts";
 import { createWsRoutes } from "./routes/ws.ts";
 import { createTemplatesService } from "./services/templates.ts";
 
 export type AppDeps = {
   listTemplateSummaries: () => Promise<TemplateSummary[]>;
+  getTemplateById: (id: string) => Promise<Template | null>;
 };
 
 export function createApp(deps: AppDeps) {
   const app = new Hono();
 
+  app.onError(onError);
+
   app.get("/health", (c) => c.json({ status: "ok" }));
 
   const templatesService = createTemplatesService({
     listTemplateSummaries: deps.listTemplateSummaries,
+    getTemplateById: deps.getTemplateById,
   });
   app.route("/api/templates", createTemplatesRoutes({ templatesService }));
   app.route("/ws", createWsRoutes());
