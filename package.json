@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "lint:md": "markdownlint-cli2",
     "lint:secret": "secretlint '**/*'",
     "type-check": "turbo run type-check",

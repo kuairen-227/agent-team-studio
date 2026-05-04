@@ -7,6 +7,9 @@
       "env": ["DATABASE_URL", "PORT"]
     },
     "lint": {},
+    "lint:fix": {
+      "cache": false
+    },
     "type-check": {},
     "test": {},
     "build": {

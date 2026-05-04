@@ -8,6 +8,7 @@
   },
   "scripts": {
     "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
     "type-check": "tsc --noEmit",
     "test": "bun test",
     "db:generate": "drizzle-kit generate",

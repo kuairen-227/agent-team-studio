@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
     "type-check": "tsc --noEmit",
     "test": "bun test"
   },
