@@ -36,13 +36,13 @@ ADR-0010 では「E2E は MVP では見送り（3 画面、手動確認で十分
 
 ### 3. DevContainer の Chromium 依存
 
-`@playwright/mcp` の起動には Chromium と Linux system 依存パッケージが必要だが、DevContainer 内では不足することがある。`.devcontainer/post-create.sh` に以下の 2 コマンドを追記し、リビルド時に確実に揃える。`install-deps` は apt パッケージ操作のため sudo が必要、`install`（Chromium バイナリ取得）はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
+`@playwright/mcp` の起動にはブラウザバイナリと Linux system 依存パッケージが必要だが、DevContainer 内では不足することがある。`.devcontainer/post-create.sh` に以下の 2 コマンドを追記し、リビルド時に確実に揃える。`install-deps` は apt パッケージ操作のため sudo が必要、ブラウザ取得はユーザー home 配下への書き込みなので sudo 不要、と権限境界を分離する。
 
-なお `@playwright/mcp` は既定で `chrome` チャンネル（システム Google Chrome）を参照するため、Playwright がバンドルする Chromium を使うよう `.mcp.json` の args に `--browser chromium` を明示する。これにより DevContainer に Google Chrome を別途導入する必要がない。
+なお `@playwright/mcp` は既定で **Chrome for Testing**（Playwright が配布する CDN ビルド、`~/.cache/ms-playwright/chromium_headless_shell-*` に展開）を使う。Playwright バンドルの `chromium` とはディレクトリが分かれており、`playwright install chromium` では取得されない。`@playwright/mcp` の `--browser` フラグは `chrome / firefox / webkit / msedge` のみ受け付け `chromium` は無効値のため、フラグでの上書きはせず、エラーメッセージが推奨する `install-browser chrome-for-testing` で取得する。system 依存は両者で共通のため `playwright install-deps chromium` で賄える。
 
 ```bash
 sudo npx --yes playwright install-deps chromium
-npx --yes playwright install chromium
+npx --yes @playwright/mcp@latest install-browser chrome-for-testing
 ```
 
 ADR-0016 の DevContainer 統合方針には抵触しない（features 追加なし、postCreate の拡張のみ）。
