@@ -8,6 +8,7 @@
   },
   "scripts": {
     "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
