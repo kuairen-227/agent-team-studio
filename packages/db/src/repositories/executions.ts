@@ -13,6 +13,10 @@ import type {
 import type { DrizzleDb } from "../client.ts";
 import { agentExecutions, executions } from "../schema/index.ts";
 
+/**
+ * 呼び出し元（apps/api の service 層）で Zod による検証・正規化（trim 等）が
+ * 完了している前提で受け取る。repo 層では再検証しない。
+ */
 export type CreateExecutionInput = {
   templateId: TemplateId;
   parameters: CompetitorAnalysisParameters;
