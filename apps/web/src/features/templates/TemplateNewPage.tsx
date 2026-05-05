@@ -66,7 +66,6 @@ export function TemplateNewPage() {
   const competitorRefs = useRef<(HTMLInputElement | null)[]>([]);
   const referenceRef = useRef<HTMLTextAreaElement>(null);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
-  const competitorsLabelId = useId();
   const competitorsHelpId = useId();
   const competitorsErrorId = useId();
   const competitorItemErrorIdPrefix = useId();
@@ -244,10 +243,7 @@ export function TemplateNewPage() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <fieldset className="space-y-2">
-              <legend
-                id={competitorsLabelId}
-                className="text-sm font-medium leading-none"
-              >
+              <legend className="text-sm font-medium leading-none">
                 競合企業名 <span aria-hidden="true">*</span>
               </legend>
               <p
@@ -279,7 +275,7 @@ export function TemplateNewPage() {
                           ref={(el) => {
                             competitorRefs.current[index] = el;
                           }}
-                          aria-labelledby={competitorsLabelId}
+                          aria-label={`競合企業 ${index + 1}`}
                           aria-describedby={describedBy}
                           aria-invalid={itemError ? true : undefined}
                           aria-required="true"
