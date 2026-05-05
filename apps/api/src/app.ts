@@ -13,6 +13,10 @@ import type {
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
 import { onError } from "./lib/errors.ts";
+// API モジュール全体で Zod のロケールを日本語に統一する副作用 import。
+// 個別 service ではなく app.ts で一括設定し、新しい service が追加されても
+// import 順に依存しないようにする。
+import "./lib/zod-config.ts";
 import { createExecutionsRoutes } from "./routes/executions.ts";
 import { createTemplatesRoutes } from "./routes/templates.ts";
 import { createWsRoutes } from "./routes/ws.ts";

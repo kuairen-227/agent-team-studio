@@ -16,8 +16,6 @@ import type {
 } from "@agent-team-studio/shared";
 import { z } from "zod";
 import { NotFoundError, ValidationError } from "../lib/errors.ts";
-// Zod のデフォルトメッセージを日本語にするための副作用 import。
-import "../lib/zod-config.ts";
 
 const competitorAnalysisParametersSchema = z.object({
   // trim() してから min(1) で「スペースのみ」を弾く（UI 側で trim 済みでも
