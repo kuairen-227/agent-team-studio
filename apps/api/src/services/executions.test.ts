@@ -1,3 +1,6 @@
+// このファイルは app.ts を経由しないため Zod の日本語ロケール（lib/zod-config.ts）が
+// ロードされない。アサートは field キーまでに留め、reason 文言は app.test.ts 側で
+// 確認する責務分担とする。
 import { describe, expect, test } from "bun:test";
 import type { CompetitorAnalysisParameters } from "@agent-team-studio/shared";
 import { fixtureTemplate } from "../_test-fixtures.ts";
@@ -107,6 +110,17 @@ describe("createExecutionsService.createExecution", () => {
     );
   });
 
+  test("competitors が 1 件（境界 OK）は通る", async () => {
+    const service = buildService();
+
+    const res = await service.createExecution({
+      templateId: fixtureTemplate.id,
+      parameters: { competitors: ["Acme"] },
+    });
+
+    expect(res.id).toBe("exec-1");
+  });
+
   // MVP では重複チェックなし。将来 .refine(unique) を追加するなら破壊的変更となる前提を固定する。
   test("competitors の重複は許容される", async () => {
     const service = buildService();
@@ -179,7 +193,7 @@ describe("createExecutionsService.createExecution", () => {
     ).toBe(true);
   });
 
-  test("スペースのみの competitor は trim 後 min(1) で ValidationError", async () => {
+  test("スペースのみの competitor は ValidationError", async () => {
     const service = buildService();
 
     const err = await service
