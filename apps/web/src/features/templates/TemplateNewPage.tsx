@@ -166,10 +166,18 @@ export function TemplateNewPage() {
         }
         const err = (await res.json().catch(() => null)) as ApiError | null;
         if (err?.errorCode === "validation_error") {
-          setSubmitState({
-            kind: "validation-error",
-            errors: mapValidationErrors(err, cleanedToUiIndex),
-          });
+          const mapped = mapValidationErrors(err, cleanedToUiIndex);
+          // 既知フィールドが何もマップできなかった（サーバ側の制約変更等で
+          // UI が認識しないフィールド名が返ってきた）場合は無音失敗を防ぐため
+          // submit-error にフォールバックする。
+          if (!mapped) {
+            setSubmitState({
+              kind: "submit-error",
+              message: err.message ?? "入力に誤りがあります",
+            });
+            return;
+          }
+          setSubmitState({ kind: "validation-error", errors: mapped });
           return;
         }
         setSubmitState({
@@ -377,27 +385,31 @@ export function TemplateNewPage() {
 function mapValidationErrors(
   err: ApiValidationError,
   cleanedToUiIndex: number[],
-): FieldErrors {
+): FieldErrors | null {
   const result: FieldErrors = { competitorItems: {} };
+  let mappedCount = 0;
   for (const detail of err.details) {
     if (detail.field === "competitors") {
       result.competitors = detail.reason;
+      mappedCount++;
       continue;
     }
     const competitorMatch = /^competitors\.(\d+)$/.exec(detail.field);
     if (competitorMatch) {
       const cleanedIndex = Number.parseInt(competitorMatch[1] ?? "", 10);
       const uiIndex = cleanedToUiIndex[cleanedIndex];
-      if (Number.isFinite(uiIndex) && uiIndex !== undefined) {
+      if (uiIndex !== undefined) {
         result.competitorItems[uiIndex] = detail.reason;
+        mappedCount++;
       }
       continue;
     }
     if (detail.field === "reference") {
       result.reference = detail.reason;
+      mappedCount++;
     }
   }
-  return result;
+  return mappedCount > 0 ? result : null;
 }
 
 function FormSkeleton() {
