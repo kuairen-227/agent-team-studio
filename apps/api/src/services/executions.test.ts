@@ -69,6 +69,9 @@ describe("createExecutionsService.createExecution", () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
+  // Zod の path は配列全体エラーで `["competitors"]`、要素エラーで `["competitors", N]` と
+  // 構造が異なる。前者は `=== "competitors"`、後者は `startsWith("competitors")` で検証する。
+
   test("competitors が空配列なら ValidationError", async () => {
     const service = buildService();
 
@@ -76,6 +79,23 @@ describe("createExecutionsService.createExecution", () => {
       .createExecution({
         templateId: fixtureTemplate.id,
         parameters: { competitors: [] },
+      })
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ValidationError);
+    const validation = err as ValidationError;
+    expect(validation.details.some((d) => d.field === "competitors")).toBe(
+      true,
+    );
+  });
+
+  test("parameters が {} で competitors キー欠落なら ValidationError", async () => {
+    const service = buildService();
+
+    const err = await service
+      .createExecution({
+        templateId: fixtureTemplate.id,
+        parameters: {} as never,
       })
       .catch((e: unknown) => e);
 
