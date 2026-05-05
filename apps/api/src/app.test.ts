@@ -152,6 +152,8 @@ describe("POST /api/executions", () => {
     expect(body.details).toEqual({ resource: "template", id: "tpl-missing" });
   });
 
+  // route 層を経由した validation_error の整形のみを検証する。
+  // 個別 field 名・境界値は service 層テスト（services/executions.test.ts）に委譲する。
   test("バリデーション失敗は 400 + ApiValidationError 形を返す", async () => {
     const app = buildApp({ getTemplateById: async () => fixtureTemplate });
 
@@ -166,6 +168,21 @@ describe("POST /api/executions", () => {
     expect(body.details.length).toBeGreaterThan(0);
     expect(body.details[0]).toHaveProperty("field");
     expect(body.details[0]).toHaveProperty("reason");
+  });
+
+  // route 層が `as CreateExecutionRequest` でキャストした後に service の Zod が
+  // `safeParse(undefined)` で受け止める経路を明示的に押さえる。
+  test("parameters フィールド省略は 400 + ApiValidationError 形を返す", async () => {
+    const app = buildApp({ getTemplateById: async () => fixtureTemplate });
+
+    const res = await postExecutions(app, {
+      templateId: fixtureTemplate.id,
+    });
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as ApiValidationError;
+    expect(body.errorCode).toBe("validation_error");
+    expect(body.details.length).toBeGreaterThan(0);
   });
 
   // route 層独自のエラー整形契約として field 名（"body"）まで明示する。

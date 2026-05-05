@@ -129,6 +129,23 @@ describe("createExecutionsService.createExecution", () => {
     expect(res.id).toBe("exec-1");
   });
 
+  test("competitors の要素が 101 文字（境界 NG）なら ValidationError", async () => {
+    const service = buildService();
+
+    const err = await service
+      .createExecution({
+        templateId: fixtureTemplate.id,
+        parameters: { competitors: ["a".repeat(101)] },
+      })
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ValidationError);
+    const validation = err as ValidationError;
+    expect(
+      validation.details.some((d) => d.field.startsWith("competitors")),
+    ).toBe(true);
+  });
+
   test("空文字の competitor を含むと ValidationError", async () => {
     const service = buildService();
 
