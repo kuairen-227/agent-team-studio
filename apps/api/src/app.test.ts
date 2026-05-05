@@ -64,6 +64,7 @@ describe("GET /api/templates", () => {
     const body = (await res.json()) as ApiInternalError;
     expect(body.errorCode).toBe("internal_error");
     expect(body.message).toBeTruthy();
+    expect(body.message).not.toContain("DB connection failed");
   });
 });
 
@@ -110,6 +111,7 @@ describe("GET /api/templates/:id", () => {
     const body = (await res.json()) as ApiInternalError;
     expect(body.errorCode).toBe("internal_error");
     expect(body.message).toBeTruthy();
+    expect(body.message).not.toContain("DB connection failed");
   });
 });
 

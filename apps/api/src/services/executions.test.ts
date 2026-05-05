@@ -107,6 +107,18 @@ describe("createExecutionsService.createExecution", () => {
     );
   });
 
+  // MVP では重複チェックなし。将来 .refine(unique) を追加するなら破壊的変更となる前提を固定する。
+  test("competitors の重複は許容される", async () => {
+    const service = buildService();
+
+    const res = await service.createExecution({
+      templateId: fixtureTemplate.id,
+      parameters: { competitors: ["Acme", "Acme"] },
+    });
+
+    expect(res.id).toBe("exec-1");
+  });
+
   test("competitors が 5 件（境界 OK）は通る", async () => {
     const service = buildService();
 
