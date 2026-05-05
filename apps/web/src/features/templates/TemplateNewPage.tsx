@@ -70,6 +70,7 @@ export function TemplateNewPage() {
   const competitorsErrorId = useId();
   const competitorItemErrorIdPrefix = useId();
   const referenceFieldId = useId();
+  const referenceHelpId = useId();
   const referenceErrorId = useId();
 
   useEffect(() => {
@@ -312,7 +313,7 @@ export function TemplateNewPage() {
 
             <div className="space-y-2">
               <Label htmlFor={referenceFieldId}>参考情報（任意）</Label>
-              <p className="text-xs text-muted-foreground">
+              <p id={referenceHelpId} className="text-xs text-muted-foreground">
                 ユーザーが手で貼り付けたテキストのみを LLM に渡す。Web
                 取得は行わない（〜10000 文字）
               </p>
@@ -325,7 +326,9 @@ export function TemplateNewPage() {
                 maxLength={10000}
                 aria-invalid={fieldErrors.reference ? true : undefined}
                 aria-describedby={
-                  fieldErrors.reference ? referenceErrorId : undefined
+                  fieldErrors.reference
+                    ? `${referenceHelpId} ${referenceErrorId}`
+                    : referenceHelpId
                 }
               />
               {fieldErrors.reference && (
@@ -335,6 +338,8 @@ export function TemplateNewPage() {
               )}
             </div>
 
+            {/* submitting → submit-error の遷移で Alert は一度アンマウント → 再挿入される。
+                同一メッセージで再送信した場合も role="alert" が再アナウンスされるのはこの挙動に依存する。 */}
             {submitState.kind === "submit-error" && (
               <Alert variant="destructive">
                 <AlertTitle>実行を開始できませんでした</AlertTitle>
