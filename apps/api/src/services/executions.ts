@@ -1,16 +1,11 @@
 /**
  * Execution 作成 Service。
  *
- * 責務:
- * - parameters の Zod バリデーション（competitor-analysis.md §入力パラメータ JSON Schema 準拠）
- * - Template 取得（不在は `NotFoundError`）
- * - Template.definition.agents から `{ agentId, role }` を抽出して repo に渡す
+ * バリデーションは Template 取得より先に実行する。入力エラーは Template 存在有無に
+ * 依存せず判定可能で、不要な DB アクセスを避けるため。
  *
- * バリデーションは Template 取得より先に実行する（入力エラーは
- * Template の存在に依存しない判定のため）。
- *
- * MVP では parameters の型はテンプレート横断ではなく `CompetitorAnalysisParameters`
- * 1 種に固定する（domain-types.ts のコメント / ADR-0005）。
+ * MVP では parameters の型を `CompetitorAnalysisParameters` 固定とする（テンプレ横断の
+ * 抽象化は v2 で導入予定）。
  */
 
 import type { CreateExecutionInput } from "@agent-team-studio/db";

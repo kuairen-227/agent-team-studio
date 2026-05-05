@@ -1,14 +1,8 @@
 /**
  * Hono app の組み立て。
  *
- * `index.ts` から本番の DB クライアントを渡して起動するパスと、
- * `app.test.ts` から fake repo を渡して `app.request()` で叩くパスを共通化するため、
- * app の構築を関数として切り出す。
- *
- * 依存（templates の repo 関数）は引数で受け取り、内部で service を生成する。
- * route → service → repo の 3 層を貫通する点は ADR-0010 開発ワークフローに準拠。
- *
- * エラーは `lib/errors.ts` の onError で `ApiNotFoundError` / `ApiInternalError` 形に整形する。
+ * 依存（repo 関数）を引数で受け取ることで、本番起動と fake repo を使ったテストの
+ * 起動パスを共通化する。
  */
 
 import type { CreateExecutionInput } from "@agent-team-studio/db";

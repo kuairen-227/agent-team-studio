@@ -1,13 +1,8 @@
 /**
  * `POST /api/executions` ルート。
  *
- * Service を引数で受け取り（DI）、Hono の `c.req.json()` で受信した body をそのまま
- * service へ渡す。body の構造妥当性（templateId / parameters の存在）は service 側の
- * Zod で検証する。
- *
- * JSON parse 失敗（壊れた body）は `ValidationError` に整形して 400 を返す。
- *
- * 成功時は 202 Accepted（api-design.md §HTTP メソッド 非同期処理開始）。
+ * body の構造検証は service 側の Zod に委譲する。route 層は JSON parse 失敗のみ
+ * `ValidationError` に整形して 400 を返す（field="body" で識別）。成功時は 202 Accepted。
  */
 
 import type {
