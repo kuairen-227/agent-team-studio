@@ -44,8 +44,8 @@ export function createExecutionsService(
         request.parameters,
       );
       if (!parsed.success) {
-        // field 名は parameters のキー基準（api-design.md §エラーレスポンス 例と整合）。
-        // 配列要素は "competitors.0" の形でドット連結する。
+        // 配列要素のエラーは "competitors.0" の形でドット連結し、フォーム側で
+        // 要素単位に inline 表示できるようにする。
         throw new ValidationError(
           parsed.error.issues.map((issue) => ({
             field: issue.path.map(String).join("."),

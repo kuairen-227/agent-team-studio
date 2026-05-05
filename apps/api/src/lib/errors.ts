@@ -2,10 +2,8 @@
  * REST エラーの内部表現と onError ミドルウェア。
  *
  * Service / Route 層は `NotFoundError` / `ValidationError` を throw し、`onError`
- * ハンドラで `ApiNotFoundError` / `ApiValidationError` 形（`packages/shared/src/api-types.ts`）+ HTTP に整形する。
- *
- * 内部例外（DB 接続失敗等）は `internal_error` (500) として `ApiInternalError` に
- * 整形する。詳細漏洩を避けるため `details` は MVP では返さない（api-design.md §エラーレスポンス）。
+ * ハンドラで API レスポンス形 + HTTP ステータスに整形する。内部例外（DB 接続失敗等）は
+ * `internal_error` (500) に集約し、詳細漏洩を避けるため `details` は返さない。
  */
 
 import type {
