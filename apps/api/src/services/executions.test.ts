@@ -222,4 +222,31 @@ describe("createExecutionsService.createExecution", () => {
       }),
     ).rejects.toThrow("DB connection failed");
   });
+
+  test("Template.definition.agents が空配列なら repo 到達前に Error を throw する", async () => {
+    const emptyAgentsTemplate = {
+      ...fixtureTemplate,
+      definition: { ...fixtureTemplate.definition, agents: [] },
+    };
+    let repoCalled = false;
+    const service = buildService({
+      getTemplateById: async () => emptyAgentsTemplate,
+      createExecution: async () => {
+        repoCalled = true;
+        return {
+          id: "exec-1",
+          status: "pending",
+          createdAt: "2026-05-04T00:00:00.000Z",
+        };
+      },
+    });
+
+    await expect(
+      service.createExecution({
+        templateId: fixtureTemplate.id,
+        parameters: validParameters,
+      }),
+    ).rejects.toThrow(/no agents/);
+    expect(repoCalled).toBe(false);
+  });
 });

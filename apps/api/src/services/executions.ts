@@ -63,6 +63,11 @@ export function createExecutionsService(
         agentId: a.agent_id,
         role: a.role,
       }));
+      // Drizzle の `tx.insert(...).values([])` は TypeError を投げるため、
+      // agents 空のテンプレートは repo 到達前に明示的に弾く（500 経路へ）。
+      if (agents.length === 0) {
+        throw new Error(`template has no agents: ${template.id}`);
+      }
 
       return deps.createExecution({
         templateId: template.id,
