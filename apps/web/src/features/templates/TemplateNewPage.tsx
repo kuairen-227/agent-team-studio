@@ -65,6 +65,7 @@ export function TemplateNewPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const competitorRefs = useRef<(HTMLInputElement | null)[]>([]);
   const referenceRef = useRef<HTMLTextAreaElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const competitorsLabelId = useId();
   const competitorsHelpId = useId();
   const competitorsErrorId = useId();
@@ -117,6 +118,15 @@ export function TemplateNewPage() {
     }
     if (errors.reference) {
       referenceRef.current?.focus();
+    }
+  }, [submitState]);
+
+  // submit-error 遷移時は submit ボタンへフォーカスを戻す。submitting 中は disabled で
+  // フォーカスが body へ落ちており、Alert は role="alert" のみで focus は奪わない方針
+  // （ui-patterns.md §7）のため、明示的にボタンへ復帰させる。
+  useEffect(() => {
+    if (submitState.kind === "submit-error") {
+      submitButtonRef.current?.focus();
     }
   }, [submitState]);
 
@@ -364,7 +374,11 @@ export function TemplateNewPage() {
             )}
 
             <div className="flex gap-2">
-              <Button type="submit" disabled={submitDisabled}>
+              <Button
+                ref={submitButtonRef}
+                type="submit"
+                disabled={submitDisabled}
+              >
                 {submitState.kind === "submitting" ? (
                   <>
                     <Loader2 className="animate-spin" aria-hidden="true" />
