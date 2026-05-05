@@ -1,20 +1,13 @@
 /**
- * `executions` / `agent_executions` テーブルへの書き込み repo。
- *
- * `createExecution` は Execution 1 件と AgentExecution × N をトランザクションで INSERT する。
- * agent-execution.md §4 副作用順序（Execution INSERT → AgentExecution INSERT）を守る。
- * 途中失敗時は両方ロールバックされる。両者は同一 commit で確定するため、
- * WS 初期スナップショット等の外部観測者は「Execution あり / AgentExecution 0 件」の
- * 中間状態を観測しない（agent-execution.md §4 / websocket-design.md §接続ライフサイクル）。
- *
- * 戻り値は API レスポンス（CreateExecutionResponse）に必要な最小フィールドに限定する。
+ * Execution 1 件と AgentExecution × N を同一トランザクションで INSERT する。
+ * 両者を同一 commit で確定させることで、外部観測者が「Execution あり / AgentExecution 0 件」
+ * の中間状態を見ないことを保証する。
  */
 
 import type {
   AgentRole,
   CompetitorAnalysisParameters,
-  ExecutionId,
-  ExecutionStatus,
+  CreateExecutionResponse,
   TemplateId,
 } from "@agent-team-studio/shared";
 import type { DrizzleDb } from "../client.ts";
@@ -26,16 +19,10 @@ export type CreateExecutionInput = {
   agents: { agentId: string; role: AgentRole }[];
 };
 
-export type CreateExecutionResult = {
-  id: ExecutionId;
-  status: ExecutionStatus;
-  createdAt: string;
-};
-
 export async function createExecution(
   db: DrizzleDb,
   input: CreateExecutionInput,
-): Promise<CreateExecutionResult> {
+): Promise<CreateExecutionResponse> {
   return db.transaction(async (tx) => {
     const [execution] = await tx
       .insert(executions)
