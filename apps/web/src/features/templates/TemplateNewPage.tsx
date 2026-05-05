@@ -1,14 +1,6 @@
 /**
- * 入力フォーム画面（[US-2](docs/product/user-stories.md#us-2-調査パラメータを入力して実行する)）。
- *
- * 入力スキーマは MVP の競合調査テンプレート固定（[ADR-0005](docs/adr/0005-mvp-scope.md),
- * [competitor-analysis.md](docs/design/templates/competitor-analysis.md)）。複数テンプレ対応は v2。
- *
- * バリデーションエラーは API の `details[].field` をそのままフォーム要素直下に
- * inline 表示する（[ui-patterns.md §3.3 error](docs/design/ui-patterns.md)）。
- *
- * Router 固有 API（loader / action）には寄せず、`fetch` は `useEffect` / submit ハンドラ内に
- * 閉じる（[ADR-0025](docs/adr/0025-spa-routing-library.md) Decision）。
+ * 競合調査テンプレート専用の入力フォーム。MVP では `parameters` 構造をテンプレ横断で
+ * 抽象化せず、`CompetitorAnalysisParameters` に固定する（v2 で動的化予定）。
  */
 
 import type {
@@ -19,6 +11,7 @@ import type {
   CreateExecutionResponse,
   GetTemplateResponse,
 } from "@agent-team-studio/shared";
+import { Loader2 } from "lucide-react";
 import {
   type FormEvent,
   useCallback,
@@ -65,8 +58,13 @@ export function TemplateNewPage() {
   const [competitors, setCompetitors] = useState<string[]>([""]);
   const [reference, setReference] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
+  // 再試行ボタンで useEffect を再実行するためのカウンタ。fetch の中断・state 衝突を
+  // useEffect の cleanup で一元管理する（独立した abort パスを持たせない）。
+  const [reloadCounter, setReloadCounter] = useState(0);
 
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const competitorRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const referenceRef = useRef<HTMLTextAreaElement>(null);
   const competitorsLabelId = useId();
   const competitorsHelpId = useId();
   const competitorsErrorId = useId();
@@ -78,6 +76,8 @@ export function TemplateNewPage() {
     headingRef.current?.focus();
   }, []);
 
+  // reloadCounter は再試行ボタンの再実行トリガ。effect 内で参照しないが意図的に依存として残す。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadCounter is intentional retry trigger
   useEffect(() => {
     if (!templateId) {
       setLoadState({ kind: "load-error" });
@@ -99,7 +99,25 @@ export function TemplateNewPage() {
     return () => {
       aborted = true;
     };
-  }, [templateId]);
+  }, [templateId, reloadCounter]);
+
+  useEffect(() => {
+    if (submitState.kind !== "validation-error") return;
+    const errors = submitState.errors;
+    if (errors.competitors) {
+      competitorRefs.current[0]?.focus();
+      return;
+    }
+    const itemIndices = Object.keys(errors.competitorItems).map(Number);
+    if (itemIndices.length > 0) {
+      const first = Math.min(...itemIndices);
+      competitorRefs.current[first]?.focus();
+      return;
+    }
+    if (errors.reference) {
+      referenceRef.current?.focus();
+    }
+  }, [submitState]);
 
   const filledCount = competitors.filter((c) => c.trim().length > 0).length;
   const submitDisabled =
@@ -167,11 +185,7 @@ export function TemplateNewPage() {
 
   return (
     <section>
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="mb-2 text-xl font-semibold focus:outline-none"
-      >
+      <h1 ref={headingRef} tabIndex={-1} className="mb-2 text-xl font-semibold">
         入力フォーム
       </h1>
 
@@ -182,6 +196,15 @@ export function TemplateNewPage() {
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
             <p>時間をおいて再度お試しください。</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => setReloadCounter((c) => c + 1)}
+            >
+              再試行
+            </Button>
           </AlertDescription>
         </Alert>
       )}
@@ -226,9 +249,13 @@ export function TemplateNewPage() {
                     <li key={index} className="flex items-start gap-2">
                       <div className="flex-1">
                         <Input
+                          ref={(el) => {
+                            competitorRefs.current[index] = el;
+                          }}
                           aria-labelledby={competitorsLabelId}
                           aria-describedby={describedBy}
                           aria-invalid={itemError ? true : undefined}
+                          aria-required="true"
                           value={value}
                           onChange={(e) => {
                             const next = [...competitors];
@@ -290,6 +317,7 @@ export function TemplateNewPage() {
                 取得は行わない（〜10000 文字）
               </p>
               <Textarea
+                ref={referenceRef}
                 id={referenceFieldId}
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
@@ -316,7 +344,14 @@ export function TemplateNewPage() {
 
             <div className="flex gap-2">
               <Button type="submit" disabled={submitDisabled}>
-                {submitState.kind === "submitting" ? "実行中…" : "実行する"}
+                {submitState.kind === "submitting" ? (
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                    実行中…
+                  </>
+                ) : (
+                  "実行する"
+                )}
               </Button>
             </div>
           </form>
