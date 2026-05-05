@@ -222,5 +222,8 @@ describe("POST /api/executions", () => {
     expect(res.status).toBe(500);
     const body = (await res.json()) as ApiInternalError;
     expect(body.errorCode).toBe("internal_error");
+    expect(body.message).toBeTruthy();
+    // 内部例外メッセージが API レスポンスに漏洩しないことを境界として固定する。
+    expect(body.message).not.toContain("DB connection failed");
   });
 });

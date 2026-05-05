@@ -95,6 +95,7 @@ describe("createExecutionsService.createExecution", () => {
     const err = await service
       .createExecution({
         templateId: fixtureTemplate.id,
+        // 型レイヤを強引に通して Zod に不正構造を渡し、ランタイム検証経路を確認する。
         parameters: {} as never,
       })
       .catch((e: unknown) => e);
