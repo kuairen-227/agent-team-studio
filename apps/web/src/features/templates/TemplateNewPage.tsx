@@ -131,9 +131,17 @@ export function TemplateNewPage() {
       event.preventDefault();
       if (!templateId) return;
       // 空行はサーバ送信前に除外する。残りで MIN を満たさなければ disabled で押下不可のため到達しない。
-      const cleanedCompetitors = competitors
-        .map((c) => c.trim())
-        .filter((c) => c.length > 0);
+      // 同時に「送信後 index → UI 配列 index」の対応マップも作る。サーバの validation_error
+      // が `competitors.N` を返したとき、UI 表示位置（空行を含む）に正しく復元するため。
+      const cleanedCompetitors: string[] = [];
+      const cleanedToUiIndex: number[] = [];
+      competitors.forEach((c, uiIndex) => {
+        const trimmed = c.trim();
+        if (trimmed.length > 0) {
+          cleanedCompetitors.push(trimmed);
+          cleanedToUiIndex.push(uiIndex);
+        }
+      });
       const trimmedReference = reference.trim();
       const parameters: CompetitorAnalysisParameters = {
         competitors: cleanedCompetitors,
@@ -160,7 +168,7 @@ export function TemplateNewPage() {
         if (err?.errorCode === "validation_error") {
           setSubmitState({
             kind: "validation-error",
-            errors: mapValidationErrors(err),
+            errors: mapValidationErrors(err, cleanedToUiIndex),
           });
           return;
         }
@@ -366,7 +374,10 @@ export function TemplateNewPage() {
   );
 }
 
-function mapValidationErrors(err: ApiValidationError): FieldErrors {
+function mapValidationErrors(
+  err: ApiValidationError,
+  cleanedToUiIndex: number[],
+): FieldErrors {
   const result: FieldErrors = { competitorItems: {} };
   for (const detail of err.details) {
     if (detail.field === "competitors") {
@@ -375,9 +386,10 @@ function mapValidationErrors(err: ApiValidationError): FieldErrors {
     }
     const competitorMatch = /^competitors\.(\d+)$/.exec(detail.field);
     if (competitorMatch) {
-      const index = Number.parseInt(competitorMatch[1] ?? "", 10);
-      if (Number.isFinite(index)) {
-        result.competitorItems[index] = detail.reason;
+      const cleanedIndex = Number.parseInt(competitorMatch[1] ?? "", 10);
+      const uiIndex = cleanedToUiIndex[cleanedIndex];
+      if (Number.isFinite(uiIndex) && uiIndex !== undefined) {
+        result.competitorItems[uiIndex] = detail.reason;
       }
       continue;
     }
