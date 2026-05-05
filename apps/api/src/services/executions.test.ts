@@ -166,6 +166,23 @@ describe("createExecutionsService.createExecution", () => {
     ).toBe(true);
   });
 
+  test("スペースのみの competitor は trim 後 min(1) で ValidationError", async () => {
+    const service = buildService();
+
+    const err = await service
+      .createExecution({
+        templateId: fixtureTemplate.id,
+        parameters: { competitors: ["   "] },
+      })
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ValidationError);
+    const validation = err as ValidationError;
+    expect(
+      validation.details.some((d) => d.field.startsWith("competitors")),
+    ).toBe(true);
+  });
+
   test("空文字の competitor を含むと ValidationError", async () => {
     const service = buildService();
 

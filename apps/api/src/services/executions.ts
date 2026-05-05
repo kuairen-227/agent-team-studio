@@ -18,7 +18,9 @@ import { z } from "zod";
 import { NotFoundError, ValidationError } from "../lib/errors.ts";
 
 const competitorAnalysisParametersSchema = z.object({
-  competitors: z.array(z.string().min(1).max(100)).min(1).max(5),
+  // trim() してから min(1) で「スペースのみ」を弾く（UI 側で trim 済みでも
+  // API 直叩き経路を防御する）。
+  competitors: z.array(z.string().trim().min(1).max(100)).min(1).max(5),
   reference: z.string().max(10000).optional(),
 });
 
