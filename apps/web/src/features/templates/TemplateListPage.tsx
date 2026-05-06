@@ -25,14 +25,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchJson } from "@/lib/api";
 
 type EnrichedTemplate = TemplateSummary & { agents: AgentDefinition[] };
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`status=${res.status}`);
-  return (await res.json()) as T;
-}
 
 async function loadTemplates(): Promise<EnrichedTemplate[]> {
   const list = await fetchJson<GetTemplatesResponse>("/api/templates");
@@ -54,6 +49,7 @@ export function TemplateListPage() {
     data: items,
     status,
     refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["templates"],
     queryFn: loadTemplates,
@@ -79,8 +75,13 @@ export function TemplateListPage() {
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
             <p>時間をおいて再度お試しください。</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              再読み込み
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? "読み込み中…" : "再読み込み"}
             </Button>
           </AlertDescription>
         </Alert>

@@ -26,14 +26,14 @@ const indexRoute = createRoute({
   component: TemplateListPage,
 });
 
-export const templateNewRoute = createRoute({
+const templateNewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/templates/$templateId/new",
   component: TemplateNewPage,
 });
 
 // Stub: US-3/US-4 で実装予定
-export const executionRoute = createRoute({
+const executionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/executions/$executionId",
   beforeLoad: () => {

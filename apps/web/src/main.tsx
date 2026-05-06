@@ -5,7 +5,16 @@ import { createRoot } from "react-dom/client";
 import { router } from "./router";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      retry: (failureCount, error) =>
+        !(error instanceof Error && /^status=4\d\d$/.test(error.message)) &&
+        failureCount < 3,
+    },
+  },
+});
 
 const root = document.getElementById("root");
 if (!root) {

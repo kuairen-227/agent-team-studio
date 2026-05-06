@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchJson } from "@/lib/api";
 
 const MAX_COMPETITORS = 5;
 const MIN_COMPETITORS = 1;
@@ -48,6 +49,10 @@ const emptyFieldErrors: FieldErrors = { competitorItems: {} };
 
 const Route = getRouteApi("/templates/$templateId/new");
 
+async function fetchTemplate(templateId: string): Promise<GetTemplateResponse> {
+  return fetchJson<GetTemplateResponse>(`/api/templates/${templateId}`);
+}
+
 export function TemplateNewPage() {
   const { templateId } = Route.useParams();
   const navigate = useNavigate();
@@ -56,13 +61,10 @@ export function TemplateNewPage() {
     data: templateData,
     status: templateStatus,
     refetch: retryLoad,
+    isFetching: isTemplateFetching,
   } = useQuery({
     queryKey: ["template", templateId],
-    queryFn: async () => {
-      const res = await fetch(`/api/templates/${templateId}`);
-      if (!res.ok) throw new Error(`status=${res.status}`);
-      return (await res.json()) as GetTemplateResponse;
-    },
+    queryFn: () => fetchTemplate(templateId),
   });
 
   const [competitors, setCompetitors] = useState<string[]>([""]);
@@ -151,6 +153,7 @@ export function TemplateNewPage() {
         });
         if (res.status === 202) {
           const created = (await res.json()) as CreateExecutionResponse;
+          // US-3 実装まで executionRoute のスタブが / へリダイレクトする
           navigate({
             to: "/executions/$executionId",
             params: { executionId: created.id },
@@ -212,8 +215,9 @@ export function TemplateNewPage() {
               size="sm"
               className="mt-2"
               onClick={() => retryLoad()}
+              disabled={isTemplateFetching}
             >
-              再試行
+              {isTemplateFetching ? "読み込み中…" : "再試行"}
             </Button>
           </AlertDescription>
         </Alert>
