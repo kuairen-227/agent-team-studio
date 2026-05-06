@@ -46,7 +46,7 @@ const { LlmError, streamAgentMessage } = await import("./llm-client.ts");
 type FakeEvent =
   | {
       type: "content_block_delta";
-      index: number;
+      index: number; // SDK が送信するが streamAgentMessage では参照しない
       delta: { type: "text_delta"; text: string };
     }
   | { type: "message_stop" };
@@ -147,6 +147,7 @@ describe("streamAgentMessage", () => {
       _body: unknown,
       opts: { signal?: AbortSignal },
     ) {
+      // 開始前は signal.aborted を SDK が自前チェックする挙動をシミュレート
       if (opts?.signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
@@ -197,6 +198,26 @@ describe("streamAgentMessage", () => {
     expect(chunks).toEqual(["chunk1"]);
     expect(caught).toBeInstanceOf(DOMException);
     expect((caught as DOMException).name).toBe("AbortError");
+  });
+
+  test("LlmInput を SDK body に正しく写像する", async () => {
+    let capturedBody: unknown;
+    mockStreamFn.mockImplementation((body: unknown) => {
+      capturedBody = body;
+      return fakeStream([]);
+    });
+
+    for await (const _chunk of streamAgentMessage(baseInput)) {
+      // noop
+    }
+
+    expect(capturedBody).toMatchObject({
+      model: "claude-sonnet-4-6",
+      system: "You are helpful",
+      messages: [{ role: "user", content: "Hello" }],
+      temperature: 0.3,
+      max_tokens: 100,
+    });
   });
 });
 

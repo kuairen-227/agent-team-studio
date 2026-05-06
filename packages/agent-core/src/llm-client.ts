@@ -43,7 +43,7 @@ const client = new Anthropic(clientOptions);
 export async function* streamAgentMessage(
   input: LlmInput,
   signal?: AbortSignal,
-): AsyncGenerator<string> {
+): AsyncIterable<string> {
   try {
     const stream = client.messages.stream(
       {
@@ -71,6 +71,7 @@ export async function* streamAgentMessage(
         cause: err,
       });
     }
+    // AbortError は DOMException として伝播する（Bun + @anthropic-ai/sdk の挙動）
     throw err;
   }
 }
