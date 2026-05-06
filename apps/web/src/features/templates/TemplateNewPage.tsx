@@ -11,6 +11,8 @@ import type {
   CreateExecutionResponse,
   GetTemplateResponse,
 } from "@agent-team-studio/shared";
+import { useQuery } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import {
   type FormEvent,
@@ -20,7 +22,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate, useParams } from "react-router";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 const MAX_COMPETITORS = 5;
 const MIN_COMPETITORS = 1;
-
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; template: GetTemplateResponse }
-  | { kind: "load-error" };
 
 type FieldErrors = {
   competitors?: string;
@@ -50,17 +46,28 @@ type SubmitState =
 
 const emptyFieldErrors: FieldErrors = { competitorItems: {} };
 
+const Route = getRouteApi("/templates/$templateId/new");
+
 export function TemplateNewPage() {
-  const { templateId } = useParams();
+  const { templateId } = Route.useParams();
   const navigate = useNavigate();
 
-  const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
+  const {
+    data: templateData,
+    status: templateStatus,
+    refetch: retryLoad,
+  } = useQuery({
+    queryKey: ["template", templateId],
+    queryFn: async () => {
+      const res = await fetch(`/api/templates/${templateId}`);
+      if (!res.ok) throw new Error(`status=${res.status}`);
+      return (await res.json()) as GetTemplateResponse;
+    },
+  });
+
   const [competitors, setCompetitors] = useState<string[]>([""]);
   const [reference, setReference] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
-  // 再試行ボタンで useEffect を再実行するためのカウンタ。fetch の中断・state 衝突を
-  // useEffect の cleanup で一元管理する（独立した abort パスを持たせない）。
-  const [reloadCounter, setReloadCounter] = useState(0);
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const competitorRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -76,31 +83,6 @@ export function TemplateNewPage() {
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
-
-  // reloadCounter は再試行ボタンの再実行トリガ。effect 内で参照しないが意図的に依存として残す。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadCounter is intentional retry trigger
-  useEffect(() => {
-    if (!templateId) {
-      setLoadState({ kind: "load-error" });
-      return;
-    }
-    let aborted = false;
-    setLoadState({ kind: "loading" });
-    fetch(`/api/templates/${templateId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`status=${res.status}`);
-        return (await res.json()) as GetTemplateResponse;
-      })
-      .then((template) => {
-        if (!aborted) setLoadState({ kind: "ready", template });
-      })
-      .catch(() => {
-        if (!aborted) setLoadState({ kind: "load-error" });
-      });
-    return () => {
-      aborted = true;
-    };
-  }, [templateId, reloadCounter]);
 
   useEffect(() => {
     if (submitState.kind !== "validation-error") return;
@@ -133,12 +115,11 @@ export function TemplateNewPage() {
   const submitDisabled =
     submitState.kind === "submitting" ||
     filledCount < MIN_COMPETITORS ||
-    loadState.kind !== "ready";
+    templateStatus !== "success";
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (!templateId) return;
       // 空行はサーバ送信前に除外する。残りで MIN を満たさなければ disabled で押下不可のため到達しない。
       // 同時に「送信後 index → UI 配列 index」の対応マップも作る。サーバの validation_error
       // が `competitors.N` を返したとき、UI 表示位置（空行を含む）に正しく復元するため。
@@ -170,7 +151,10 @@ export function TemplateNewPage() {
         });
         if (res.status === 202) {
           const created = (await res.json()) as CreateExecutionResponse;
-          navigate(`/executions/${created.id}`);
+          navigate({
+            to: "/executions/$executionId",
+            params: { executionId: created.id },
+          });
           return;
         }
         const err = (await res.json().catch(() => null)) as ApiError | null;
@@ -215,9 +199,9 @@ export function TemplateNewPage() {
         入力フォーム
       </h1>
 
-      {loadState.kind === "loading" && <FormSkeleton />}
+      {templateStatus === "pending" && <FormSkeleton />}
 
-      {loadState.kind === "load-error" && (
+      {templateStatus === "error" && (
         <Alert variant="destructive">
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
@@ -227,7 +211,7 @@ export function TemplateNewPage() {
               variant="outline"
               size="sm"
               className="mt-2"
-              onClick={() => setReloadCounter((c) => c + 1)}
+              onClick={() => retryLoad()}
             >
               再試行
             </Button>
@@ -235,10 +219,10 @@ export function TemplateNewPage() {
         </Alert>
       )}
 
-      {loadState.kind === "ready" && (
+      {templateStatus === "success" && (
         <>
           <p className="mb-6 text-sm text-muted-foreground">
-            {loadState.template.name} ・ {loadState.template.description}
+            {templateData.name} ・ {templateData.description}
           </p>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">

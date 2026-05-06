@@ -5,7 +5,7 @@
  * 画面追加時にナビ項目を増やす。
  */
 
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 
 export function AppHeader() {
   return (

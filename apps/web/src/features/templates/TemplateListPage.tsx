@@ -1,14 +1,9 @@
 /**
- * テンプレート一覧画面（[US-1](docs/product/user-stories.md#us-1-テンプレートを選んで調査を始める)）。
+ * テンプレート一覧画面（US-1）。
  *
  * 各カードにエージェント構成を出すために詳細 fetch を 1 件ずつ追加で叩く N+1 を
  * 許容している。MVP は 1 テンプレ前提（ADR-0005）。件数が増えた段階で
  * `TemplateSummary` 拡張または集約エンドポイントで再考する。
- *
- * Router 固有 API（loader）には寄せず素 `fetch` を `useEffect` 内に閉じる方針
- * （[ADR-0025](docs/adr/0025-spa-routing-library.md) Decision）。StrictMode の
- * useEffect 二重実行と再読み込み連打の race condition は `reloadTokenRef` の
- * token 番号方式で破棄する。
  */
 
 import type {
@@ -17,8 +12,9 @@ import type {
   GetTemplatesResponse,
   TemplateSummary,
 } from "@agent-team-studio/shared";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,11 +27,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 type EnrichedTemplate = TemplateSummary & { agents: AgentDefinition[] };
-
-type State =
-  | { kind: "loading" }
-  | { kind: "ready"; items: EnrichedTemplate[] }
-  | { kind: "error" };
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -56,39 +47,22 @@ async function loadTemplates(): Promise<EnrichedTemplate[]> {
 }
 
 export function TemplateListPage() {
-  const [state, setState] = useState<State>({ kind: "loading" });
   const navigate = useNavigate();
-  // ui-patterns.md §7 / WCAG 2.1 SC 2.4.3: 画面遷移直後は <h1> に focus。
-  // tabIndex={-1} でプログラムからのみ focus 可能とし、tab 順には載せない。
   const headingRef = useRef<HTMLHeadingElement>(null);
-  // 再読み込み時の race condition 対策。発行ごとに token を更新し、
-  // 戻ってきた fetch の token と現在値を比較して古いレスポンスを破棄する。
-  const reloadTokenRef = useRef(0);
 
-  const load = useCallback(() => {
-    const token = ++reloadTokenRef.current;
-    setState({ kind: "loading" });
-    loadTemplates()
-      .then((items) => {
-        if (reloadTokenRef.current === token) {
-          setState({ kind: "ready", items });
-        }
-      })
-      .catch(() => {
-        // 内部表現（"status=404" 等）は UI に出さない（ui-patterns.md §3.3）。
-        if (reloadTokenRef.current === token) {
-          setState({ kind: "error" });
-        }
-      });
-  }, []);
+  const {
+    data: items,
+    status,
+    refetch,
+  } = useQuery({
+    queryKey: ["templates"],
+    queryFn: loadTemplates,
+  });
 
+  // ui-patterns.md §7 / WCAG 2.1 SC 2.4.3: 画面遷移直後は <h1> に focus。
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   return (
     <section>
@@ -99,30 +73,35 @@ export function TemplateListPage() {
       >
         テンプレート一覧
       </h1>
-      {state.kind === "loading" && <TemplateListSkeleton />}
-      {state.kind === "error" && (
+      {status === "pending" && <TemplateListSkeleton />}
+      {status === "error" && (
         <Alert variant="destructive">
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
             <p>時間をおいて再度お試しください。</p>
-            <Button variant="outline" size="sm" onClick={load}>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
               再読み込み
             </Button>
           </AlertDescription>
         </Alert>
       )}
-      {state.kind === "ready" && state.items.length === 0 && (
+      {status === "success" && items.length === 0 && (
         <p className="text-sm text-muted-foreground">
           まだテンプレートがありません。管理者にお問い合わせください。
         </p>
       )}
-      {state.kind === "ready" && state.items.length > 0 && (
+      {status === "success" && items.length > 0 && (
         <ul className="grid gap-4 md:grid-cols-2">
-          {state.items.map((template) => (
+          {items.map((template) => (
             <li key={template.id}>
               <TemplateCard
                 template={template}
-                onSelect={() => navigate(`/templates/${template.id}/new`)}
+                onSelect={() =>
+                  navigate({
+                    to: "/templates/$templateId/new",
+                    params: { templateId: template.id },
+                  })
+                }
               />
             </li>
           ))}
