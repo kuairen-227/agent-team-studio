@@ -1,3 +1,6 @@
+// LLM_API_KEY を dynamic import より前に設定（CI 環境での初期化 fail-fast 回避）
+process.env.LLM_API_KEY ??= "test-key";
+
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 
 // SDK モック（bun:test が mock.module を import より前に処理する）
@@ -12,7 +15,7 @@ class FakeAPIError extends Error {
 }
 
 const mockStreamFn = mock();
-let constructorOptions: Record<string, unknown> = {};
+let capturedClientOptions: Record<string, unknown> = {};
 
 mock.module("@anthropic-ai/sdk", () => {
   class FakeAnthropic {
@@ -24,7 +27,7 @@ mock.module("@anthropic-ai/sdk", () => {
     };
 
     constructor(opts: Record<string, unknown>) {
-      constructorOptions = opts;
+      capturedClientOptions = opts;
     }
 
     static APIError = FakeAPIError;
@@ -52,13 +55,13 @@ async function* fakeStream(events: FakeEvent[]) {
   }
 }
 
-const baseInput = {
+const baseInput = Object.freeze({
   model: "claude-sonnet-4-6",
   system: "You are helpful",
   user: "Hello",
   temperature: 0.3,
   max_tokens: 100,
-};
+});
 
 // ---- テスト ----
 
@@ -117,25 +120,25 @@ describe("streamAgentMessage", () => {
       throw new FakeAPIError(400, "Bad request");
     });
 
-    await expect(async () => {
-      for await (const _ of streamAgentMessage(baseInput)) {
-        // noop
-      }
-    }).toThrow(LlmError);
-
+    let caught: unknown;
     try {
       for await (const _ of streamAgentMessage(baseInput)) {
         // noop
       }
     } catch (err) {
-      expect(err).toBeInstanceOf(LlmError);
-      expect((err as InstanceType<typeof LlmError>).failReason).toBe(
-        "llm_error",
-      );
+      caught = err;
     }
+
+    expect(caught).toBeInstanceOf(LlmError);
+    expect((caught as InstanceType<typeof LlmError>).failReason).toBe(
+      "llm_error",
+    );
+    expect((caught as InstanceType<typeof LlmError>).cause).toBeInstanceOf(
+      FakeAPIError,
+    );
   });
 
-  test("AbortError は LlmError にせずそのまま再スローする", async () => {
+  test("AbortError は LlmError にせずそのまま再スローする（開始前中断）", async () => {
     const controller = new AbortController();
     controller.abort();
 
@@ -156,8 +159,45 @@ describe("streamAgentMessage", () => {
     }).toThrow(DOMException);
   });
 
+  test("AbortError は LlmError にせずそのまま再スローする（ストリーム途中の中断）", async () => {
+    const controller = new AbortController();
+
+    mockStreamFn.mockImplementation(async function* (
+      _body: unknown,
+      opts: { signal?: AbortSignal },
+    ) {
+      yield {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "text_delta", text: "chunk1" },
+      };
+      controller.abort();
+      if (opts?.signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+      yield { type: "message_stop" };
+    });
+
+    const chunks: string[] = [];
+    let caught: unknown;
+    try {
+      for await (const chunk of streamAgentMessage(
+        baseInput,
+        controller.signal,
+      )) {
+        chunks.push(chunk);
+      }
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(chunks).toEqual(["chunk1"]);
+    expect(caught).toBeInstanceOf(DOMException);
+    expect((caught as DOMException).name).toBe("AbortError");
+  });
+
   test("SDK クライアントが maxRetries=3 / timeout=120000 で初期化されている", () => {
-    expect(constructorOptions).toMatchObject({
+    expect(capturedClientOptions).toMatchObject({
       maxRetries: 3,
       timeout: 120_000,
     });
