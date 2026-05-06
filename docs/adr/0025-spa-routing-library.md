@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted
+superseded by [0027](./0027-tanstack-router.md)
 
 - 作成日: 2026-05-04
 - 関連: ADR-0008（技術スタック）, [ui-patterns.md §8](../design/ui-patterns.md), Issue #117
