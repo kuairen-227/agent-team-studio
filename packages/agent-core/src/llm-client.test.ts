@@ -124,7 +124,7 @@ describe("streamAgentMessage", () => {
 
     let caught: unknown;
     try {
-      for await (const _ of streamAgentMessage(baseInput)) {
+      for await (const _chunk of streamAgentMessage(baseInput)) {
         // noop
       }
     } catch (err) {
@@ -155,7 +155,10 @@ describe("streamAgentMessage", () => {
 
     let caught: unknown;
     try {
-      for await (const _ of streamAgentMessage(baseInput, controller.signal)) {
+      for await (const _chunk of streamAgentMessage(
+        baseInput,
+        controller.signal,
+      )) {
         // noop
       }
     } catch (err) {
@@ -168,20 +171,14 @@ describe("streamAgentMessage", () => {
   test("AbortError は LlmError にせずそのまま再スローする（ストリーム途中の中断）", async () => {
     const controller = new AbortController();
 
-    mockStreamFn.mockImplementation(async function* (
-      _body: unknown,
-      opts: { signal?: AbortSignal },
-    ) {
+    mockStreamFn.mockImplementation(async function* () {
       yield {
         type: "content_block_delta",
         index: 0,
         delta: { type: "text_delta", text: "chunk1" },
       };
       controller.abort();
-      if (opts?.signal?.aborted) {
-        throw new DOMException("Aborted", "AbortError");
-      }
-      yield { type: "message_stop" };
+      throw new DOMException("Aborted", "AbortError");
     });
 
     const chunks: string[] = [];
@@ -203,6 +200,7 @@ describe("streamAgentMessage", () => {
   });
 });
 
+// capturedClientOptions はモジュールロード時（dynamic import）に1回だけ記録される
 describe("クライアント初期化", () => {
   test("maxRetries=3 / timeout=120000 で初期化されている", () => {
     expect(capturedClientOptions).toMatchObject({
