@@ -17,6 +17,8 @@ class FakeAPIError extends Error {
 const mockStreamFn = mock();
 let capturedClientOptions: Record<string, unknown> = {};
 
+// FakeAnthropic.APIError = FakeAPIError により、プロダクションコードの
+// `err instanceof Anthropic.APIError` がモック環境で FakeAPIError の instanceof 検査になる
 mock.module("@anthropic-ai/sdk", () => {
   class FakeAnthropic {
     // getter で常に現在の mockStreamFn を参照する
@@ -130,12 +132,9 @@ describe("streamAgentMessage", () => {
     }
 
     expect(caught).toBeInstanceOf(LlmError);
-    expect((caught as InstanceType<typeof LlmError>).failReason).toBe(
-      "llm_error",
-    );
-    expect((caught as InstanceType<typeof LlmError>).cause).toBeInstanceOf(
-      FakeAPIError,
-    );
+    const err = caught as InstanceType<typeof LlmError>;
+    expect(err.failReason).toBe("llm_error");
+    expect(err.cause).toBeInstanceOf(FakeAPIError);
   });
 
   test("AbortError は LlmError にせずそのまま再スローする（開始前中断）", async () => {
@@ -152,11 +151,16 @@ describe("streamAgentMessage", () => {
       yield { type: "message_stop" };
     });
 
-    await expect(async () => {
+    let caught: unknown;
+    try {
       for await (const _ of streamAgentMessage(baseInput, controller.signal)) {
         // noop
       }
-    }).toThrow(DOMException);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(DOMException);
+    expect((caught as DOMException).name).toBe("AbortError");
   });
 
   test("AbortError は LlmError にせずそのまま再スローする（ストリーム途中の中断）", async () => {
@@ -195,11 +199,18 @@ describe("streamAgentMessage", () => {
     expect(caught).toBeInstanceOf(DOMException);
     expect((caught as DOMException).name).toBe("AbortError");
   });
+});
 
-  test("SDK クライアントが maxRetries=3 / timeout=120000 で初期化されている", () => {
+describe("クライアント初期化", () => {
+  test("maxRetries=3 / timeout=120000 で初期化されている", () => {
     expect(capturedClientOptions).toMatchObject({
       maxRetries: 3,
       timeout: 120_000,
     });
   });
+
+  // MVP: LLM_API_KEY 未設定時の fail-fast はモジュールキャッシュ制約により自動テスト不可。
+  // 別ファイル（llm-client.env.test.ts）で独立プロセスとして検証が必要。手動確認事項。
+
+  // MVP: LLM_BASE_URL 設定時の clientOptions.baseURL 付与も同様にモジュールキャッシュ制約で未カバー。
 });
