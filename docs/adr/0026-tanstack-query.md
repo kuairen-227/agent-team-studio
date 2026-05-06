@@ -71,4 +71,4 @@ US-3 以降の要件:
 悪い面・残課題:
 
 - `QueryClientProvider` のラップが必要（設定は最小限で影響は限定的）
-- 既存 US-1/US-2 の `useEffect` ベース fetch は即時移行を必須としない。新規画面から `useQuery` を使い始める
+- 既存 US-1/US-2 の `useEffect` ベース fetch は即時移行を必須としないとしたが、実際には本 ADR の適用と同時に両画面とも `useQuery` に移行した

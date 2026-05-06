@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "biome check src/ vite.config.ts",
     "lint:fix": "biome check --write src/ vite.config.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@agent-team-studio/shared": "workspace:*",
