@@ -10,14 +10,14 @@ class FakeAPIError extends Error {
     message: string,
   ) {
     super(message);
-    this.name = "APIError";
+    this.name = "APIError"; // スタックトレース向け（instanceof はプロトタイプチェーンで判定）
   }
 }
 
 const mockStreamFn = mock();
 let capturedClientOptions: Record<string, unknown> = {};
 
-// FakeAnthropic.APIError = FakeAPIError により、プロダクションコードの
+// static APIError = FakeAPIError とすることで、プロダクションコードの
 // `err instanceof Anthropic.APIError` がモック環境で FakeAPIError の instanceof 検査になる
 mock.module("@anthropic-ai/sdk", () => {
   class FakeAnthropic {
@@ -134,6 +134,8 @@ describe("streamAgentMessage", () => {
     expect(caught).toBeInstanceOf(LlmError);
     const err = caught as InstanceType<typeof LlmError>;
     expect(err.failReason).toBe("llm_error");
+    expect(err.message).toBe("LLM API error: Bad request");
+    expect(err.name).toBe("LlmError");
     expect(err.cause).toBeInstanceOf(FakeAPIError);
   });
 
@@ -204,6 +206,7 @@ describe("streamAgentMessage", () => {
 describe("クライアント初期化", () => {
   test("maxRetries=3 / timeout=120000 で初期化されている", () => {
     expect(capturedClientOptions).toMatchObject({
+      apiKey: "test-key",
       maxRetries: 3,
       timeout: 120_000,
     });

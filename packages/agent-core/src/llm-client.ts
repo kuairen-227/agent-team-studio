@@ -65,6 +65,7 @@ export async function* streamAgentMessage(
       }
     }
   } catch (err) {
+    // APITimeoutError を含む SDK エラーを llm_error に統一。timeout 判断は engine 層の AbortSignal が担う
     if (err instanceof Anthropic.APIError) {
       throw new LlmError("llm_error", `LLM API error: ${err.message}`, {
         cause: err,
