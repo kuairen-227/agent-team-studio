@@ -63,3 +63,4 @@ TanStack Router を採用する。ADR-0025 を supersede する。
 - React Router v7 からの移行作業が発生する（現時点で 2 ルート・4 ファイル、影響は限定的）
 - コードベースルーティングはルート数が増えると `router.tsx` が肥大化する。ルート数が 10 を超えた段階でファイルベースへの移行を再評価する
 - `createRoute` の `getParentRoute` / `addChildren` を手書きするため、子ルートの登録忘れ等の親子関係の不一致をコンパイラが検出できないケースがある（ランタイムで 404 になる）
+- `getRouteApi("/path/$param")` に渡すパス文字列は `router.tsx` の path 定義と一致しなくてもコンパイルエラーにならない。新規ルート実装時は `router.tsx` の path と `getRouteApi` の引数が一致しているか手動で確認する

@@ -51,13 +51,14 @@ US-3 以降の要件:
 スコープ（MVP）:
 
 - `useQuery` による HTTP GET のみ。既存 US-1/US-2 の POST（`fetch` 直書き）には遡って適用しない
+- `useMutation` は MVP スコープ外。`TemplateNewPage` の `POST /api/executions` は 202 + navigate という副作用フローで `useMutation` の恩恵（楽観的更新・キャッシュ無効化）が小さいため現時点では移行しない。US-5 で履歴一覧キャッシュ（`["executions"]`）の無効化ニーズが発生した時点で再評価する
 - `QueryClient` は `main.tsx` でアプリ全体に提供する（`QueryClientProvider`）
 - WebSocket 接続（US-3）はスコープ外。素の WebSocket または専用カスタム hook で扱う
 
 キャッシュポリシー（初期設定）:
 
 - `staleTime`: 60 秒。フォーカス復帰のたびにバックグラウンド refetch が走るデフォルト（0 秒）を抑制する
-- `retry`: 4xx エラーは即座に失敗扱い（クライアントエラーはリトライしても無意味）。それ以外は最大 3 回
+- `retry`: 4xx エラーは即座に失敗扱い（クライアントエラーはリトライしても無意味）。それ以外は最大 3 回リトライ（初回含め最大 4 回試行）
 - US-5 の履歴一覧等でページング・無効化が必要になった段階でクエリ個別に上書きする
 
 ## Consequences

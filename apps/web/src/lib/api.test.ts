@@ -40,6 +40,15 @@ describe("fetchJson", () => {
     await expect(fetchJson("/api/error")).rejects.toThrow("status=500");
   });
 
+  test("ok=true でも不正 JSON のとき SyntaxError が伝播する", async () => {
+    global.fetch = mock().mockResolvedValueOnce(
+      new Response("not-json", { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    // SyntaxError は /^status=4\d\d$/ にマッチしないため retry 対象になる（意図的な挙動）
+    await expect(fetchJson("/api/test")).rejects.toThrow(SyntaxError);
+  });
+
   test("fetch が TypeError を投げたときそのまま伝播する", async () => {
     global.fetch = mock().mockRejectedValueOnce(
       new TypeError("Failed to fetch"),
