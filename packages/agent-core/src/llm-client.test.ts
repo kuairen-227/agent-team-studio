@@ -49,6 +49,11 @@ type FakeEvent =
       index: number; // SDK が送信するが streamAgentMessage では参照しない
       delta: { type: "text_delta"; text: string };
     }
+  | {
+      type: "content_block_delta";
+      index: number;
+      delta: { type: "input_json_delta"; partial_json: string };
+    }
   | { type: "message_stop" };
 
 async function* fakeStream(events: FakeEvent[]) {
@@ -117,7 +122,31 @@ describe("streamAgentMessage", () => {
     expect(chunks).toEqual(["ok"]);
   });
 
-  test("SDK APIError は LlmError('llm_error') に写像される", async () => {
+  test("content_block_delta でも text_delta 以外のデルタは無視する", async () => {
+    mockStreamFn.mockImplementation(() =>
+      fakeStream([
+        {
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "input_json_delta", partial_json: '{"key":' },
+        },
+        {
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "text_delta", text: "ok" },
+        },
+      ]),
+    );
+
+    const chunks: string[] = [];
+    for await (const chunk of streamAgentMessage(baseInput)) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toEqual(["ok"]);
+  });
+
+  test("SDK APIError (400) は LlmError('llm_error') に写像される", async () => {
     mockStreamFn.mockImplementation(() => {
       throw new FakeAPIError(400, "Bad request");
     });
@@ -214,10 +243,12 @@ describe("streamAgentMessage", () => {
     expect(capturedBody).toMatchObject({
       model: "claude-sonnet-4-6",
       system: "You are helpful",
-      messages: [{ role: "user", content: "Hello" }],
       temperature: 0.3,
       max_tokens: 100,
     });
+    expect((capturedBody as { messages: unknown }).messages).toEqual([
+      { role: "user", content: "Hello" },
+    ]);
   });
 });
 
