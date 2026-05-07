@@ -12,9 +12,13 @@
 // ---------- 識別子 ----------
 // MVP では string のまま。branded type 化は将来検討（api-design.md §エラーレスポンス 注）。
 
+/** Template の識別子。 */
 export type TemplateId = string;
+/** Execution の識別子。 */
 export type ExecutionId = string;
+/** AgentExecution の識別子。 */
 export type AgentExecutionId = string;
+/** Result の識別子。 */
 export type ResultId = string;
 
 // ---------- 共通 enum ----------
@@ -46,8 +50,11 @@ export const AGENT_STATUSES = [
 /** AgentExecution.role の取りうる値（data-model.md §4.3）。 */
 export const AGENT_ROLES = ["investigation", "integration"] as const;
 
+/** `EXECUTION_STATUSES` から派生した union 型。 */
 export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
+/** `AGENT_STATUSES` から派生した union 型。 */
 export type AgentStatus = (typeof AGENT_STATUSES)[number];
+/** `AGENT_ROLES` から派生した union 型。 */
 export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /** 個別エージェントの失敗理由（agent-execution.md §5）。 */
@@ -65,7 +72,9 @@ export const EXECUTION_FAIL_REASONS = [
   "timeout",
 ] as const;
 
+/** `AGENT_FAIL_REASONS` から派生した union 型。 */
 export type AgentFailReason = (typeof AGENT_FAIL_REASONS)[number];
+/** `EXECUTION_FAIL_REASONS` から派生した union 型。 */
 export type ExecutionFailReason = (typeof EXECUTION_FAIL_REASONS)[number];
 
 // ---------- Template ----------
@@ -107,6 +116,7 @@ export type AgentDefinition =
   | InvestigationAgentDefinition
   | IntegrationAgentDefinition;
 
+/** テンプレートの静的定義（agents・input_schema・LLM 設定を含む）。 */
 export type TemplateDefinition = {
   schema_version: "1";
   input_schema: JsonSchema;
@@ -114,6 +124,7 @@ export type TemplateDefinition = {
   llm: LlmDefaults;
 };
 
+/** テンプレートのドメインオブジェクト（data-model.md §3）。 */
 export type Template = {
   id: TemplateId;
   name: string;
@@ -125,6 +136,7 @@ export type Template = {
 
 // ---------- Execution / AgentExecution / Result ----------
 
+/** Execution のドメインオブジェクト（data-model.md §4）。 */
 export type Execution = {
   id: ExecutionId;
   template_id: TemplateId;
@@ -157,20 +169,24 @@ type AgentExecutionBase<R extends AgentRole, O> = {
   completed_at?: string;
 };
 
+/** `AgentExecution` の調査エージェント（role: "investigation"）バリアント。 */
 export type InvestigationAgentExecution = AgentExecutionBase<
   "investigation",
   InvestigationAgentOutput
 >;
 
+/** `AgentExecution` の統合エージェント（role: "integration"）バリアント。 */
 export type IntegrationAgentExecution = AgentExecutionBase<
   "integration",
   IntegrationAgentOutput
 >;
 
+/** `InvestigationAgentExecution` と `IntegrationAgentExecution` の discriminated union。 */
 export type AgentExecution =
   | InvestigationAgentExecution
   | IntegrationAgentExecution;
 
+/** 実行結果のドメインオブジェクト（data-model.md §7）。 */
 export type Result = {
   id: ResultId;
   execution_id: ExecutionId;
@@ -182,12 +198,14 @@ export type Result = {
 // ---------- 競合調査テンプレート固有の I/O ----------
 // SSoT: docs/design/templates/competitor-analysis.md
 
+/** 競合調査の分析視点を識別するキー（competitor-analysis.md §視点）。 */
 export type CompetitorPerspectiveKey =
   | "strategy"
   | "product"
   | "investment"
   | "partnership";
 
+/** 調査結果の証拠信頼度（competitor-analysis.md §EvidenceLevel）。 */
 export type EvidenceLevel = "strong" | "moderate" | "weak" | "insufficient";
 
 /** Execution.parameters（competitor-analysis.md §入力パラメータ JSON Schema）。 */
@@ -202,6 +220,7 @@ export type InvestigationAgentOutput = {
   findings: InvestigationFinding[];
 };
 
+/** Investigation Agent の競合 1 社・1 視点分の発見事項。 */
 export type InvestigationFinding = {
   competitor: string;
   points: string[];
@@ -219,13 +238,16 @@ export type IntegrationAgentOutput = {
   missing: MissingPerspective[];
 };
 
+/** `Result.structured` の型。`IntegrationAgentOutput` と同型。 */
 export type CompetitorAnalysisResult = IntegrationAgentOutput;
 
+/** 競合調査マトリクスの 1 行（視点ごとの競合データ）。 */
 export type PerspectiveMatrixRow = {
   perspective: CompetitorPerspectiveKey;
   cells: MatrixCell[];
 };
 
+/** `PerspectiveMatrixRow` の各競合に対するセル。 */
 export type MatrixCell = {
   competitor: string;
   summary: string;
@@ -233,6 +255,7 @@ export type MatrixCell = {
   source_evidence_level: EvidenceLevel;
 };
 
+/** マトリクスから欠落している視点とその理由。 */
 export type MissingPerspective = {
   perspective: CompetitorPerspectiveKey;
   reason: "agent_failed" | "insufficient_evidence";

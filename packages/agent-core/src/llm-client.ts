@@ -1,6 +1,7 @@
 import type { AgentFailReason } from "@agent-team-studio/shared";
 import Anthropic from "@anthropic-ai/sdk";
 
+/** LLM 呼び出しのパラメータ（モデル・プロンプト・温度・トークン上限）。 */
 export type LlmInput = {
   model: string;
   system: string;
@@ -9,6 +10,7 @@ export type LlmInput = {
   max_tokens: number;
 };
 
+/** LLM API 失敗を表すカスタムエラー。`failReason` で失敗の種別を識別する。 */
 export class LlmError extends Error {
   readonly failReason: AgentFailReason;
 
@@ -40,6 +42,12 @@ if (process.env.LLM_BASE_URL) {
 
 const client = new Anthropic(clientOptions);
 
+/**
+ * LLM からのテキストを非同期ストリームで返す。
+ *
+ * `signal` が中断されると AbortError（DOMException）がそのまま伝播する。
+ * Anthropic SDK 例外は `LlmError` に変換して throw する。
+ */
 export async function* streamAgentMessage(
   input: LlmInput,
   signal?: AbortSignal,

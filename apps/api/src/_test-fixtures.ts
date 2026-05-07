@@ -8,6 +8,7 @@
 
 import type { Template, TemplateSummary } from "@agent-team-studio/shared";
 
+/** 単体テスト用の共通 `Template` フィクスチャ。 */
 export const fixtureTemplate: Template = {
   id: "tpl-1",
   name: "競合調査",
@@ -42,6 +43,7 @@ export const fixtureTemplate: Template = {
   updated_at: "2026-05-02T00:00:00.000Z",
 };
 
+/** `fixtureTemplate` から生成したテスト用 `TemplateSummary` 配列。 */
 export const fixtureTemplateSummaries: TemplateSummary[] = [
   {
     id: fixtureTemplate.id,

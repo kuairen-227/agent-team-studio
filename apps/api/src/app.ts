@@ -23,6 +23,7 @@ import { createWsRoutes } from "./routes/ws.ts";
 import { createExecutionsService } from "./services/executions.ts";
 import { createTemplatesService } from "./services/templates.ts";
 
+/** `createApp` に渡す依存（Repo 関数群）。本番は実 Repo、テストは fake Repo を使用する。 */
 export type AppDeps = {
   listTemplateSummaries: () => Promise<TemplateSummary[]>;
   getTemplateById: (id: string) => Promise<Template | null>;
@@ -31,6 +32,7 @@ export type AppDeps = {
   ) => Promise<CreateExecutionResponse>;
 };
 
+/** 依存を注入して Hono app を組み立てるファクトリ。 */
 export function createApp(deps: AppDeps) {
   const app = new Hono();
 

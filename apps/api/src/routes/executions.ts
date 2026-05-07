@@ -13,6 +13,7 @@ import { Hono } from "hono";
 import { ValidationError } from "../lib/errors.ts";
 import type { ExecutionsService } from "../services/executions.ts";
 
+/** `POST /api/executions` ルートを返すファクトリ。 */
 export function createExecutionsRoutes(deps: {
   executionsService: ExecutionsService;
 }) {

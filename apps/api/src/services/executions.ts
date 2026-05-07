@@ -24,12 +24,14 @@ const competitorAnalysisParametersSchema = z.object({
   reference: z.string().max(10000).optional(),
 });
 
+/** Execution 作成 Service の公開インターフェース。 */
 export type ExecutionsService = {
   createExecution: (
     request: CreateExecutionRequest,
   ) => Promise<CreateExecutionResponse>;
 };
 
+/** `createExecutionsService` の依存注入インターフェース。 */
 export type ExecutionsServiceDeps = {
   getTemplateById: (id: string) => Promise<Template | null>;
   createExecution: (
@@ -37,6 +39,7 @@ export type ExecutionsServiceDeps = {
   ) => Promise<CreateExecutionResponse>;
 };
 
+/** Execution 作成 Service を組み立てるファクトリ。 */
 export function createExecutionsService(
   deps: ExecutionsServiceDeps,
 ): ExecutionsService {

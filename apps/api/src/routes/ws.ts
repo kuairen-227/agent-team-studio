@@ -20,6 +20,7 @@ import type { AgentStatusPendingMessage } from "@agent-team-studio/shared";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "../lib/ws.ts";
 
+/** `/ws` WebSocket ルートを返すファクトリ。 */
 export function createWsRoutes() {
   const app = new Hono();
 
