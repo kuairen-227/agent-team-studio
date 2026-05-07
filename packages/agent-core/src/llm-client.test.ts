@@ -39,7 +39,8 @@ mock.module("@anthropic-ai/sdk", () => {
 });
 
 // SDK モック確立後にモジュールを dynamic import
-const { LlmError, streamAgentMessage } = await import("./llm-client.ts");
+const { streamAgentMessage } = await import("./llm-client.ts");
+const { LlmError } = await import("./llm-error.ts");
 
 // ---- ヘルパー ----
 

@@ -200,7 +200,7 @@ describe("runInvestigationAgent", () => {
 
   test("LLM エラー → agent_failed('llm_error') を発行し { success: false } を返す", async () => {
     // LlmError を発生させる stream を注入
-    const { LlmError } = await import("./llm-client.ts");
+    const { LlmError } = await import("./llm-error.ts");
 
     // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
     async function* errorStream(): AsyncIterable<string> {
@@ -334,7 +334,7 @@ describe("runIntegrationAgent", () => {
   });
 
   test("LLM エラー → agent_failed('llm_error')", async () => {
-    const { LlmError } = await import("./llm-client.ts");
+    const { LlmError } = await import("./llm-error.ts");
 
     // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
     async function* errorStream(): AsyncIterable<string> {

@@ -21,7 +21,7 @@ import type {
 } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
-import { LlmError } from "./llm-client.ts";
+import { LlmError } from "./llm-error.ts";
 
 // ---------- 公開型 ----------
 
