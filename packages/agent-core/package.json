@@ -9,9 +9,11 @@
   "scripts": {
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
-    "@agent-team-studio/shared": "workspace:*"
+    "@agent-team-studio/shared": "workspace:*",
+    "@anthropic-ai/sdk": "^0.94.0"
   }
 }
