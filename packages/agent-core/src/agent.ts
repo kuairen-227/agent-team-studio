@@ -18,6 +18,7 @@ import type {
   InvestigationAgentDefinition,
   InvestigationAgentOutput,
   LlmDefaults,
+  MissingPerspective,
 } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
@@ -153,7 +154,10 @@ function isInvestigationOutput(
   return true;
 }
 
-const MISSING_REASONS = ["agent_failed", "insufficient_evidence"] as const;
+const MISSING_REASONS = [
+  "agent_failed",
+  "insufficient_evidence",
+] as const satisfies MissingPerspective["reason"][];
 
 function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
   if (typeof value !== "object" || value === null) return false;

@@ -331,6 +331,14 @@ describe("runIntegrationAgent", () => {
     if (!result.success) {
       expect(result.reason).toBe("output_parse_error");
     }
+
+    const failEvent = deps.capturedEvents.find(
+      (e) => e.kind === "agent_failed",
+    );
+    expect(failEvent).toBeDefined();
+    if (failEvent?.kind === "agent_failed") {
+      expect(failEvent.reason).toBe("output_parse_error");
+    }
   });
 
   test("LLM エラー → agent_failed('llm_error')", async () => {

@@ -281,13 +281,12 @@ describe("runExecution", () => {
       input: LlmInput,
       signal?: AbortSignal,
     ): AsyncIterable<string> => {
-      if (input.system.includes("調査")) {
-        callCount++;
-        // 1回目は失敗、2回目以降は成功
-        if (callCount === 1) return makeStream(["invalid json"])(input, signal);
-        return investigationStream(input, signal);
-      }
-      return integrationStream(input, signal);
+      if (input.system.includes('"findings"'))
+        return integrationStream(input, signal);
+      callCount++;
+      // 1回目は失敗、2回目以降は成功
+      if (callCount === 1) return makeStream(["invalid json"])(input, signal);
+      return investigationStream(input, signal);
     };
 
     const deps = makeFakeDeps(partialStream);
@@ -305,10 +304,10 @@ describe("runExecution", () => {
       input: LlmInput,
       signal?: AbortSignal,
     ): AsyncIterable<string> => {
-      if (input.system.includes("調査"))
-        return investigationStream(input, signal);
-      // Integration は無効出力（パース失敗）
-      return makeStream(["no matrix here"])(input, signal);
+      if (input.system.includes('"findings"'))
+        // Integration は無効出力（パース失敗）
+        return makeStream(["no matrix here"])(input, signal);
+      return investigationStream(input, signal);
     };
 
     const deps = makeFakeDeps(mixedStream);
