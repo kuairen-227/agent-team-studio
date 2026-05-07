@@ -8,8 +8,10 @@ import type {
   AgentRole,
   CompetitorAnalysisParameters,
   CreateExecutionResponse,
+  ExecutionStatus,
   TemplateId,
 } from "@agent-team-studio/shared";
+import { eq } from "drizzle-orm";
 import type { DrizzleDb } from "../client.ts";
 import { agentExecutions, executions } from "../schema/index.ts";
 
@@ -60,4 +62,38 @@ export async function createExecution(
       createdAt: execution.createdAt.toISOString(),
     };
   });
+}
+
+/** `executions` テーブルの可変フィールドのパッチ型。 */
+export type ExecutionUpdatePatch = {
+  status: ExecutionStatus;
+  errorMessage?: string | null;
+  startedAt?: Date | null;
+  completedAt?: Date | null;
+};
+
+/**
+ * Execution のステータスを更新する。
+ *
+ * エンジンから呼び出される副作用。「DB UPDATE → イベント発行」の順序を保証するため、
+ * 呼び出し元（engine）は本関数の完了を待ってからイベントを発行すること。
+ */
+export async function updateExecution(
+  db: DrizzleDb,
+  id: string,
+  patch: ExecutionUpdatePatch,
+): Promise<void> {
+  await db
+    .update(executions)
+    .set({
+      status: patch.status,
+      ...(patch.errorMessage !== undefined && {
+        errorMessage: patch.errorMessage,
+      }),
+      ...(patch.startedAt !== undefined && { startedAt: patch.startedAt }),
+      ...(patch.completedAt !== undefined && {
+        completedAt: patch.completedAt,
+      }),
+    })
+    .where(eq(executions.id, id));
 }

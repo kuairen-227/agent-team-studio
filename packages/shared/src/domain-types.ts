@@ -63,6 +63,7 @@ export const EXECUTION_FAIL_REASONS = [
   "all_investigations_failed",
   "integration_failed",
   "timeout",
+  "internal_error",
 ] as const;
 
 export type AgentFailReason = (typeof AGENT_FAIL_REASONS)[number];

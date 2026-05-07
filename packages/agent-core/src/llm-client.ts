@@ -5,8 +5,8 @@
  * エラーは `LlmError` に統一し、AbortSignal による中断はそのまま伝播する。
  */
 
-import type { AgentFailReason } from "@agent-team-studio/shared";
 import Anthropic from "@anthropic-ai/sdk";
+import { LlmError } from "./llm-error.ts";
 
 /** LLM 呼び出しのパラメータ（モデル・プロンプト・温度・トークン上限）。 */
 export type LlmInput = {
@@ -16,21 +16,6 @@ export type LlmInput = {
   temperature: number;
   max_tokens: number;
 };
-
-/** LLM API 失敗を表すカスタムエラー。`failReason` で失敗の種別を識別する。 */
-export class LlmError extends Error {
-  readonly failReason: AgentFailReason;
-
-  constructor(
-    failReason: AgentFailReason,
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "LlmError";
-    this.failReason = failReason;
-  }
-}
 
 const apiKey = process.env.LLM_API_KEY;
 if (!apiKey) {

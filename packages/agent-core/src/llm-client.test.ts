@@ -39,7 +39,8 @@ mock.module("@anthropic-ai/sdk", () => {
 });
 
 // SDK モック確立後にモジュールを dynamic import
-const { LlmError, streamAgentMessage } = await import("./llm-client.ts");
+const { streamAgentMessage } = await import("./llm-client.ts");
+const { LlmError } = await import("./llm-error.ts");
 
 // ---- ヘルパー ----
 
@@ -252,7 +253,7 @@ describe("streamAgentMessage", () => {
   });
 });
 
-// capturedClientOptions はモジュールロード時（dynamic import）に1回だけ記録される
+// capturedClientOptions は streamAgentMessage の初回呼び出し時（= getClient() 初回実行時）に記録される
 describe("クライアント初期化", () => {
   test("maxRetries=3 / timeout=120000 で初期化されている", () => {
     expect(capturedClientOptions).toMatchObject({
