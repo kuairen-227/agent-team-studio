@@ -107,7 +107,7 @@ export type AgentDefinition =
   | InvestigationAgentDefinition
   | IntegrationAgentDefinition;
 
-/** テンプレートの静的定義（agents・input_schema・LLM 設定を含む）。 */
+/** テンプレートの静的定義。 */
 export type TemplateDefinition = {
   schema_version: "1";
   input_schema: JsonSchema;
