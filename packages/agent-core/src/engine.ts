@@ -222,32 +222,34 @@ async function _runExecution(
 
   // Integration エージェント用 AbortController（agent タイムアウト）
   const agentTimeout = timeoutSignalPair(agentTimeoutMs);
-  // Execution タイムアウトでも中断できるよう、両方を監視する合成 signal を作る
   const combinedController = new AbortController();
   const abortCombined = () => combinedController.abort();
   executionSignal.addEventListener("abort", abortCombined);
   agentTimeout.signal.addEventListener("abort", abortCombined);
 
-  const integrationResult = await runIntegrationAgent(
-    {
-      agentExecutionId: integrationAe.id,
-      agentId: integrationAe.agentId,
-      definition: integrationDef,
-      parameters,
-      successfulInvestigations,
-      llm: templateDefinition.llm,
-      signal: combinedController.signal,
-    },
-    {
-      stream: streamFn,
-      updateAgentExecution: deps.updateAgentExecution,
-      onEvent: deps.onEvent,
-    },
-  );
-
-  agentTimeout.clear();
-  executionSignal.removeEventListener("abort", abortCombined);
-  agentTimeout.signal.removeEventListener("abort", abortCombined);
+  let integrationResult: Awaited<ReturnType<typeof runIntegrationAgent>>;
+  try {
+    integrationResult = await runIntegrationAgent(
+      {
+        agentExecutionId: integrationAe.id,
+        agentId: integrationAe.agentId,
+        definition: integrationDef,
+        parameters,
+        successfulInvestigations,
+        llm: templateDefinition.llm,
+        signal: combinedController.signal,
+      },
+      {
+        stream: streamFn,
+        updateAgentExecution: deps.updateAgentExecution,
+        onEvent: deps.onEvent,
+      },
+    );
+  } finally {
+    agentTimeout.clear();
+    executionSignal.removeEventListener("abort", abortCombined);
+    agentTimeout.signal.removeEventListener("abort", abortCombined);
+  }
 
   if (executionSignal.aborted) {
     await deps.updateExecution(executionId, {
@@ -274,7 +276,7 @@ async function _runExecution(
   const resultId = await deps.insertResult({
     executionId,
     markdown: integrationResult.markdown,
-    structured: integrationResult.output as CompetitorAnalysisResult,
+    structured: integrationResult.output,
   });
 
   await deps.updateExecution(executionId, {
@@ -310,25 +312,28 @@ async function runInvestigationsWithTimeout(
       executionSignal.addEventListener("abort", abortCombined);
       agentTimeout.signal.addEventListener("abort", abortCombined);
 
-      const result = await runInvestigationAgent(
-        {
-          agentExecutionId: ae.id,
-          agentId: ae.agentId,
-          definition: def,
-          parameters,
-          llm: templateDefinition.llm,
-          signal: combinedController.signal,
-        },
-        {
-          stream: streamFn,
-          updateAgentExecution: deps.updateAgentExecution,
-          onEvent: deps.onEvent,
-        },
-      );
-
-      agentTimeout.clear();
-      executionSignal.removeEventListener("abort", abortCombined);
-      agentTimeout.signal.removeEventListener("abort", abortCombined);
+      let result: Awaited<ReturnType<typeof runInvestigationAgent>>;
+      try {
+        result = await runInvestigationAgent(
+          {
+            agentExecutionId: ae.id,
+            agentId: ae.agentId,
+            definition: def,
+            parameters,
+            llm: templateDefinition.llm,
+            signal: combinedController.signal,
+          },
+          {
+            stream: streamFn,
+            updateAgentExecution: deps.updateAgentExecution,
+            onEvent: deps.onEvent,
+          },
+        );
+      } finally {
+        agentTimeout.clear();
+        executionSignal.removeEventListener("abort", abortCombined);
+        agentTimeout.signal.removeEventListener("abort", abortCombined);
+      }
 
       if (result.success) {
         return {

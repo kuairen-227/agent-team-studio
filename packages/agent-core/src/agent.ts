@@ -84,10 +84,10 @@ function substituteTemplate(
   template: string,
   vars: Record<string, string>,
 ): string {
-  return template.replace(
-    /\{\{(\w+)\}\}/g,
-    (_, key: string) => vars[key] ?? `{{${key}}}`,
-  );
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+    if (!(key in vars)) throw new Error(`Unknown template key: {{${key}}}`);
+    return vars[key] as string;
+  });
 }
 
 function buildInvestigationSystem(
@@ -156,11 +156,19 @@ function isInvestigationOutput(
 function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;
-  return (
-    Array.isArray(obj.matrix) &&
-    Array.isArray(obj.overall_insights) &&
-    Array.isArray(obj.missing)
-  );
+  if (
+    !Array.isArray(obj.matrix) ||
+    !Array.isArray(obj.overall_insights) ||
+    !Array.isArray(obj.missing)
+  )
+    return false;
+  for (const cell of obj.matrix) {
+    if (typeof cell !== "object" || cell === null) return false;
+    const c = cell as Record<string, unknown>;
+    if (typeof c.perspective !== "string" || !Array.isArray(c.cells))
+      return false;
+  }
+  return true;
 }
 
 function parseInvestigationOutput(raw: string): InvestigationAgentOutput {

@@ -361,6 +361,7 @@ describe("runIntegrationAgent", () => {
     const deps = makeDeps([], { stream: (input) => captureStream(input) });
     await runIntegrationAgent({ ...baseIntegrationInput }, deps);
 
-    expect(capturedSystem).toContain("strategy");
+    expect(capturedSystem).toContain("CompanyA");
+    expect(capturedSystem).toContain('"perspective"');
   });
 });
