@@ -34,6 +34,7 @@ tools: Read, Grep, Glob, Bash(git log:*)
 - 既存 ADR と矛盾せず、Context / Decision / Consequences が具体か
 - 技術選定の根拠が明確で、チーム制約（1 人 + AI、学習目的）と整合しているか
 - 型・命名・モジュール境界が一貫しているか（`any` / `as` の抑制、`packages/shared` の活用）
+- コードの可読性が保たれているか（命名の意図表現・ネスト深度・関数サイズ・コメントの質）（[coding.md](../../docs/principles/coding.md)）
 - コミットメッセージ・ブランチ名がガイドに従っているか
 
 ## アンチパターン
