@@ -273,17 +273,29 @@ async function _runExecution(
 
   // ---------- Result INSERT → execution_completed ----------
 
-  const resultId = await deps.insertResult({
-    executionId,
-    markdown: integrationResult.markdown,
-    structured: integrationResult.output,
-  });
+  try {
+    const resultId = await deps.insertResult({
+      executionId,
+      markdown: integrationResult.markdown,
+      structured: integrationResult.output,
+    });
 
-  await deps.updateExecution(executionId, {
-    status: "completed",
-    completedAt: new Date(),
-  });
-  deps.onEvent({ kind: "execution_completed", resultId });
+    await deps.updateExecution(executionId, {
+      status: "completed",
+      completedAt: new Date(),
+    });
+    deps.onEvent({ kind: "execution_completed", resultId });
+  } catch (e) {
+    await deps
+      .updateExecution(executionId, {
+        status: "failed",
+        errorMessage: "internal_error",
+        completedAt: new Date(),
+      })
+      .catch(() => {});
+    deps.onEvent({ kind: "execution_failed", reason: "internal_error" });
+    throw e;
+  }
 }
 
 type InvestigationRunResult =

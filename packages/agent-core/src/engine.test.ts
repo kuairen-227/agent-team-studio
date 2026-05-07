@@ -391,4 +391,25 @@ describe("runExecution", () => {
       expect(failEvent.reason).toBe("timeout");
     }
   });
+
+  test("insertResult が throw → execution_failed('internal_error') を発行し execution が running のまま残らない", async () => {
+    const deps = makeFakeDeps(undefined, {
+      insertResultFn: async () => {
+        throw new Error("DB connection error");
+      },
+    });
+
+    await expect(runExecution(baseInput, deps)).rejects.toThrow(
+      "DB connection error",
+    );
+
+    const failEvent = deps.events.find((e) => e.kind === "execution_failed");
+    expect(failEvent).toBeDefined();
+    if (failEvent?.kind === "execution_failed") {
+      expect(failEvent.reason).toBe("internal_error");
+    }
+
+    const finalPatch = deps.executionPatches[deps.executionPatches.length - 1];
+    expect(finalPatch?.patch.status).toBe("failed");
+  });
 });

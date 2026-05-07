@@ -167,6 +167,16 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
     const c = cell as Record<string, unknown>;
     if (typeof c.perspective !== "string" || !Array.isArray(c.cells))
       return false;
+    for (const item of c.cells) {
+      if (typeof item !== "object" || item === null) return false;
+      const i = item as Record<string, unknown>;
+      if (
+        typeof i.competitor !== "string" ||
+        typeof i.summary !== "string" ||
+        typeof i.source_evidence_level !== "string"
+      )
+        return false;
+    }
   }
   return true;
 }
