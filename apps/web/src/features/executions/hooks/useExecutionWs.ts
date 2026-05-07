@@ -45,7 +45,7 @@ type Action =
   | { type: "connected" }
   | { type: "ws_error"; code: number };
 
-function reducer(state: WsState, action: Action): WsState {
+export function reducer(state: WsState, action: Action): WsState {
   switch (action.type) {
     case "connected":
       return { phase: "running", agents: new Map() };

@@ -13,6 +13,7 @@
  * リダイレクト or 簡易メッセージを置く。
  */
 
+import type { ExecutionFailReason } from "@agent-team-studio/shared";
 import { getRouteApi } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,15 +25,10 @@ import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
 const Route = getRouteApi("/executions/$executionId");
 
 const AGENT_LABEL: Record<string, string> = {
-  "investigation:strategy": "戦略調査",
-  "investigation:product": "製品調査",
-  "investigation:investment": "投資調査",
-  "investigation:partnership": "提携調査",
   investigation_strategy: "戦略調査",
   investigation_product: "製品調査",
   investigation_investment: "投資調査",
   investigation_partnership: "提携調査",
-  "integration:main": "統合",
   integrator: "統合",
   integration: "統合",
 };
@@ -57,7 +53,7 @@ export function ExecutionProgressPage() {
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行中
         </h1>
-        <p className="text-sm text-muted-foreground">接続中</p>
+        <p className="text-sm text-muted-foreground">接続中…</p>
       </section>
     );
   }
@@ -77,10 +73,7 @@ export function ExecutionProgressPage() {
           <AlertDescription>
             <p>{message}</p>
             <p className="mt-1">
-              <a href="/history" className="underline">
-                履歴一覧
-              </a>
-              から過去の実行を確認できます。
+              履歴一覧（準備中）から過去の実行を確認できます。
             </p>
           </AlertDescription>
         </Alert>
@@ -103,17 +96,17 @@ export function ExecutionProgressPage() {
           すべてのエージェントが完了しました。
         </p>
         <AgentList agents={agents} />
-        <p className="mt-6 text-sm">
+        <div className="mt-6">
           <Button variant="outline" disabled>
             結果を表示（準備中）
           </Button>
-        </p>
+        </div>
       </section>
     );
   }
 
   if (wsState.phase === "failed") {
-    const REASON_MESSAGES: Record<string, string> = {
+    const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
       all_investigations_failed: "すべての調査エージェントが失敗しました。",
       integration_failed: "統合エージェントが失敗しました。",
       timeout: "実行がタイムアウトしました。",
@@ -127,12 +120,9 @@ export function ExecutionProgressPage() {
         <Alert variant="destructive">
           <AlertTitle>実行が失敗しました</AlertTitle>
           <AlertDescription>
-            <p>{REASON_MESSAGES[wsState.reason] ?? "エラーが発生しました。"}</p>
+            <p>{REASON_MESSAGES[wsState.reason]}</p>
             <p className="mt-1">
-              <a href="/history" className="underline">
-                履歴一覧
-              </a>
-              から過去の実行を確認できます。
+              履歴一覧（準備中）から過去の実行を確認できます。
             </p>
           </AlertDescription>
         </Alert>

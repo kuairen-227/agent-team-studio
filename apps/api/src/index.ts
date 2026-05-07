@@ -49,11 +49,19 @@ async function launchEngine(executionId: string): Promise<void> {
   ]);
   if (!execution) {
     console.error(`[engine] execution not found: ${executionId}`);
+    eventHub.publish(executionId, {
+      kind: "execution_failed",
+      reason: "internal_error",
+    });
     return;
   }
   const template = await getTemplateById(db, execution.templateId);
   if (!template) {
     console.error(`[engine] template not found: ${execution.templateId}`);
+    eventHub.publish(executionId, {
+      kind: "execution_failed",
+      reason: "internal_error",
+    });
     return;
   }
 

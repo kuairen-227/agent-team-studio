@@ -58,7 +58,9 @@ function connectAndWait(
     ws.onmessage = (e) => {
       try {
         messages.push(JSON.parse(e.data as string) as WsMessage);
-      } catch {}
+      } catch (err) {
+        console.warn("WS メッセージのパースに失敗しました", err);
+      }
     };
 
     ws.onclose = (e) => {
@@ -99,6 +101,12 @@ const failedExecution: ExecutionRow = {
   errorMessage: "internal_error",
   startedAt: new Date("2026-05-04T00:01:00.000Z"),
   completedAt: new Date("2026-05-04T00:02:00.000Z"),
+};
+
+const pendingExecution: ExecutionRow = {
+  ...baseExecution,
+  id: "exec-pending",
+  status: "pending",
 };
 
 const runningExecution: ExecutionRow = {
@@ -203,6 +211,28 @@ describe("WS 失敗済み Execution", () => {
       (m) => m.type === "execution:failed",
     );
     expect(failedMsg).toBeDefined();
+    expect(
+      (failedMsg as Extract<WsMessage, { type: "execution:failed" }>).reason,
+    ).toBe("internal_error");
+  });
+});
+
+describe("WS 保留中 Execution", () => {
+  test("subscribe が呼ばれる", async () => {
+    await new Promise<void>((resolve) => {
+      server = buildServer({
+        getExecution: async () => pendingExecution,
+        subscribeToExecution: (_id, _handler) => {
+          resolve();
+          return () => {};
+        },
+      });
+
+      const ws = new WebSocket(
+        `ws://localhost:${server.port}/ws?executionId=exec-pending`,
+      );
+      ws.onerror = () => resolve();
+    });
   });
 });
 
