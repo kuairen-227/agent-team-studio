@@ -169,10 +169,10 @@ function makeFakeDeps(
     input: LlmInput,
     signal?: AbortSignal,
   ): AsyncIterable<string> => {
-    // system プロンプトの内容で agent 種別を判定
-    if (input.system.includes("調査"))
-      return investigationStream(input, signal);
-    return integrationStream(input, signal);
+    // integration は investigation_results が JSON 展開されるため "findings" キーを含む
+    if (input.system.includes('"findings"'))
+      return integrationStream(input, signal);
+    return investigationStream(input, signal);
   };
 
   return {

@@ -348,6 +348,14 @@ describe("runIntegrationAgent", () => {
     if (!result.success) {
       expect(result.reason).toBe("llm_error");
     }
+
+    const failEvent = deps.capturedEvents.find(
+      (e) => e.kind === "agent_failed",
+    );
+    expect(failEvent).toBeDefined();
+    if (failEvent?.kind === "agent_failed") {
+      expect(failEvent.reason).toBe("llm_error");
+    }
   });
 
   test("investigation_results プレースホルダに成功した調査結果が展開される", async () => {

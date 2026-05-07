@@ -153,6 +153,8 @@ function isInvestigationOutput(
   return true;
 }
 
+const MISSING_REASONS = ["agent_failed", "insufficient_evidence"] as const;
+
 function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;
@@ -165,7 +167,10 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
   for (const cell of obj.matrix) {
     if (typeof cell !== "object" || cell === null) return false;
     const c = cell as Record<string, unknown>;
-    if (typeof c.perspective !== "string" || !Array.isArray(c.cells))
+    if (
+      !PERSPECTIVE_KEYS.includes(c.perspective as string) ||
+      !Array.isArray(c.cells)
+    )
       return false;
     for (const item of c.cells) {
       if (typeof item !== "object" || item === null) return false;
@@ -173,10 +178,22 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
       if (
         typeof i.competitor !== "string" ||
         typeof i.summary !== "string" ||
-        typeof i.source_evidence_level !== "string"
+        !EVIDENCE_LEVELS.includes(i.source_evidence_level as string)
       )
         return false;
     }
+  }
+  for (const insight of obj.overall_insights) {
+    if (typeof insight !== "string") return false;
+  }
+  for (const m of obj.missing) {
+    if (typeof m !== "object" || m === null) return false;
+    const mp = m as Record<string, unknown>;
+    if (
+      !PERSPECTIVE_KEYS.includes(mp.perspective as string) ||
+      !(MISSING_REASONS as readonly string[]).includes(mp.reason as string)
+    )
+      return false;
   }
   return true;
 }
