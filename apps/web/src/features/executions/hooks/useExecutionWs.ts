@@ -66,6 +66,9 @@ function reducer(state: WsState, action: Action): WsState {
       const msg = action.msg;
 
       if (isAgentStatusMessage(msg)) {
+        // 終端フェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
+        if (state.phase === "completed" || state.phase === "failed")
+          return state;
         const prev = agents.get(msg.agentId);
         const next: AgentState = {
           agentId: msg.agentId,
@@ -79,6 +82,9 @@ function reducer(state: WsState, action: Action): WsState {
       }
 
       if (isAgentOutputMessage(msg)) {
+        // 終端フェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
+        if (state.phase === "completed" || state.phase === "failed")
+          return state;
         const prev = agents.get(msg.agentId);
         const next: AgentState = {
           agentId: msg.agentId,

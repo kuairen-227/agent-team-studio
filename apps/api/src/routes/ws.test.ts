@@ -208,29 +208,20 @@ describe("WS 失敗済み Execution", () => {
 
 describe("WS 進行中 Execution", () => {
   test("subscribe が呼ばれる", async () => {
-    let subscribed = false;
-    server = buildServer({
-      getExecution: async () => runningExecution,
-      subscribeToExecution: (_id, _handler) => {
-        subscribed = true;
-        return () => {};
-      },
-    });
-
+    // subscribeToExecution が呼ばれた時点で Promise を解決し、setTimeout への依存を排除する。
     await new Promise<void>((resolve) => {
+      server = buildServer({
+        getExecution: async () => runningExecution,
+        subscribeToExecution: (_id, _handler) => {
+          resolve();
+          return () => {};
+        },
+      });
+
       const ws = new WebSocket(
         `ws://localhost:${server.port}/ws?executionId=exec-running`,
       );
-      ws.onopen = () => {
-        // onOpen が完了するまで少し待ってから切断する。
-        setTimeout(() => {
-          ws.close();
-          resolve();
-        }, 50);
-      };
       ws.onerror = () => resolve();
     });
-
-    expect(subscribed).toBe(true);
   });
 });

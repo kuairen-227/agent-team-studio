@@ -181,22 +181,21 @@ function AgentCard({ agent }: { agent: AgentState }) {
         </CardTitle>
         <Badge variant={agent.status} />
       </CardHeader>
-      {(agent.output || agent.failReason) && (
-        <CardContent>
-          {agent.failReason && (
-            <p className="mb-2 text-xs text-destructive">
-              失敗理由: {agent.failReason}
-            </p>
+      <CardContent>
+        {agent.failReason && (
+          <p className="mb-2 text-xs text-destructive">
+            失敗理由: {agent.failReason}
+          </p>
+        )}
+        {/* aria-live は DOM に常時存在させることで ARIA 仕様を満たす。 */}
+        <div aria-live="polite">
+          {agent.output && (
+            <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
+              {agent.output}
+            </pre>
           )}
-          <div aria-live="polite">
-            {agent.output && (
-              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                {agent.output}
-              </pre>
-            )}
-          </div>
-        </CardContent>
-      )}
+        </div>
+      </CardContent>
     </Card>
   );
 }
