@@ -12,6 +12,7 @@ import type {
 } from "@agent-team-studio/shared";
 import { eq } from "drizzle-orm";
 import type { DrizzleDb } from "../client.ts";
+import type { AgentExecutionRow } from "../schema/agent-executions.ts";
 import { agentExecutions } from "../schema/index.ts";
 
 /** `agent_executions` テーブルの可変フィールドのパッチ型。 */
@@ -22,6 +23,18 @@ export type AgentExecutionUpdatePatch = {
   startedAt?: Date | null;
   completedAt?: Date | null;
 };
+
+export async function getAgentExecutionsByExecutionId(
+  db: DrizzleDb,
+  executionId: string,
+): Promise<AgentExecutionRow[]> {
+  return db
+    .select()
+    .from(agentExecutions)
+    .where(eq(agentExecutions.executionId, executionId));
+}
+
+export type { AgentExecutionRow };
 
 /** AgentExecution のステータス・出力を更新する。 */
 export async function updateAgentExecution(

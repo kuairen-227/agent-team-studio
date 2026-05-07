@@ -1,5 +1,5 @@
 /**
- * Execution 作成 Service。
+ * Execution 作成・取得 Service。
  *
  * バリデーションは Template 取得より先に実行する。入力エラーは Template 存在有無に
  * 依存せず判定可能で、不要な DB アクセスを避けるため。
@@ -8,10 +8,23 @@
  * 抽象化は v2 で導入予定）。
  */
 
-import type { CreateExecutionInput } from "@agent-team-studio/db";
 import type {
+  AgentExecutionRow,
+  CreateExecutionInput,
+  ExecutionRow,
+  ResultRow,
+} from "@agent-team-studio/db";
+import type {
+  AgentExecutionDetail,
   CreateExecutionRequest,
   CreateExecutionResponse,
+  ExecutionSummary,
+  GetExecutionResponse,
+  GetExecutionsResponse,
+  IntegrationAgentExecutionDetail,
+  IntegrationAgentOutput,
+  InvestigationAgentExecutionDetail,
+  InvestigationAgentOutput,
   Template,
 } from "@agent-team-studio/shared";
 import { z } from "zod";
@@ -24,11 +37,15 @@ const competitorAnalysisParametersSchema = z.object({
   reference: z.string().max(10000).optional(),
 });
 
-/** Execution 作成 Service の公開インターフェース。 */
+/** Execution Service の公開インターフェース。 */
 export type ExecutionsService = {
   createExecution: (
     request: CreateExecutionRequest,
   ) => Promise<CreateExecutionResponse>;
+  /** Execution 詳細を返す。存在しない場合は null。 */
+  getExecution: (id: string) => Promise<GetExecutionResponse | null>;
+  /** 全 Execution 一覧を新しい順で返す。 */
+  listExecutions: () => Promise<GetExecutionsResponse>;
 };
 
 export type ExecutionsServiceDeps = {
@@ -36,6 +53,12 @@ export type ExecutionsServiceDeps = {
   createExecution: (
     input: CreateExecutionInput,
   ) => Promise<CreateExecutionResponse>;
+  getExecution: (id: string) => Promise<ExecutionRow | null>;
+  getAgentExecutionsByExecutionId: (
+    executionId: string,
+  ) => Promise<AgentExecutionRow[]>;
+  getResultByExecutionId: (executionId: string) => Promise<ResultRow | null>;
+  listExecutions: () => Promise<ExecutionRow[]>;
 };
 
 export function createExecutionsService(
@@ -78,5 +101,72 @@ export function createExecutionsService(
         agents,
       });
     },
+
+    async getExecution(id) {
+      const execution = await deps.getExecution(id);
+      if (!execution) return null;
+
+      const [agentExecs, result] = await Promise.all([
+        deps.getAgentExecutionsByExecutionId(id),
+        deps.getResultByExecutionId(id),
+      ]);
+
+      return {
+        id: execution.id,
+        templateId: execution.templateId,
+        parameters: execution.parameters,
+        status: execution.status,
+        errorMessage: execution.errorMessage ?? undefined,
+        createdAt: execution.createdAt.toISOString(),
+        startedAt: execution.startedAt?.toISOString(),
+        completedAt: execution.completedAt?.toISOString(),
+        agentExecutions: agentExecs.map(mapAgentExecution),
+        result: result
+          ? {
+              id: result.id,
+              markdown: result.markdown,
+              structured: result.structured,
+              createdAt: result.createdAt.toISOString(),
+            }
+          : undefined,
+      };
+    },
+
+    async listExecutions() {
+      const rows = await deps.listExecutions();
+      const summaries: ExecutionSummary[] = rows.map((e) => ({
+        id: e.id,
+        templateId: e.templateId,
+        status: e.status,
+        createdAt: e.createdAt.toISOString(),
+        startedAt: e.startedAt?.toISOString(),
+        completedAt: e.completedAt?.toISOString(),
+      }));
+      return { items: summaries, total: summaries.length };
+    },
   };
+}
+
+function mapAgentExecution(ae: AgentExecutionRow): AgentExecutionDetail {
+  const base = {
+    id: ae.id,
+    agentId: ae.agentId,
+    status: ae.status,
+    errorMessage: ae.errorMessage ?? undefined,
+    startedAt: ae.startedAt?.toISOString(),
+    completedAt: ae.completedAt?.toISOString(),
+  };
+
+  if (ae.role === "investigation") {
+    return {
+      ...base,
+      role: "investigation",
+      output: ae.output as InvestigationAgentOutput | undefined,
+    } satisfies InvestigationAgentExecutionDetail;
+  }
+  return {
+    ...base,
+    role: "integration",
+    output: ae.output as IntegrationAgentOutput | undefined,
+  } satisfies IntegrationAgentExecutionDetail;
 }
