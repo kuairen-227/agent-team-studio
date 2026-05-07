@@ -13,6 +13,7 @@ import type {
   AgentStatus,
   CompetitorAnalysisParameters,
   CompetitorPerspectiveKey,
+  EvidenceLevel,
   IntegrationAgentDefinition,
   IntegrationAgentOutput,
   InvestigationAgentDefinition,
@@ -129,12 +130,12 @@ const PERSPECTIVE_KEYS: readonly string[] = [
   "partnership",
 ] satisfies CompetitorPerspectiveKey[];
 
-const EVIDENCE_LEVELS: readonly string[] = [
+const EVIDENCE_LEVELS = [
   "strong",
   "moderate",
   "weak",
   "insufficient",
-];
+] as const satisfies EvidenceLevel[];
 
 function isInvestigationOutput(
   value: unknown,
@@ -148,7 +149,7 @@ function isInvestigationOutput(
     const finding = f as Record<string, unknown>;
     if (typeof finding.competitor !== "string") return false;
     if (!Array.isArray(finding.points)) return false;
-    if (!EVIDENCE_LEVELS.includes(finding.evidence_level as string))
+    if (!EVIDENCE_LEVELS.includes(finding.evidence_level as EvidenceLevel))
       return false;
   }
   return true;
@@ -182,7 +183,7 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
       if (
         typeof i.competitor !== "string" ||
         typeof i.summary !== "string" ||
-        !EVIDENCE_LEVELS.includes(i.source_evidence_level as string)
+        !EVIDENCE_LEVELS.includes(i.source_evidence_level as EvidenceLevel)
       )
         return false;
     }
