@@ -1,3 +1,10 @@
+/**
+ * Anthropic SDK の薄いラッパー。
+ *
+ * モジュールロード時に `LLM_API_KEY` を検証する副作用がある。
+ * エラーは `LlmError` に統一し、AbortSignal による中断はそのまま伝播する。
+ */
+
 import type { AgentFailReason } from "@agent-team-studio/shared";
 import Anthropic from "@anthropic-ai/sdk";
 

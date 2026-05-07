@@ -61,7 +61,6 @@ export type AgentStatusFailedMessage = AgentStatusBase &
     reason: AgentFailReason;
   };
 
-/** `agent:status` メッセージ全バリアントの discriminated union。 */
 export type AgentStatusMessage =
   | AgentStatusPendingMessage
   | AgentStatusRunningMessage

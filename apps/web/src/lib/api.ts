@@ -1,6 +1,6 @@
 /**
  * JSON を fetch するユーティリティ。エラー時は `"status=NNN"` 形式でメッセージを throw する。
- * `QueryClient` の retry 判定と対になっている。
+ * `main.tsx` の `QueryClient` retry 判定と対になっている。
  */
 export async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);

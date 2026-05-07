@@ -160,19 +160,18 @@ type AgentExecutionBase<R extends AgentRole, O> = {
   completed_at?: string;
 };
 
-/** `AgentExecution` の調査エージェント（role: "investigation"）バリアント。 */
+/** `AgentExecution` の調査エージェントバリアント。 */
 export type InvestigationAgentExecution = AgentExecutionBase<
   "investigation",
   InvestigationAgentOutput
 >;
 
-/** `AgentExecution` の統合エージェント（role: "integration"）バリアント。 */
+/** `AgentExecution` の統合エージェントバリアント。 */
 export type IntegrationAgentExecution = AgentExecutionBase<
   "integration",
   IntegrationAgentOutput
 >;
 
-/** `InvestigationAgentExecution` と `IntegrationAgentExecution` の discriminated union。 */
 export type AgentExecution =
   | InvestigationAgentExecution
   | IntegrationAgentExecution;
@@ -189,14 +188,14 @@ export type Result = {
 // ---------- 競合調査テンプレート固有の I/O ----------
 // SSoT: docs/design/templates/competitor-analysis.md
 
-/** 競合調査の分析視点を識別するキー（competitor-analysis.md §視点）。 */
+/** 競合調査における 4 つの分析視点（戦略・製品・投資・提携）を識別するキー。 */
 export type CompetitorPerspectiveKey =
   | "strategy"
   | "product"
   | "investment"
   | "partnership";
 
-/** 調査結果の証拠信頼度（competitor-analysis.md §EvidenceLevel）。 */
+/** 調査結果の証拠信頼度（strong → moderate → weak → insufficient の 4 段階）。 */
 export type EvidenceLevel = "strong" | "moderate" | "weak" | "insufficient";
 
 /** Execution.parameters（competitor-analysis.md §入力パラメータ JSON Schema）。 */
@@ -229,7 +228,7 @@ export type IntegrationAgentOutput = {
   missing: MissingPerspective[];
 };
 
-/** `Result.structured` の型。`IntegrationAgentOutput` と同型。 */
+/** `Result.structured` の型（Integration Agent の出力と同型）。 */
 export type CompetitorAnalysisResult = IntegrationAgentOutput;
 
 /** 競合調査マトリクスの 1 行（視点ごとの競合データ）。 */
