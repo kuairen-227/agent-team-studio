@@ -32,7 +32,6 @@ export type AppDeps = {
   ) => Promise<CreateExecutionResponse>;
 };
 
-/** 依存を注入して Hono app を組み立てるファクトリ。 */
 export function createApp(deps: AppDeps) {
   const app = new Hono();
 

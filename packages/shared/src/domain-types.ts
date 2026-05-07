@@ -12,13 +12,9 @@
 // ---------- 識別子 ----------
 // MVP では string のまま。branded type 化は将来検討（api-design.md §エラーレスポンス 注）。
 
-/** Template の識別子。 */
 export type TemplateId = string;
-/** Execution の識別子。 */
 export type ExecutionId = string;
-/** AgentExecution の識別子。 */
 export type AgentExecutionId = string;
-/** Result の識別子。 */
 export type ResultId = string;
 
 // ---------- 共通 enum ----------
@@ -50,11 +46,8 @@ export const AGENT_STATUSES = [
 /** AgentExecution.role の取りうる値（data-model.md §4.3）。 */
 export const AGENT_ROLES = ["investigation", "integration"] as const;
 
-/** `EXECUTION_STATUSES` から派生した union 型。 */
 export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
-/** `AGENT_STATUSES` から派生した union 型。 */
 export type AgentStatus = (typeof AGENT_STATUSES)[number];
-/** `AGENT_ROLES` から派生した union 型。 */
 export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /** 個別エージェントの失敗理由（agent-execution.md §5）。 */
@@ -72,9 +65,7 @@ export const EXECUTION_FAIL_REASONS = [
   "timeout",
 ] as const;
 
-/** `AGENT_FAIL_REASONS` から派生した union 型。 */
 export type AgentFailReason = (typeof AGENT_FAIL_REASONS)[number];
-/** `EXECUTION_FAIL_REASONS` から派生した union 型。 */
 export type ExecutionFailReason = (typeof EXECUTION_FAIL_REASONS)[number];
 
 // ---------- Template ----------

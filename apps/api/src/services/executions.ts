@@ -31,7 +31,6 @@ export type ExecutionsService = {
   ) => Promise<CreateExecutionResponse>;
 };
 
-/** `createExecutionsService` の依存注入インターフェース。 */
 export type ExecutionsServiceDeps = {
   getTemplateById: (id: string) => Promise<Template | null>;
   createExecution: (
@@ -39,7 +38,6 @@ export type ExecutionsServiceDeps = {
   ) => Promise<CreateExecutionResponse>;
 };
 
-/** Execution 作成 Service を組み立てるファクトリ。 */
 export function createExecutionsService(
   deps: ExecutionsServiceDeps,
 ): ExecutionsService {
