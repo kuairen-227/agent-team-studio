@@ -78,7 +78,7 @@ export function reducer(state: WsState, action: Action): WsState {
         };
         const newAgents = new Map(agents);
         newAgents.set(msg.agentId, next);
-        return { ...state, phase: "running", agents: newAgents } as WsState;
+        return { phase: "running", agents: newAgents };
       }
 
       if (isAgentOutputMessage(msg)) {
@@ -94,7 +94,7 @@ export function reducer(state: WsState, action: Action): WsState {
         };
         const newAgents = new Map(agents);
         newAgents.set(msg.agentId, next);
-        return { ...state, phase: "running", agents: newAgents } as WsState;
+        return { phase: "running", agents: newAgents };
       }
 
       if (isExecutionCompletedMessage(msg)) {
@@ -139,6 +139,7 @@ export function useExecutionWs(executionId: string) {
       } catch {
         return;
       }
+      if (typeof msg !== "object" || msg === null) return;
       dispatch({ type: "message", msg });
     };
 

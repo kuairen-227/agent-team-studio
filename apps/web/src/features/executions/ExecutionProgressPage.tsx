@@ -29,8 +29,14 @@ const AGENT_LABEL: Record<string, string> = {
   investigation_product: "製品調査",
   investigation_investment: "投資調査",
   investigation_partnership: "提携調査",
-  integrator: "統合",
   integration: "統合",
+};
+
+const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
+  all_investigations_failed: "すべての調査エージェントが失敗しました。",
+  integration_failed: "統合エージェントが失敗しました。",
+  timeout: "実行がタイムアウトしました。",
+  internal_error: "内部エラーが発生しました。",
 };
 
 function getAgentLabel(agentId: string): string {
@@ -51,9 +57,8 @@ export function ExecutionProgressPage() {
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
-          実行中
+          接続中
         </h1>
-        <p className="text-sm text-muted-foreground">接続中…</p>
       </section>
     );
   }
@@ -106,19 +111,13 @@ export function ExecutionProgressPage() {
   }
 
   if (wsState.phase === "failed") {
-    const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
-      all_investigations_failed: "すべての調査エージェントが失敗しました。",
-      integration_failed: "統合エージェントが失敗しました。",
-      timeout: "実行がタイムアウトしました。",
-      internal_error: "内部エラーが発生しました。",
-    };
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行失敗
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>実行が失敗しました</AlertTitle>
+          <AlertTitle>実行失敗</AlertTitle>
           <AlertDescription>
             <p>{REASON_MESSAGES[wsState.reason]}</p>
             <p className="mt-1">
@@ -146,7 +145,7 @@ function AgentList({ agents }: { agents: AgentState[] }) {
   if (agents.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        エージェントの応答を待機しています
+        エージェントの応答を待機しています…
       </p>
     );
   }

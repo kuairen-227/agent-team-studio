@@ -25,10 +25,20 @@ describe("reducer / ws_error", () => {
 
   test("running 中のエラーは既存 agents を引き継ぐ", () => {
     const running = reducer(INITIAL, { type: "connected" });
-    const next = reducer(running, { type: "ws_error", code: 1011 });
+    const withAgent = reducer(running, {
+      type: "message",
+      msg: {
+        type: "agent:status",
+        agentId: "investigation_strategy",
+        status: "running",
+        timestamp: "2026-05-04T00:01:00Z",
+      },
+    });
+    const next = reducer(withAgent, { type: "ws_error", code: 1011 });
     expect(next.phase).toBe("error");
     if (next.phase === "error") {
       expect(next.code).toBe(1011);
+      expect(next.agents.size).toBeGreaterThan(0);
     }
   });
 });
@@ -87,6 +97,24 @@ describe("reducer / message: agent:status", () => {
     });
     expect(next.phase).toBe("completed");
   });
+
+  test("failed フェーズ後の agent:status は無視する（逆行防止）", () => {
+    const failed: Parameters<typeof reducer>[0] = {
+      phase: "failed",
+      reason: "internal_error",
+      agents: new Map(),
+    };
+    const next = reducer(failed, {
+      type: "message",
+      msg: {
+        type: "agent:status",
+        agentId: "investigation_strategy",
+        status: "running",
+        timestamp: "2026-05-04T00:01:00Z",
+      },
+    });
+    expect(next.phase).toBe("failed");
+  });
 });
 
 describe("reducer / message: agent:output", () => {
@@ -139,6 +167,23 @@ describe("reducer / message: agent:output", () => {
       },
     });
     expect(next.phase).toBe("failed");
+  });
+
+  test("completed フェーズ後の agent:output は無視する（逆行防止）", () => {
+    const completed: Parameters<typeof reducer>[0] = {
+      phase: "completed",
+      resultId: "res-1",
+      agents: new Map(),
+    };
+    const next = reducer(completed, {
+      type: "message",
+      msg: {
+        type: "agent:output",
+        agentId: "investigation_strategy",
+        chunk: "late chunk",
+      },
+    });
+    expect(next.phase).toBe("completed");
   });
 });
 

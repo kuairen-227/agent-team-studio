@@ -215,20 +215,47 @@ describe("WS 失敗済み Execution", () => {
       (failedMsg as Extract<WsMessage, { type: "execution:failed" }>).reason,
     ).toBe("internal_error");
   });
+
+  test("errorMessage が無効値のとき reason が internal_error にフォールバックする", async () => {
+    const invalidFailedExecution: ExecutionRow = {
+      ...baseExecution,
+      id: "exec-failed-invalid",
+      status: "failed",
+      errorMessage: "unknown_reason",
+      startedAt: new Date("2026-05-04T00:01:00.000Z"),
+      completedAt: new Date("2026-05-04T00:02:00.000Z"),
+    };
+    server = buildServer({
+      getExecution: async () => invalidFailedExecution,
+    });
+
+    const result = await connectAndWait(server, "exec-failed-invalid");
+
+    expect(result.closeCode).toBe(1000);
+    const failedMsg = result.messages.find(
+      (m) => m.type === "execution:failed",
+    );
+    expect(failedMsg).toBeDefined();
+    expect(
+      (failedMsg as Extract<WsMessage, { type: "execution:failed" }>).reason,
+    ).toBe("internal_error");
+  });
 });
 
 describe("WS 保留中 Execution", () => {
   test("subscribe が呼ばれる", async () => {
     await new Promise<void>((resolve) => {
+      let ws: WebSocket;
       server = buildServer({
         getExecution: async () => pendingExecution,
         subscribeToExecution: (_id, _handler) => {
+          ws?.close();
           resolve();
           return () => {};
         },
       });
 
-      const ws = new WebSocket(
+      ws = new WebSocket(
         `ws://localhost:${server.port}/ws?executionId=exec-pending`,
       );
       ws.onerror = () => resolve();
@@ -240,15 +267,17 @@ describe("WS 進行中 Execution", () => {
   test("subscribe が呼ばれる", async () => {
     // subscribeToExecution が呼ばれた時点で Promise を解決し、setTimeout への依存を排除する。
     await new Promise<void>((resolve) => {
+      let ws: WebSocket;
       server = buildServer({
         getExecution: async () => runningExecution,
         subscribeToExecution: (_id, _handler) => {
+          ws?.close();
           resolve();
           return () => {};
         },
       });
 
-      const ws = new WebSocket(
+      ws = new WebSocket(
         `ws://localhost:${server.port}/ws?executionId=exec-running`,
       );
       ws.onerror = () => resolve();
