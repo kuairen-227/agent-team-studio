@@ -17,6 +17,7 @@ import type {
 import { Hono } from "hono";
 import type { TemplatesService } from "../services/templates.ts";
 
+/** `GET /api/templates` と `GET /api/templates/:id` ルートを返すファクトリ。 */
 export function createTemplatesRoutes(deps: {
   templatesService: TemplatesService;
 }) {

@@ -13,6 +13,7 @@ import type {
 } from "@agent-team-studio/shared";
 import type { ErrorHandler } from "hono";
 
+/** リソース不在を表す例外。`onError` が 404 レスポンスに整形する。 */
 export class NotFoundError extends Error {
   constructor(
     readonly resource: ApiNotFoundError["details"]["resource"],
@@ -24,6 +25,7 @@ export class NotFoundError extends Error {
   }
 }
 
+/** バリデーション失敗を表す例外。`onError` が 400 レスポンスに整形する。 */
 export class ValidationError extends Error {
   constructor(
     readonly details: ApiValidationError["details"],
@@ -42,6 +44,7 @@ const NOT_FOUND_MESSAGES: Record<
   execution: "指定された実行が見つかりません",
 };
 
+/** `NotFoundError`・`ValidationError`・その他例外を HTTP レスポンスに整形する Hono エラーハンドラ。 */
 export const onError: ErrorHandler = (err, c) => {
   if (err instanceof ValidationError) {
     const body: ApiValidationError = {

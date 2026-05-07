@@ -13,6 +13,7 @@
 import type { Template, TemplateSummary } from "@agent-team-studio/shared";
 import { NotFoundError } from "../lib/errors.ts";
 
+/** テンプレート Service の公開インターフェース。 */
 export type TemplatesService = {
   listTemplates: () => Promise<TemplateSummary[]>;
   getTemplate: (id: string) => Promise<Template>;

@@ -42,16 +42,19 @@ export type AgentStatusPendingMessage = AgentStatusBase & {
   status: "pending";
 };
 
+/** エージェント実行開始時に送信される `agent:status` メッセージ。 */
 export type AgentStatusRunningMessage = AgentStatusBase &
   WithEventTimestamp & {
     status: "running";
   };
 
+/** エージェント正常完了時に送信される `agent:status` メッセージ。 */
 export type AgentStatusCompletedMessage = AgentStatusBase &
   WithEventTimestamp & {
     status: "completed";
   };
 
+/** エージェント失敗時に送信される `agent:status` メッセージ（`reason` 必須）。 */
 export type AgentStatusFailedMessage = AgentStatusBase &
   WithEventTimestamp & {
     status: "failed";
@@ -66,6 +69,7 @@ export type AgentStatusMessage =
 
 // ---------- agent:output ----------
 
+/** エージェントの LLM 出力チャンクを転送する `agent:output` メッセージ。 */
 export type AgentOutputMessage = {
   type: "agent:output";
   agentId: string;
@@ -74,12 +78,14 @@ export type AgentOutputMessage = {
 
 // ---------- execution:completed / execution:failed ----------
 
+/** Execution 正常完了時に送信される `execution:completed` メッセージ。 */
 export type ExecutionCompletedMessage = {
   type: "execution:completed";
   executionId: ExecutionId;
   resultId: ResultId;
 };
 
+/** Execution 失敗時に送信される `execution:failed` メッセージ。 */
 export type ExecutionFailedMessage = {
   type: "execution:failed";
   executionId: ExecutionId;
@@ -88,6 +94,7 @@ export type ExecutionFailedMessage = {
 
 // ---------- WS メッセージ全体 ----------
 
+/** サーバ → クライアントの全 WS メッセージの discriminated union（websocket-design.md §メッセージ型）。 */
 export type WsMessage =
   | AgentStatusMessage
   | AgentOutputMessage

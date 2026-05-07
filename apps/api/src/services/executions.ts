@@ -24,6 +24,7 @@ const competitorAnalysisParametersSchema = z.object({
   reference: z.string().max(10000).optional(),
 });
 
+/** Execution 作成 Service の公開インターフェース。 */
 export type ExecutionsService = {
   createExecution: (
     request: CreateExecutionRequest,

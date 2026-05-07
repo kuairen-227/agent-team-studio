@@ -107,6 +107,7 @@ export type AgentDefinition =
   | InvestigationAgentDefinition
   | IntegrationAgentDefinition;
 
+/** テンプレートの静的定義。 */
 export type TemplateDefinition = {
   schema_version: "1";
   input_schema: JsonSchema;
@@ -114,6 +115,7 @@ export type TemplateDefinition = {
   llm: LlmDefaults;
 };
 
+/** テンプレートのドメインオブジェクト（data-model.md §3）。 */
 export type Template = {
   id: TemplateId;
   name: string;
@@ -125,6 +127,7 @@ export type Template = {
 
 // ---------- Execution / AgentExecution / Result ----------
 
+/** Execution のドメインオブジェクト（data-model.md §4）。 */
 export type Execution = {
   id: ExecutionId;
   template_id: TemplateId;
@@ -157,11 +160,13 @@ type AgentExecutionBase<R extends AgentRole, O> = {
   completed_at?: string;
 };
 
+/** `AgentExecution` の調査エージェントバリアント。 */
 export type InvestigationAgentExecution = AgentExecutionBase<
   "investigation",
   InvestigationAgentOutput
 >;
 
+/** `AgentExecution` の統合エージェントバリアント。 */
 export type IntegrationAgentExecution = AgentExecutionBase<
   "integration",
   IntegrationAgentOutput
@@ -171,6 +176,7 @@ export type AgentExecution =
   | InvestigationAgentExecution
   | IntegrationAgentExecution;
 
+/** 実行結果のドメインオブジェクト（data-model.md §7）。 */
 export type Result = {
   id: ResultId;
   execution_id: ExecutionId;
@@ -182,12 +188,14 @@ export type Result = {
 // ---------- 競合調査テンプレート固有の I/O ----------
 // SSoT: docs/design/templates/competitor-analysis.md
 
+/** 競合調査における 4 つの分析視点（戦略・製品・投資・提携）を識別するキー。 */
 export type CompetitorPerspectiveKey =
   | "strategy"
   | "product"
   | "investment"
   | "partnership";
 
+/** 調査結果の証拠信頼度（strong → moderate → weak → insufficient の 4 段階）。 */
 export type EvidenceLevel = "strong" | "moderate" | "weak" | "insufficient";
 
 /** Execution.parameters（competitor-analysis.md §入力パラメータ JSON Schema）。 */
@@ -202,6 +210,7 @@ export type InvestigationAgentOutput = {
   findings: InvestigationFinding[];
 };
 
+/** Investigation Agent の競合 1 社・1 視点分の発見事項。 */
 export type InvestigationFinding = {
   competitor: string;
   points: string[];
@@ -219,13 +228,16 @@ export type IntegrationAgentOutput = {
   missing: MissingPerspective[];
 };
 
+/** `Result.structured` の型（Integration Agent の出力と同型）。 */
 export type CompetitorAnalysisResult = IntegrationAgentOutput;
 
+/** 競合調査マトリクスの 1 行（視点ごとの競合データ）。 */
 export type PerspectiveMatrixRow = {
   perspective: CompetitorPerspectiveKey;
   cells: MatrixCell[];
 };
 
+/** `PerspectiveMatrixRow` の各競合に対するセル。 */
 export type MatrixCell = {
   competitor: string;
   summary: string;
@@ -233,6 +245,7 @@ export type MatrixCell = {
   source_evidence_level: EvidenceLevel;
 };
 
+/** マトリクスから欠落している視点とその理由。 */
 export type MissingPerspective = {
   perspective: CompetitorPerspectiveKey;
   reason: "agent_failed" | "insufficient_evidence";
