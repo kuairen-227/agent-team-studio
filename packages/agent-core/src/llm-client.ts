@@ -1,7 +1,8 @@
 /**
  * Anthropic SDK の薄いラッパー。
  *
- * モジュールロード時に `LLM_API_KEY` を検証する副作用がある。
+ * クライアントは初回呼び出し時に初期化する（lazy singleton）。
+ * `LLM_API_KEY` 未設定の場合は `streamAgentMessage` の呼び出し時に throw する。
  * エラーは `LlmError` に統一し、AbortSignal による中断はそのまま伝播する。
  */
 
@@ -32,22 +33,24 @@ export class LlmError extends Error {
   }
 }
 
-const apiKey = process.env.LLM_API_KEY;
-if (!apiKey) {
-  throw new Error("LLM_API_KEY is not set");
+let _client: Anthropic | null = null;
+
+/** 初回呼び出し時にクライアントを生成してキャッシュする。 */
+function getClient(): Anthropic {
+  if (_client) return _client;
+  const apiKey = process.env.LLM_API_KEY;
+  if (!apiKey) throw new Error("LLM_API_KEY is not set");
+  const options: ConstructorParameters<typeof Anthropic>[0] = {
+    apiKey,
+    maxRetries: 3,
+    timeout: 120_000,
+  };
+  if (process.env.LLM_BASE_URL) {
+    options.baseURL = process.env.LLM_BASE_URL;
+  }
+  _client = new Anthropic(options);
+  return _client;
 }
-
-const clientOptions: ConstructorParameters<typeof Anthropic>[0] = {
-  apiKey,
-  maxRetries: 3,
-  timeout: 120_000,
-};
-
-if (process.env.LLM_BASE_URL) {
-  clientOptions.baseURL = process.env.LLM_BASE_URL;
-}
-
-const client = new Anthropic(clientOptions);
 
 /**
  * LLM からのテキストを非同期ストリームで返す。
@@ -59,6 +62,7 @@ export async function* streamAgentMessage(
   input: LlmInput,
   signal?: AbortSignal,
 ): AsyncIterable<string> {
+  const client = getClient();
   try {
     const stream = client.messages.stream(
       {
