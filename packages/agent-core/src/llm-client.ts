@@ -1,8 +1,9 @@
 /**
  * Anthropic SDK の薄いラッパー。
  *
- * クライアントは初回呼び出し時に初期化する（lazy singleton）。
- * `LLM_API_KEY` 未設定の場合は `streamAgentMessage` の呼び出し時に throw する。
+ * クライアントは lazy singleton で初回呼び出し時に初期化する。
+ * モジュールロード時に副作用がないため、fake stream を DI するテストで
+ * `LLM_API_KEY` 不要かつ `mock.module` が正しく適用される。
  * エラーは `LlmError` に統一し、AbortSignal による中断はそのまま伝播する。
  */
 
