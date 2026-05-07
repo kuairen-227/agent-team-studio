@@ -23,6 +23,10 @@ const buildService = (overrides: Partial<ExecutionsServiceDeps> = {}) =>
       status: "pending",
       createdAt: "2026-05-04T00:00:00.000Z",
     }),
+    getExecution: async () => null,
+    getAgentExecutionsByExecution: async () => [],
+    getResultByExecution: async () => null,
+    listExecutions: async () => [],
     ...overrides,
   });
 
