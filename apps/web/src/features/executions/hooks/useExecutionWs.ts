@@ -136,15 +136,20 @@ export function useExecutionWs(executionId: string) {
       dispatch({ type: "message", msg });
     };
 
+    // onerror と onclose は通常セット発火（onerror → onclose）する。
+    // 二重 dispatch を防ぐため onerror で dispatch 済みのときは onclose をスキップする。
+    let errorDispatched = false;
+
     ws.onclose = (event) => {
       // close code 1000 は正常終了（execution:completed/failed 受信後）。
       // それ以外（4404 / 1011 等）は接続エラーとして扱う。
-      if (event.code !== 1000) {
+      if (event.code !== 1000 && !errorDispatched) {
         dispatch({ type: "ws_error", code: event.code });
       }
     };
 
     ws.onerror = () => {
+      errorDispatched = true;
       dispatch({ type: "ws_error", code: 0 });
     };
 

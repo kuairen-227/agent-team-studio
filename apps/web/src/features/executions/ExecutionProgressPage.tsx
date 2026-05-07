@@ -14,8 +14,10 @@
  */
 
 import { getRouteApi } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
 
@@ -26,8 +28,13 @@ const AGENT_LABEL: Record<string, string> = {
   "investigation:product": "製品調査",
   "investigation:investment": "投資調査",
   "investigation:partnership": "提携調査",
+  investigation_strategy: "戦略調査",
+  investigation_product: "製品調査",
+  investigation_investment: "投資調査",
+  investigation_partnership: "提携調査",
   "integration:main": "統合",
   integrator: "統合",
+  integration: "統合",
 };
 
 function getAgentLabel(agentId: string): string {
@@ -37,12 +44,20 @@ function getAgentLabel(agentId: string): string {
 export function ExecutionProgressPage() {
   const { executionId } = Route.useParams();
   const wsState = useExecutionWs(executionId);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: フェーズ変化を effect のトリガーとして使用する
+  useEffect(() => {
+    h1Ref.current?.focus();
+  }, [wsState.phase]);
 
   if (wsState.phase === "connecting") {
     return (
       <section>
-        <h1 className="mb-4 text-xl font-semibold">実行中</h1>
-        <p className="text-sm text-muted-foreground">接続中…</p>
+        <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
+          実行中
+        </h1>
+        <p className="text-sm text-muted-foreground">接続中</p>
       </section>
     );
   }
@@ -54,7 +69,9 @@ export function ExecutionProgressPage() {
         : "サーバーとの接続でエラーが発生しました。";
     return (
       <section>
-        <h1 className="mb-4 text-xl font-semibold">実行中</h1>
+        <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
+          接続エラー
+        </h1>
         <Alert variant="destructive">
           <AlertTitle>接続エラー</AlertTitle>
           <AlertDescription>
@@ -79,15 +96,17 @@ export function ExecutionProgressPage() {
   if (wsState.phase === "completed") {
     return (
       <section>
-        <h1 className="mb-4 text-xl font-semibold">実行完了</h1>
+        <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
+          実行完了
+        </h1>
         <p className="mb-4 text-sm text-muted-foreground">
           すべてのエージェントが完了しました。
         </p>
         <AgentList agents={agents} />
         <p className="mt-6 text-sm">
-          <a href={`/executions/${executionId}/result`} className="underline">
-            結果を表示
-          </a>
+          <Button variant="outline" disabled>
+            結果を表示（準備中）
+          </Button>
         </p>
       </section>
     );
@@ -102,11 +121,19 @@ export function ExecutionProgressPage() {
     };
     return (
       <section>
-        <h1 className="mb-4 text-xl font-semibold">実行失敗</h1>
+        <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
+          実行失敗
+        </h1>
         <Alert variant="destructive">
           <AlertTitle>実行が失敗しました</AlertTitle>
           <AlertDescription>
-            {REASON_MESSAGES[wsState.reason] ?? "エラーが発生しました。"}
+            <p>{REASON_MESSAGES[wsState.reason] ?? "エラーが発生しました。"}</p>
+            <p className="mt-1">
+              <a href="/history" className="underline">
+                履歴一覧
+              </a>
+              から過去の実行を確認できます。
+            </p>
           </AlertDescription>
         </Alert>
         <AgentList agents={agents} />
@@ -117,7 +144,9 @@ export function ExecutionProgressPage() {
   // running
   return (
     <section>
-      <h1 className="mb-4 text-xl font-semibold">実行中</h1>
+      <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
+        実行中
+      </h1>
       <AgentList agents={agents} />
     </section>
   );
@@ -127,7 +156,7 @@ function AgentList({ agents }: { agents: AgentState[] }) {
   if (agents.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        エージェントの応答を待機中…
+        エージェントの応答を待機しています
       </p>
     );
   }
@@ -159,14 +188,13 @@ function AgentCard({ agent }: { agent: AgentState }) {
               失敗理由: {agent.failReason}
             </p>
           )}
-          {agent.output && (
-            <pre
-              className="whitespace-pre-wrap font-mono text-sm leading-relaxed"
-              aria-live="polite"
-            >
-              {agent.output}
-            </pre>
-          )}
+          <div aria-live="polite">
+            {agent.output && (
+              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                {agent.output}
+              </pre>
+            )}
+          </div>
         </CardContent>
       )}
     </Card>

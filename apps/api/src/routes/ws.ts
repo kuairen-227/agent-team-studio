@@ -8,18 +8,28 @@
  */
 
 import type { AgentEvent } from "@agent-team-studio/agent-core";
-import type {
-  AgentExecutionDetail,
-  AgentFailReason,
-  AgentStatusMessage,
-  ExecutionFailReason,
-  WsMessage,
+import {
+  AGENT_FAIL_REASONS,
+  type AgentExecutionDetail,
+  type AgentFailReason,
+  type AgentStatusMessage,
+  EXECUTION_FAIL_REASONS,
+  type ExecutionFailReason,
+  type WsMessage,
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "../lib/ws.ts";
 import type { ExecutionsService } from "../services/executions.ts";
 
 const EXECUTION_ID_RE = /^[a-z0-9-]{1,64}$/;
+
+function isExecutionFailReason(v: unknown): v is ExecutionFailReason {
+  return (EXECUTION_FAIL_REASONS as readonly unknown[]).includes(v);
+}
+
+function isAgentFailReason(v: unknown): v is AgentFailReason {
+  return (AGENT_FAIL_REASONS as readonly unknown[]).includes(v);
+}
 
 export function createWsRoutes(deps: {
   executionsService: ExecutionsService;
@@ -46,62 +56,74 @@ export function createWsRoutes(deps: {
             }
           };
 
-          // 1. executionId の形式バリデーション
-          if (!EXECUTION_ID_RE.test(executionId)) {
-            ws.close(4404, "execution_not_found");
-            return;
-          }
+          try {
+            // 形式が不正な executionId は DB 検索不要で弾く。
+            if (!EXECUTION_ID_RE.test(executionId)) {
+              ws.close(4404, "execution_not_found");
+              return;
+            }
 
-          // 2. Execution の存在確認と詳細取得
-          const detail = await deps.executionsService.getExecution(executionId);
-          if (!detail) {
-            ws.close(4404, "execution_not_found");
-            return;
-          }
+            const detail =
+              await deps.executionsService.getExecution(executionId);
+            if (!detail) {
+              ws.close(4404, "execution_not_found");
+              return;
+            }
 
-          // 3. 初期スナップショット: 各 AgentExecution の現状態を送信
-          for (const ae of detail.agentExecutions) {
-            send(agentExecutionToStatusMessage(ae));
-          }
+            // 初期スナップショット: 各 AgentExecution の現状態を送信する。
+            for (const ae of detail.agentExecutions) {
+              send(agentExecutionToStatusMessage(ae));
+            }
 
-          // 4. 完了済み Execution: 終端メッセージを送信して close
-          if (detail.status === "completed" && detail.result) {
-            send({
-              type: "execution:completed",
-              executionId: detail.id,
-              resultId: detail.result.id,
-            });
-            ws.close(1000, "normal");
-            return;
-          }
-
-          if (detail.status === "failed") {
-            send({
-              type: "execution:failed",
-              executionId: detail.id,
-              reason: (detail.errorMessage ??
-                "internal_error") as ExecutionFailReason,
-            });
-            ws.close(1000, "normal");
-            return;
-          }
-
-          // 5. 進行中 (pending / running): AgentEvent を購読して転送
-          unsubscribe = deps.subscribeToExecution(
-            executionId,
-            (event: AgentEvent) => {
-              const msg = agentEventToWsMessage(event, executionId);
-              if (msg) send(msg);
-
-              // execution:completed / execution:failed を受信したら close
-              if (
-                event.kind === "execution_completed" ||
-                event.kind === "execution_failed"
-              ) {
-                ws.close(1000, "normal");
+            // 完了済み Execution は subscribe が不要なため即 close する。
+            if (detail.status === "completed") {
+              if (!detail.result) {
+                ws.close(1011, "server_error");
+                return;
               }
-            },
-          );
+              send({
+                type: "execution:completed",
+                executionId: detail.id,
+                resultId: detail.result.id,
+              });
+              ws.close(1000, "normal");
+              return;
+            }
+
+            // 失敗済み Execution も同様に即 close する。
+            if (detail.status === "failed") {
+              send({
+                type: "execution:failed",
+                executionId: detail.id,
+                reason: isExecutionFailReason(detail.errorMessage)
+                  ? detail.errorMessage
+                  : "internal_error",
+              });
+              ws.close(1000, "normal");
+              return;
+            }
+
+            // pending / running: AgentEvent を購読して転送する。
+            unsubscribe = deps.subscribeToExecution(
+              executionId,
+              (event: AgentEvent) => {
+                const msg = agentEventToWsMessage(event, executionId);
+                if (msg) send(msg);
+
+                // 終端イベント受信後は subscribe が不要になるため即解除する。
+                if (
+                  event.kind === "execution_completed" ||
+                  event.kind === "execution_failed"
+                ) {
+                  ws.close(1000, "normal");
+                  unsubscribe?.();
+                  unsubscribe = undefined;
+                }
+              },
+            );
+          } catch {
+            ws.close(1011, "server_error");
+          }
         },
 
         onClose() {
@@ -143,7 +165,9 @@ function agentExecutionToStatusMessage(
       return {
         ...base,
         status: "failed",
-        reason: (ae.errorMessage ?? "internal_error") as AgentFailReason,
+        reason: isAgentFailReason(ae.errorMessage)
+          ? ae.errorMessage
+          : "internal_error",
         timestamp: ae.completedAt ?? new Date().toISOString(),
       };
   }

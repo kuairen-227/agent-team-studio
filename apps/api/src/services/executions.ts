@@ -54,10 +54,10 @@ export type ExecutionsServiceDeps = {
     input: CreateExecutionInput,
   ) => Promise<CreateExecutionResponse>;
   getExecution: (id: string) => Promise<ExecutionRow | null>;
-  getAgentExecutionsByExecution: (
+  getAgentExecutionsByExecutionId: (
     executionId: string,
   ) => Promise<AgentExecutionRow[]>;
-  getResultByExecution: (executionId: string) => Promise<ResultRow | null>;
+  getResultByExecutionId: (executionId: string) => Promise<ResultRow | null>;
   listExecutions: () => Promise<ExecutionRow[]>;
 };
 
@@ -107,8 +107,8 @@ export function createExecutionsService(
       if (!execution) return null;
 
       const [agentExecs, result] = await Promise.all([
-        deps.getAgentExecutionsByExecution(id),
-        deps.getResultByExecution(id),
+        deps.getAgentExecutionsByExecutionId(id),
+        deps.getResultByExecutionId(id),
       ]);
 
       return {

@@ -38,11 +38,11 @@ export type AppDeps = {
   /** Execution の行を 1 件取得する。存在しない場合は null。 */
   getExecution: (id: string) => Promise<ExecutionRow | null>;
   /** Execution に紐づく全 AgentExecution 行を取得する。 */
-  getAgentExecutionsByExecution: (
+  getAgentExecutionsByExecutionId: (
     executionId: string,
   ) => Promise<AgentExecutionRow[]>;
   /** Execution に紐づく Result 行を取得する。存在しない場合は null。 */
-  getResultByExecution: (executionId: string) => Promise<ResultRow | null>;
+  getResultByExecutionId: (executionId: string) => Promise<ResultRow | null>;
   /** 全 Execution 行を新しい順で取得する。 */
   listExecutions: () => Promise<ExecutionRow[]>;
   /** 202 受理後に engine を非同期起動する（fire-and-forget）。 */
@@ -74,8 +74,8 @@ export function createApp(deps: AppDeps) {
     getTemplateById: deps.getTemplateById,
     createExecution: deps.createExecution,
     getExecution: deps.getExecution,
-    getAgentExecutionsByExecution: deps.getAgentExecutionsByExecution,
-    getResultByExecution: deps.getResultByExecution,
+    getAgentExecutionsByExecutionId: deps.getAgentExecutionsByExecutionId,
+    getResultByExecutionId: deps.getResultByExecutionId,
     listExecutions: deps.listExecutions,
   });
   app.route(

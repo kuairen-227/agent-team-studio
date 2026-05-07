@@ -2,6 +2,11 @@
 // ロードされない。アサートは field キーまでに留め、reason 文言は app.test.ts 側で
 // 確認する責務分担とする。
 import { describe, expect, test } from "bun:test";
+import type {
+  AgentExecutionRow,
+  ExecutionRow,
+  ResultRow,
+} from "@agent-team-studio/db";
 import type { CompetitorAnalysisParameters } from "@agent-team-studio/shared";
 import { fixtureTemplate } from "../_test-fixtures.ts";
 import { NotFoundError, ValidationError } from "../lib/errors.ts";
@@ -15,6 +20,42 @@ const validParameters: CompetitorAnalysisParameters = {
   reference: "メモ",
 };
 
+const baseExecutionRow: ExecutionRow = {
+  id: "exec-1",
+  templateId: "tpl-1",
+  parameters: validParameters,
+  status: "completed",
+  errorMessage: null,
+  createdAt: new Date("2026-05-04T00:00:00.000Z"),
+  startedAt: new Date("2026-05-04T00:01:00.000Z"),
+  completedAt: new Date("2026-05-04T00:02:00.000Z"),
+};
+
+const investigationAgentRow: AgentExecutionRow = {
+  id: "ae-1",
+  executionId: "exec-1",
+  agentId: "investigation_strategy",
+  role: "investigation",
+  status: "completed",
+  output: null,
+  errorMessage: null,
+  createdAt: new Date("2026-05-04T00:00:00.000Z"),
+  startedAt: new Date("2026-05-04T00:01:00.000Z"),
+  completedAt: new Date("2026-05-04T00:02:00.000Z"),
+};
+
+const resultRow: ResultRow = {
+  id: "result-1",
+  executionId: "exec-1",
+  markdown: "# レポート",
+  structured: {
+    matrix: [],
+    overall_insights: ["所見1"],
+    missing: [],
+  },
+  createdAt: new Date("2026-05-04T00:02:00.000Z"),
+};
+
 const buildService = (overrides: Partial<ExecutionsServiceDeps> = {}) =>
   createExecutionsService({
     getTemplateById: async () => fixtureTemplate,
@@ -24,8 +65,8 @@ const buildService = (overrides: Partial<ExecutionsServiceDeps> = {}) =>
       createdAt: "2026-05-04T00:00:00.000Z",
     }),
     getExecution: async () => null,
-    getAgentExecutionsByExecution: async () => [],
-    getResultByExecution: async () => null,
+    getAgentExecutionsByExecutionId: async () => [],
+    getResultByExecutionId: async () => null,
     listExecutions: async () => [],
     ...overrides,
   });
@@ -291,7 +332,7 @@ describe("createExecutionsService.createExecution", () => {
     ).rejects.toThrow("DB connection failed");
   });
 
-  test("Template.definition.agents が空配列なら repo 到達前に Error を throw する", async () => {
+  test("Template.definition.agents が空配列なら repo 到達前に Error をthrow する", async () => {
     const emptyAgentsTemplate = {
       ...fixtureTemplate,
       definition: { ...fixtureTemplate.definition, agents: [] },
@@ -316,5 +357,73 @@ describe("createExecutionsService.createExecution", () => {
       }),
     ).rejects.toThrow(/no agents/);
     expect(repoCalled).toBe(false);
+  });
+});
+
+describe("createExecutionsService.getExecution", () => {
+  test("id が存在しない場合は null を返す", async () => {
+    const service = buildService({ getExecution: async () => null });
+
+    const result = await service.getExecution("exec-missing");
+
+    expect(result).toBeNull();
+  });
+
+  test("agentExecs あり result あり → 正しいマッピング", async () => {
+    const service = buildService({
+      getExecution: async () => baseExecutionRow,
+      getAgentExecutionsByExecutionId: async () => [investigationAgentRow],
+      getResultByExecutionId: async () => resultRow,
+    });
+
+    const result = await service.getExecution("exec-1");
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe("exec-1");
+    expect(result?.status).toBe("completed");
+    expect(result?.createdAt).toBe("2026-05-04T00:00:00.000Z");
+    expect(result?.agentExecutions).toHaveLength(1);
+    expect(result?.agentExecutions[0]?.agentId).toBe("investigation_strategy");
+    expect(result?.result?.id).toBe("result-1");
+    expect(result?.result?.markdown).toBe("# レポート");
+  });
+
+  test("result が null のとき result フィールドは undefined", async () => {
+    const service = buildService({
+      getExecution: async () => ({ ...baseExecutionRow, status: "running" }),
+      getAgentExecutionsByExecutionId: async () => [],
+      getResultByExecutionId: async () => null,
+    });
+
+    const result = await service.getExecution("exec-1");
+
+    expect(result?.result).toBeUndefined();
+  });
+});
+
+describe("createExecutionsService.listExecutions", () => {
+  test("空配列 → { items: [], total: 0 }", async () => {
+    const service = buildService({ listExecutions: async () => [] });
+
+    const result = await service.listExecutions();
+
+    expect(result).toEqual({ items: [], total: 0 });
+  });
+
+  test("複数行 → createdAt が ISO 文字列", async () => {
+    const row1: ExecutionRow = { ...baseExecutionRow, id: "exec-1" };
+    const row2: ExecutionRow = {
+      ...baseExecutionRow,
+      id: "exec-2",
+      createdAt: new Date("2026-05-05T00:00:00.000Z"),
+    };
+    const service = buildService({ listExecutions: async () => [row1, row2] });
+
+    const result = await service.listExecutions();
+
+    expect(result.total).toBe(2);
+    expect(result.items[0]?.id).toBe("exec-1");
+    expect(result.items[0]?.createdAt).toBe("2026-05-04T00:00:00.000Z");
+    expect(result.items[1]?.createdAt).toBe("2026-05-05T00:00:00.000Z");
   });
 });

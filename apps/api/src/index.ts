@@ -9,6 +9,7 @@
 
 import type { AgentEvent } from "@agent-team-studio/agent-core";
 import { runExecution } from "@agent-team-studio/agent-core";
+import type { AgentExecutionRow } from "@agent-team-studio/db";
 import {
   createDbClient,
   createExecution,
@@ -61,7 +62,7 @@ async function launchEngine(executionId: string): Promise<void> {
       executionId,
       parameters: execution.parameters,
       templateDefinition: template.definition,
-      agentExecutions: agentExecs.map((ae) => ({
+      agentExecutions: agentExecs.map((ae: AgentExecutionRow) => ({
         id: ae.id,
         agentId: ae.agentId,
         role: ae.role as AgentRole,
@@ -81,14 +82,18 @@ const app = createApp({
   getTemplateById: (id) => getTemplateById(db, id),
   createExecution: (input) => createExecution(db, input),
   getExecution: (id) => getExecution(db, id),
-  getAgentExecutionsByExecution: (executionId) =>
+  getAgentExecutionsByExecutionId: (executionId) =>
     getAgentExecutionsByExecutionId(db, executionId),
-  getResultByExecution: (executionId) =>
+  getResultByExecutionId: (executionId) =>
     getResultByExecutionId(db, executionId),
   listExecutions: () => listExecutions(db),
   startExecution: (executionId) => {
     launchEngine(executionId).catch((err) => {
       console.error(`[engine] failed for ${executionId}:`, err);
+      eventHub.publish(executionId, {
+        kind: "execution_failed",
+        reason: "internal_error",
+      });
     });
   },
   subscribeToExecution: (executionId, handler) =>
