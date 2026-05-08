@@ -11,6 +11,7 @@
  */
 
 import {
+  type AgentFailReason,
   type AgentStatus,
   type ExecutionFailReason,
   isAgentOutputMessage,
@@ -26,7 +27,7 @@ export type AgentState = {
   agentId: string;
   status: AgentStatus;
   output: string;
-  failReason?: string;
+  failReason?: AgentFailReason;
 };
 
 type WsState =
@@ -143,6 +144,7 @@ export function useExecutionWs(executionId: string) {
     ws.onmessage = (event) => {
       let msg: WsMessage;
       try {
+        // サーバー管理下の形式保証を前提とした意図的キャスト。後続の null/array ガードで補完する。
         msg = JSON.parse(event.data as string) as WsMessage;
       } catch {
         return;

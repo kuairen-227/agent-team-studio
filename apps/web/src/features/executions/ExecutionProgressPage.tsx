@@ -13,7 +13,10 @@
  * リダイレクト or 簡易メッセージを置く。
  */
 
-import type { ExecutionFailReason } from "@agent-team-studio/shared";
+import type {
+  AgentFailReason,
+  ExecutionFailReason,
+} from "@agent-team-studio/shared";
 import { getRouteApi } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,6 +33,13 @@ const AGENT_LABEL: Record<string, string> = {
   investigation_investment: "投資調査",
   investigation_partnership: "提携調査",
   integration: "統合",
+};
+
+const AGENT_FAIL_REASON_MESSAGES: Record<AgentFailReason, string> = {
+  llm_error: "LLM エラー",
+  output_parse_error: "出力解析エラー",
+  timeout: "タイムアウト",
+  internal_error: "内部エラー",
 };
 
 const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
@@ -166,13 +176,13 @@ function AgentCard({ agent }: { agent: AgentState }) {
           {getAgentLabel(agent.agentId)}
         </CardTitle>
         <Badge variant={agent.status} />
+        {agent.failReason && (
+          <span className="text-xs text-destructive">
+            {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
+          </span>
+        )}
       </CardHeader>
       <CardContent>
-        {agent.failReason && (
-          <p className="mb-2 text-xs text-destructive">
-            失敗理由: {agent.failReason}
-          </p>
-        )}
         {/* aria-live は DOM に常時存在させることで ARIA 仕様を満たす。 */}
         <div aria-live="polite">
           {agent.output && (

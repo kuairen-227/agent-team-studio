@@ -6,6 +6,7 @@
  */
 
 import { afterEach, describe, expect, test } from "bun:test";
+import type { AgentEvent } from "@agent-team-studio/agent-core";
 import type {
   AgentExecutionRow,
   ExecutionRow,
@@ -98,7 +99,7 @@ const failedExecution: ExecutionRow = {
   ...baseExecution,
   id: "exec-failed",
   status: "failed",
-  errorMessage: "internal_error",
+  errorMessage: "all_investigations_failed",
   startedAt: new Date("2026-05-04T00:01:00.000Z"),
   completedAt: new Date("2026-05-04T00:02:00.000Z"),
 };
@@ -213,7 +214,7 @@ describe("WS 失敗済み Execution", () => {
     expect(failedMsg).toBeDefined();
     expect(
       (failedMsg as Extract<WsMessage, { type: "execution:failed" }>).reason,
-    ).toBe("internal_error");
+    ).toBe("all_investigations_failed");
   });
 
   test("errorMessage が無効値のとき reason が internal_error にフォールバックする", async () => {
@@ -282,5 +283,33 @@ describe("WS 進行中 Execution", () => {
       );
       ws.onerror = () => reject(new Error("subscribe 呼び出し前に WS エラー"));
     });
+  });
+});
+
+describe("WS イベント転送", () => {
+  test("execution_completed イベントが execution:completed メッセージと close(1000) になる", async () => {
+    server = buildServer({
+      getExecution: async () => runningExecution,
+      subscribeToExecution: (_id, handler) => {
+        // subscribe 直後にイベントを発火して転送経路を検証する。
+        handler({
+          kind: "execution_completed",
+          resultId: "result-forwarded",
+        } as AgentEvent);
+        return () => {};
+      },
+    });
+
+    const result = await connectAndWait(server, "exec-running");
+
+    expect(result.closeCode).toBe(1000);
+    const completedMsg = result.messages.find(
+      (m) => m.type === "execution:completed",
+    );
+    expect(completedMsg).toBeDefined();
+    expect(
+      (completedMsg as Extract<WsMessage, { type: "execution:completed" }>)
+        .resultId,
+    ).toBe("result-forwarded");
   });
 });
