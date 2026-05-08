@@ -244,7 +244,7 @@ describe("WS 失敗済み Execution", () => {
 
 describe("WS 保留中 Execution", () => {
   test("subscribe が呼ばれる", async () => {
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       let ws: WebSocket;
       server = buildServer({
         getExecution: async () => pendingExecution,
@@ -258,7 +258,7 @@ describe("WS 保留中 Execution", () => {
       ws = new WebSocket(
         `ws://localhost:${server.port}/ws?executionId=exec-pending`,
       );
-      ws.onerror = () => resolve();
+      ws.onerror = () => reject(new Error("subscribe 呼び出し前に WS エラー"));
     });
   });
 });
@@ -266,7 +266,7 @@ describe("WS 保留中 Execution", () => {
 describe("WS 進行中 Execution", () => {
   test("subscribe が呼ばれる", async () => {
     // subscribeToExecution が呼ばれた時点で Promise を解決し、setTimeout への依存を排除する。
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       let ws: WebSocket;
       server = buildServer({
         getExecution: async () => runningExecution,
@@ -280,7 +280,7 @@ describe("WS 進行中 Execution", () => {
       ws = new WebSocket(
         `ws://localhost:${server.port}/ws?executionId=exec-running`,
       );
-      ws.onerror = () => resolve();
+      ws.onerror = () => reject(new Error("subscribe 呼び出し前に WS エラー"));
     });
   });
 });

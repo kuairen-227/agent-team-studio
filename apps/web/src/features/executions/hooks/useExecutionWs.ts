@@ -66,8 +66,12 @@ export function reducer(state: WsState, action: Action): WsState {
       const msg = action.msg;
 
       if (isAgentStatusMessage(msg)) {
-        // 終端フェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
-        if (state.phase === "completed" || state.phase === "failed")
+        // 終端・エラーフェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
+        if (
+          state.phase === "completed" ||
+          state.phase === "failed" ||
+          state.phase === "error"
+        )
           return state;
         const prev = agents.get(msg.agentId);
         const next: AgentState = {
@@ -82,8 +86,12 @@ export function reducer(state: WsState, action: Action): WsState {
       }
 
       if (isAgentOutputMessage(msg)) {
-        // 終端フェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
-        if (state.phase === "completed" || state.phase === "failed")
+        // 終端・エラーフェーズ後に届いた遅延メッセージは無視して逆行を防ぐ。
+        if (
+          state.phase === "completed" ||
+          state.phase === "failed" ||
+          state.phase === "error"
+        )
           return state;
         const prev = agents.get(msg.agentId);
         const next: AgentState = {
@@ -139,7 +147,7 @@ export function useExecutionWs(executionId: string) {
       } catch {
         return;
       }
-      if (typeof msg !== "object" || msg === null) return;
+      if (typeof msg !== "object" || msg === null || Array.isArray(msg)) return;
       dispatch({ type: "message", msg });
     };
 

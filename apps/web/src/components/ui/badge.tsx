@@ -31,6 +31,7 @@ type BadgeProps = {
 export function Badge({ variant, className }: BadgeProps) {
   return (
     <span
+      role="status"
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         VARIANT_CLASSES[variant],

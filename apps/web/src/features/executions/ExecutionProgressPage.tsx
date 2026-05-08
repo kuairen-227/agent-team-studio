@@ -57,7 +57,7 @@ export function ExecutionProgressPage() {
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
-          接続中
+          接続中…
         </h1>
       </section>
     );
@@ -97,9 +97,6 @@ export function ExecutionProgressPage() {
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行完了
         </h1>
-        <p className="mb-4 text-sm text-muted-foreground">
-          すべてのエージェントが完了しました。
-        </p>
         <AgentList agents={agents} />
         <div className="mt-6">
           <Button variant="outline" disabled>

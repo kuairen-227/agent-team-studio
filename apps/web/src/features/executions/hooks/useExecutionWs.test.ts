@@ -41,6 +41,24 @@ describe("reducer / ws_error", () => {
       expect(next.agents.size).toBeGreaterThan(0);
     }
   });
+
+  test("error フェーズ後の遅延メッセージは無視する", () => {
+    const error: Parameters<typeof reducer>[0] = {
+      phase: "error",
+      code: 1011,
+      agents: new Map(),
+    };
+    const next = reducer(error, {
+      type: "message",
+      msg: {
+        type: "agent:status",
+        agentId: "investigation_strategy",
+        status: "running",
+        timestamp: "2026-05-04T00:01:00Z",
+      },
+    });
+    expect(next.phase).toBe("error");
+  });
 });
 
 describe("reducer / message: agent:status", () => {
