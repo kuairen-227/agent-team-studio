@@ -41,41 +41,6 @@ describe("reducer / ws_error", () => {
       expect(next.agents.size).toBeGreaterThan(0);
     }
   });
-
-  test("error フェーズ後の agent:status は無視する", () => {
-    const error: Parameters<typeof reducer>[0] = {
-      phase: "error",
-      code: 1011,
-      agents: new Map(),
-    };
-    const next = reducer(error, {
-      type: "message",
-      msg: {
-        type: "agent:status",
-        agentId: "investigation_strategy",
-        status: "running",
-        timestamp: "2026-05-04T00:01:00Z",
-      },
-    });
-    expect(next.phase).toBe("error");
-  });
-
-  test("error フェーズ後の agent:output は無視する", () => {
-    const error: Parameters<typeof reducer>[0] = {
-      phase: "error",
-      code: 1011,
-      agents: new Map(),
-    };
-    const next = reducer(error, {
-      type: "message",
-      msg: {
-        type: "agent:output",
-        agentId: "investigation_strategy",
-        chunk: "late chunk",
-      },
-    });
-    expect(next.phase).toBe("error");
-  });
 });
 
 describe("reducer / message: agent:status", () => {
@@ -150,6 +115,24 @@ describe("reducer / message: agent:status", () => {
     });
     expect(next.phase).toBe("failed");
   });
+
+  test("error フェーズ後の agent:status は無視する（逆行防止）", () => {
+    const error: Parameters<typeof reducer>[0] = {
+      phase: "error",
+      code: 1011,
+      agents: new Map(),
+    };
+    const next = reducer(error, {
+      type: "message",
+      msg: {
+        type: "agent:status",
+        agentId: "investigation_strategy",
+        status: "running",
+        timestamp: "2026-05-04T00:01:00Z",
+      },
+    });
+    expect(next.phase).toBe("error");
+  });
 });
 
 describe("reducer / message: agent:output", () => {
@@ -219,6 +202,23 @@ describe("reducer / message: agent:output", () => {
       },
     });
     expect(next.phase).toBe("completed");
+  });
+
+  test("error フェーズ後の agent:output は無視する（逆行防止）", () => {
+    const error: Parameters<typeof reducer>[0] = {
+      phase: "error",
+      code: 1011,
+      agents: new Map(),
+    };
+    const next = reducer(error, {
+      type: "message",
+      msg: {
+        type: "agent:output",
+        agentId: "investigation_strategy",
+        chunk: "late chunk",
+      },
+    });
+    expect(next.phase).toBe("error");
   });
 });
 

@@ -185,6 +185,11 @@ function AgentCard({ agent }: { agent: AgentState }) {
       <CardContent>
         {/* aria-live は DOM に常時存在させることで ARIA 仕様を満たす。 */}
         <div aria-live="polite">
+          {agent.failReason && (
+            <span className="sr-only">
+              失敗理由: {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
+            </span>
+          )}
           {agent.output && (
             <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
               {agent.output}

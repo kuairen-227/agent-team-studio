@@ -312,4 +312,28 @@ describe("WS イベント転送", () => {
         .resultId,
     ).toBe("result-forwarded");
   });
+
+  test("execution_failed イベントが execution:failed メッセージと close(1000) になる", async () => {
+    server = buildServer({
+      getExecution: async () => runningExecution,
+      subscribeToExecution: (_id, handler) => {
+        handler({
+          kind: "execution_failed",
+          reason: "all_investigations_failed",
+        } as AgentEvent);
+        return () => {};
+      },
+    });
+
+    const result = await connectAndWait(server, "exec-running");
+
+    expect(result.closeCode).toBe(1000);
+    const failedMsg = result.messages.find(
+      (m) => m.type === "execution:failed",
+    );
+    expect(failedMsg).toBeDefined();
+    expect(
+      (failedMsg as Extract<WsMessage, { type: "execution:failed" }>).reason,
+    ).toBe("all_investigations_failed");
+  });
 });
