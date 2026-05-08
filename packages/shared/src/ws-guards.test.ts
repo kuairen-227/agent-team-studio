@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
   isAgentOutputMessage,
-  isAgentStatusFailed,
   isAgentStatusMessage,
   isExecutionCompletedMessage,
   isExecutionFailedMessage,
@@ -82,33 +81,6 @@ describe("isAgentStatusMessage", () => {
     const others = allMessages.filter((m) => m.type !== "agent:status");
     for (const m of others) {
       expect(isAgentStatusMessage(m)).toBe(false);
-    }
-  });
-});
-
-describe("isAgentStatusFailed", () => {
-  test("status=failed のみ true", () => {
-    expect(isAgentStatusFailed(agentStatusFailedMessage)).toBe(true);
-    expect(isAgentStatusFailed(agentStatusPendingMessage)).toBe(false);
-    expect(isAgentStatusFailed(agentStatusRunningMessage)).toBe(false);
-    expect(isAgentStatusFailed(agentStatusCompletedMessage)).toBe(false);
-  });
-
-  test("agent:status 以外は全て false", () => {
-    const others = allMessages.filter((m) => m.type !== "agent:status");
-    for (const m of others) {
-      expect(isAgentStatusFailed(m)).toBe(false);
-    }
-  });
-
-  test("ナローイング後に reason へ安全にアクセスできる", () => {
-    // ガードが true を返すこと自体を先行 assert で保証してから
-    // ナローイングのコンパイル時挙動を確認する（else を踏まないことを担保）。
-    expect(isAgentStatusFailed(agentStatusFailedMessage)).toBe(true);
-    if (isAgentStatusFailed(agentStatusFailedMessage)) {
-      expect(agentStatusFailedMessage.reason).toBe("llm_error");
-    } else {
-      throw new Error("到達不能: 先行 assert で true を保証している");
     }
   });
 });

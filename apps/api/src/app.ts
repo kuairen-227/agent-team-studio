@@ -5,7 +5,13 @@
  * 起動パスを共通化する。
  */
 
-import type { CreateExecutionInput } from "@agent-team-studio/db";
+import type { AgentEvent } from "@agent-team-studio/agent-core";
+import type {
+  AgentExecutionRow,
+  CreateExecutionInput,
+  ExecutionRow,
+  ResultRow,
+} from "@agent-team-studio/db";
 import type {
   CreateExecutionResponse,
   Template,
@@ -29,6 +35,26 @@ export type AppDeps = {
   createExecution: (
     input: CreateExecutionInput,
   ) => Promise<CreateExecutionResponse>;
+  /** Execution の行を 1 件取得する。存在しない場合は null。 */
+  getExecution: (id: string) => Promise<ExecutionRow | null>;
+  /** Execution に紐づく全 AgentExecution 行を取得する。 */
+  getAgentExecutionsByExecutionId: (
+    executionId: string,
+  ) => Promise<AgentExecutionRow[]>;
+  /** Execution に紐づく Result 行を取得する。存在しない場合は null。 */
+  getResultByExecutionId: (executionId: string) => Promise<ResultRow | null>;
+  /** 全 Execution 行を新しい順で取得する。 */
+  listExecutions: () => Promise<ExecutionRow[]>;
+  /** 202 受理後に engine を非同期起動する（fire-and-forget）。 */
+  startExecution: (executionId: string) => void;
+  /**
+   * Execution の AgentEvent を受け取るハンドラを登録し、解除関数を返す。
+   * WS 切断時に解除関数を呼ぶこと。
+   */
+  subscribeToExecution: (
+    executionId: string,
+    handler: (event: AgentEvent) => void,
+  ) => () => void;
 };
 
 export function createApp(deps: AppDeps) {
@@ -47,10 +73,26 @@ export function createApp(deps: AppDeps) {
   const executionsService = createExecutionsService({
     getTemplateById: deps.getTemplateById,
     createExecution: deps.createExecution,
+    getExecution: deps.getExecution,
+    getAgentExecutionsByExecutionId: deps.getAgentExecutionsByExecutionId,
+    getResultByExecutionId: deps.getResultByExecutionId,
+    listExecutions: deps.listExecutions,
   });
-  app.route("/api/executions", createExecutionsRoutes({ executionsService }));
+  app.route(
+    "/api/executions",
+    createExecutionsRoutes({
+      executionsService,
+      startExecution: deps.startExecution,
+    }),
+  );
 
-  app.route("/ws", createWsRoutes());
+  app.route(
+    "/ws",
+    createWsRoutes({
+      executionsService,
+      subscribeToExecution: deps.subscribeToExecution,
+    }),
+  );
 
   return app;
 }

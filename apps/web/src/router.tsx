@@ -6,6 +6,7 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { AppHeader } from "@/components/AppHeader";
+import { ExecutionProgressPage } from "@/features/executions/ExecutionProgressPage";
 import { TemplateListPage } from "@/features/templates/TemplateListPage";
 import { TemplateNewPage } from "@/features/templates/TemplateNewPage";
 
@@ -32,13 +33,10 @@ const templateNewRoute = createRoute({
   component: TemplateNewPage,
 });
 
-// Stub: US-3/US-4 で実装予定
 const executionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/executions/$executionId",
-  beforeLoad: () => {
-    throw redirect({ to: "/" });
-  },
+  component: ExecutionProgressPage,
 });
 
 // Stub: US-5 で実装予定

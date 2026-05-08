@@ -11,8 +11,9 @@ import type {
   ExecutionStatus,
   TemplateId,
 } from "@agent-team-studio/shared";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { DrizzleDb } from "../client.ts";
+import type { ExecutionRow } from "../schema/executions.ts";
 import { agentExecutions, executions } from "../schema/index.ts";
 
 /**
@@ -63,6 +64,21 @@ export async function createExecution(
     };
   });
 }
+
+export async function getExecution(
+  db: DrizzleDb,
+  id: string,
+): Promise<ExecutionRow | null> {
+  const [row] = await db.select().from(executions).where(eq(executions.id, id));
+  return row ?? null;
+}
+
+export async function listExecutions(db: DrizzleDb): Promise<ExecutionRow[]> {
+  return db.select().from(executions).orderBy(desc(executions.createdAt));
+}
+
+// ExecutionRow を呼び出し元で利用できるよう再 export する。
+export type { ExecutionRow };
 
 /** `executions` テーブルの可変フィールドのパッチ型。 */
 export type ExecutionUpdatePatch = {

@@ -6,8 +6,23 @@
  */
 
 import type { CompetitorAnalysisResult } from "@agent-team-studio/shared";
+import { eq } from "drizzle-orm";
 import type { DrizzleDb } from "../client.ts";
 import { results } from "../schema/index.ts";
+import type { ResultRow } from "../schema/results.ts";
+
+export async function getResultByExecutionId(
+  db: DrizzleDb,
+  executionId: string,
+): Promise<ResultRow | null> {
+  const [row] = await db
+    .select()
+    .from(results)
+    .where(eq(results.executionId, executionId));
+  return row ?? null;
+}
+
+export type { ResultRow };
 
 /** `insertResult` の入力型。 */
 export type InsertResultInput = {

@@ -98,6 +98,7 @@ function buildInvestigationSystem(
   params: CompetitorAnalysisParameters,
 ): string {
   return substituteTemplate(template, {
+    perspective_key: def.specialization.perspective_key,
     perspective_name_ja: def.specialization.perspective_name_ja,
     perspective_description: def.specialization.perspective_description,
     competitors: params.competitors.join(", "),
@@ -233,9 +234,15 @@ function parseIntegrationOutput(raw: string): {
   while (jsonStart >= 0 && raw[jsonStart] !== "{") jsonStart--;
   if (jsonStart < 0) throw new Error("No opening brace before matrix field");
 
+  // JSON ブロック末尾の ``` フェンスを除くため、最後の } で切り詰める
+  const jsonEnd = raw.lastIndexOf("}");
+  if (jsonEnd < jsonStart)
+    throw new Error("No closing brace in integration output");
+  const jsonSlice = raw.slice(jsonStart, jsonEnd + 1);
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw.slice(jsonStart));
+    parsed = JSON.parse(jsonSlice);
   } catch {
     throw new Error("Invalid JSON in integration output");
   }

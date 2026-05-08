@@ -20,6 +20,12 @@ const buildApp = (overrides: Partial<AppDeps> = {}) =>
       status: "pending",
       createdAt: "2026-05-04T00:00:00.000Z",
     }),
+    getExecution: async () => null,
+    getAgentExecutionsByExecutionId: async () => [],
+    getResultByExecutionId: async () => null,
+    listExecutions: async () => [],
+    startExecution: () => {},
+    subscribeToExecution: () => () => {},
     ...overrides,
   });
 

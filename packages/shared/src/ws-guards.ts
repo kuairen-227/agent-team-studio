@@ -11,7 +11,6 @@
 
 import type {
   AgentOutputMessage,
-  AgentStatusFailedMessage,
   AgentStatusMessage,
   ExecutionCompletedMessage,
   ExecutionFailedMessage,
@@ -22,12 +21,6 @@ export function isAgentStatusMessage(
   msg: WsMessage,
 ): msg is AgentStatusMessage {
   return msg.type === "agent:status";
-}
-
-export function isAgentStatusFailed(
-  msg: WsMessage,
-): msg is AgentStatusFailedMessage {
-  return msg.type === "agent:status" && msg.status === "failed";
 }
 
 export function isAgentOutputMessage(
