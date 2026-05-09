@@ -4,7 +4,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["DATABASE_URL", "PORT"]
+      "env": ["DATABASE_URL", "PORT", "LLM_API_KEY", "LLM_BASE_URL"]
     },
     "lint": {},
     "lint:fix": {
