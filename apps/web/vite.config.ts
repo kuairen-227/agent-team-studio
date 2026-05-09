@@ -8,15 +8,19 @@ export default defineConfig(({ mode }) => {
   // クライアントバンドルには含まれない。
   const env = loadEnv(mode, process.cwd(), "");
 
-  const apiPort = env.API_PORT ?? "3000";
-
   const webPortStr = env.WEB_PORT;
   const webPort = webPortStr ? Number.parseInt(webPortStr, 10) : 5173;
-  if (Number.isNaN(webPort) || webPort <= 0) {
+  if (Number.isNaN(webPort) || webPort < 1 || webPort > 65535) {
     throw new Error(
-      `WEB_PORT="${webPortStr}" は有効なポート番号ではありません`,
+      `WEB_PORT="${webPortStr}" は有効なポート番号ではありません（1〜65535）`,
     );
   }
+
+  const apiPortStr = env.API_PORT;
+  if (apiPortStr === "") {
+    throw new Error("API_PORT が空文字です。apps/web/.env を確認してください");
+  }
+  const apiPort = apiPortStr ?? "3000";
 
   return {
     plugins: [tailwindcss(), react()],
