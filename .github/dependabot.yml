@@ -3,11 +3,8 @@ updates:
   - package-ecosystem: "bun"
     directories:
       - "/"
-      - "/apps/api"
-      - "/apps/web"
-      - "/packages/agent-core"
-      - "/packages/db"
-      - "/packages/shared"
+      - "/apps/*"
+      - "/packages/*"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
