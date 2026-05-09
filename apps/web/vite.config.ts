@@ -3,24 +3,24 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 
+// 未設定（undefined）はデフォルト値を使い、空文字・NaN・範囲外は設定不備として即 throw する。
+// Number.parseInt を使うため "80abc" → 80 の素通りは許容する（.env での発生は非現実的）。
+function parsePort(raw: string | undefined, fallback: number): number {
+  if (raw === undefined) return fallback;
+  const port = Number.parseInt(raw, 10);
+  if (Number.isNaN(port) || port < 1 || port > 65535) {
+    throw new Error(`"${raw}" は有効なポート番号ではありません（1〜65535）`);
+  }
+  return port;
+}
+
 export default defineConfig(({ mode }) => {
   // prefix="" で VITE_ 以外の変数も読む。これらは config 内のみで使用し
   // クライアントバンドルには含まれない。
   const env = loadEnv(mode, process.cwd(), "");
 
-  const webPortStr = env.WEB_PORT;
-  const webPort = webPortStr ? Number.parseInt(webPortStr, 10) : 5173;
-  if (Number.isNaN(webPort) || webPort < 1 || webPort > 65535) {
-    throw new Error(
-      `WEB_PORT="${webPortStr}" は有効なポート番号ではありません（1〜65535）`,
-    );
-  }
-
-  const apiPortStr = env.API_PORT;
-  if (apiPortStr === "") {
-    throw new Error("API_PORT が空文字です。apps/web/.env を確認してください");
-  }
-  const apiPort = apiPortStr ?? "3000";
+  const apiPort = parsePort(env.API_PORT, 3000);
+  const webPort = parsePort(env.WEB_PORT, 5173);
 
   return {
     plugins: [tailwindcss(), react()],
