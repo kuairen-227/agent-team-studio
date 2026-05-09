@@ -18,33 +18,23 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
-    cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
-      include:
-        - "*"
     groups:
       production-patch:
         dependency-type: "production"
         update-types:
           - "patch"
-        group-by: "dependency-name"
       production-minor:
         dependency-type: "production"
         update-types:
           - "minor"
-        group-by: "dependency-name"
       development-patch:
         dependency-type: "development"
         update-types:
           - "patch"
-        group-by: "dependency-name"
       development-minor:
         dependency-type: "development"
         update-types:
           - "minor"
-        group-by: "dependency-name"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -57,12 +47,6 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
-    cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
-      include:
-        - "*"
     groups:
       actions-patch:
         update-types:
