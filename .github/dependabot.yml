@@ -1,15 +1,18 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: "bun"
     directories:
       - "/"
-      - "/apps/*"
-      - "/packages/*"
+      - "/apps/api"
+      - "/apps/web"
+      - "/packages/agent-core"
+      - "/packages/db"
+      - "/packages/shared"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "chore"
       include: "scope"
     labels:
       - "chore"
@@ -26,18 +29,22 @@ updates:
         dependency-type: "production"
         update-types:
           - "patch"
+        group-by: "dependency-name"
       production-minor:
         dependency-type: "production"
         update-types:
           - "minor"
+        group-by: "dependency-name"
       development-patch:
         dependency-type: "development"
         update-types:
           - "patch"
+        group-by: "dependency-name"
       development-minor:
         dependency-type: "development"
         update-types:
           - "minor"
+        group-by: "dependency-name"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -50,12 +57,6 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
-    cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
-      include:
-        - "*"
     groups:
       actions-patch:
         update-types:
