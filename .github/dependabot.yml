@@ -1,10 +1,13 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: "bun"
     directories:
       - "/"
-      - "/apps/*"
-      - "/packages/*"
+      - "/apps/api"
+      - "/apps/web"
+      - "/packages/agent-core"
+      - "/packages/db"
+      - "/packages/shared"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
