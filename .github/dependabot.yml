@@ -29,22 +29,18 @@ updates:
         dependency-type: "production"
         update-types:
           - "patch"
-        group-by: "dependency-name"
       production-minor:
         dependency-type: "production"
         update-types:
           - "minor"
-        group-by: "dependency-name"
       development-patch:
         dependency-type: "development"
         update-types:
           - "patch"
-        group-by: "dependency-name"
       development-minor:
         dependency-type: "development"
         update-types:
           - "minor"
-        group-by: "dependency-name"
 
   - package-ecosystem: "github-actions"
     directory: "/"
