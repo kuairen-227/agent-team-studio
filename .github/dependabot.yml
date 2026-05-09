@@ -15,12 +15,6 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
-    cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
-      include:
-        - "*"
     groups:
       production-patch:
         dependency-type: "production"
@@ -50,12 +44,6 @@ updates:
       - "chore"
     assignees:
       - "kuairen-227"
-    cooldown:
-      semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
-      include:
-        - "*"
     groups:
       actions-patch:
         update-types:
