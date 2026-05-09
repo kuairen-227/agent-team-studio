@@ -1,9 +1,43 @@
 version: 2
 updates:
-  - package-ecosystem: "bun"
-    directory: "/"
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "chore"
+    assignees:
+      - "kuairen-227"
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
+    groups:
+      production-patch:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+      production-minor:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+      development-patch:
+        dependency-type: "development"
+        update-types:
+          - "patch"
+      development-minor:
+        dependency-type: "development"
+        update-types:
+          - "minor"
 
   - package-ecosystem: "github-actions"
     directory: "/"
