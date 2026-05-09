@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted
+accepted (partially supersedes ADR-0018: LLM_API_KEY をルート `.env` から `apps/api/.env` に移動)
 
 - 作成日: 2026-05-09
 - 関連: ADR-0018（ルート `.env` SSoT）, Issue #142

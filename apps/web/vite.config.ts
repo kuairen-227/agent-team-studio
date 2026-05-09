@@ -4,9 +4,19 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
+  // prefix="" で VITE_ 以外の変数も読む。これらは config 内のみで使用し
+  // クライアントバンドルには含まれない。
   const env = loadEnv(mode, process.cwd(), "");
+
   const apiPort = env.API_PORT ?? "3000";
-  const webPort = Number(env.WEB_PORT ?? 5173);
+
+  const webPortStr = env.WEB_PORT;
+  const webPort = webPortStr ? Number.parseInt(webPortStr, 10) : 5173;
+  if (Number.isNaN(webPort) || webPort <= 0) {
+    throw new Error(
+      `WEB_PORT="${webPortStr}" は有効なポート番号ではありません`,
+    );
+  }
 
   return {
     plugins: [tailwindcss(), react()],
@@ -20,6 +30,7 @@ export default defineConfig(({ mode }) => {
       // 全インターフェースに bind する（既定の IPv6 localhost のみだと外部から見えない）。
       host: true,
       port: webPort,
+      strictPort: true,
       proxy: {
         "/api": {
           target: `http://localhost:${apiPort}`,
