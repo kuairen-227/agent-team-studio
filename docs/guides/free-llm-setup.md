@@ -39,7 +39,7 @@ LLM API の選択
 
    ```bash
    # apps/api/.env または .env.local に以下を設定
-   LLM_API_KEY=sk-ant-YOUR_KEY_HERE
+   LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
    # LLM_BASE_URL は未設定（デフォルトで api.anthropic.com を使用）
    ```
 
@@ -71,7 +71,7 @@ LLM API の選択
 
    ```bash
    # apps/api/.env または .env.local に以下を設定
-   LLM_API_KEY=sk-or-YOUR_OPENROUTER_KEY_HERE
+   LLM_API_KEY=YOUR_OPENROUTER_API_KEY
    LLM_BASE_URL=https://openrouter.ai/api
    ```
 
