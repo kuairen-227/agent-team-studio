@@ -101,12 +101,14 @@ LLM API の選択
 
 ### レート制限の注意
 
-無料ティアのレート制限:
+無料ティアのレート制限（クレジット未購入時）:
 
 - 20 requests/minute
-- 200 requests/day（リセット: UTC 00:00）
+- 50 requests/day（リセット: UTC 00:00）
 
-Investigation Agent 4 つを並列実行した場合、単一実行で ~5 リクエスト消費するため、レート制限に引っかからないように注意してください。
+注: 10 以上のクレジット購入で 1000 requests/day に緩和されます。
+
+**制限値の評価**: Investigation Agent 4 つを並列実行した場合、単一実行で ~5 リクエスト消費するため、50 req/day では実運用に不十分。必要に応じて Ollama への切り替えや OpenRouter へのクレジット投入を検討してください。
 
 ---
 
@@ -184,6 +186,7 @@ Investigation Agent 4 つを並列実行した場合、単一実行で ~5 リク
 | Mistral 7B | 16GB | 不要 | MacBook Pro M1/M2, RTX 3060 |
 | Llama 3.1 8B | 16GB | 不要 | MacBook Pro M1/M2, RTX 3060 |
 | Llama 3.3 70B | 40GB+ | NVIDIA/Metal | MacBook Pro M2 Max, RTX 4080/4090 |
+| Llama 3.1 405B | 1.5TB+ | 8x A100/H100（80GB各） | 非推奨（エンタープライズ環境向け） |
 
 ---
 

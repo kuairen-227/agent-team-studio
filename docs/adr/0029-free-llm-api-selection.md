@@ -91,7 +91,7 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 **制約**:
 
-- レート制限: 20 requests/minute, 200 requests/day
+- レート制限: 20 requests/minute, 50 requests/day（クレジット未購入時）
 - JSON 出力の安定性が Sonnet 4.6 より低い可能性（要テスト）
 - 無料モデルのため、精度・応答速度が落ちる可能性
 
@@ -103,9 +103,9 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 **利用可能な無料モデル**（ローカル実行）:
 
-- Llama 3.3 70B
-- Llama 3.1 405B（GPU メモリ大）
-- Mistral 7B（軽量）
+- Llama 3.3 70B（推奨：40GB メモリで運用可能）
+- Mistral 7B（軽量：16GB メモリで運用可能）
+- Llama 3.1 405B（1.5TB メモリ・8x A100/H100 必須、エンタープライズ向け）
 - その他オープンソースモデル
 
 **特徴**:
@@ -116,9 +116,11 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 **制約**:
 
-- ローカル実行のためメモリ要求が大きい（Llama 3.3 70B は ~40GB）
+- ローカル実行のためメモリ要求が大きい
+  - Llama 3.3 70B: ~40GB（MacBook Pro M2 Max、RTX 4080/4090 推奨）
+  - Llama 3.1 405B: ~1.5TB（8x A100/H100 必須、エンタープライズ向け）
 - モデルのダウンロード・管理がローカル
-- M1/M2 Mac や RTX 4090 等のハイスペック環境推奨
+- ダウンロード時間が長い（モデルサイズ + 回線速度に依存、数時間要する場合もあり）
 
 ## Consequences
 
