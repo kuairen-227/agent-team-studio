@@ -1,26 +1,65 @@
-# 無料 LLM API のセットアップガイド
+# LLM API 設定ガイド
 
-z.ai 有料化対応として、無料で利用可能な LLM API を 2 つの選択肢から選定できます。既存コードの変更は不要で、環境変数の設定のみです。
+Anthropic API、OpenRouter、Ollama から選択できます。既存コードの変更は不要で、環境変数の設定のみです。
 
 参照: [ADR-0029](../adr/0029-free-llm-api-selection.md)
 
 ## 選択フロー
 
 ```
-開発・検証用途か？
-  ├─ クラウド実行、レート制限OK
-  │  └─ OpenRouter（推奨）
-  │     - セットアップが簡単
-  │     - スケーラブル
-  │     - レート制限: 20 req/min, 200 req/day
+LLM API の選択
+  ├─ 最高品質を優先（推奨デフォルト）
+  │  └─ Anthropic 本家
+  │     - Claude Sonnet 4.6
+  │     - 競合調査用途で最適
+  │     - 従量課金
   │
-  └─ ローカル実行、無制限実行したい
-     └─ Ollama（代替案）
-        - 完全無料、無制限
-        - ローカルスペック必要（40GB+）
+  ├─ 無料で利用したい
+  │  ├─ クラウド実行、レート制限OK
+  │  │  └─ OpenRouter（無料モデル）
+  │  │     - セットアップが簡単
+  │  │     - スケーラブル
+  │  │     - レート制限: 20 req/min, 200 req/day
+  │  │
+  │  └─ ローカル実行、無制限実行したい
+  │     └─ Ollama
+  │        - 完全無料、無制限
+  │        - ローカルスペック必要（40GB+）
 ```
 
-## Option A: OpenRouter（推奨）
+## Option A: Anthropic 本家（推奨）
+
+### セットアップ手順
+
+1. **API キー取得**
+   - https://console.anthropic.com に登録
+   - API Keys から `sk-ant-...` で始まるキーをコピー
+
+2. **環境変数を設定**
+
+   ```bash
+   # apps/api/.env または .env.local に以下を設定
+   LLM_API_KEY=sk-ant-YOUR_KEY_HERE
+   # LLM_BASE_URL は未設定（デフォルトで api.anthropic.com を使用）
+   ```
+
+3. **動作確認**
+
+   ```bash
+   # テストの実行
+   bun run test
+   ```
+
+### 特徴
+
+- 最高品質（Claude Sonnet 4.6）
+- JSON 構造化出力が安定的
+- 競合調査用途での品質優先
+- 既に暫定運用中で、設定が確立している
+
+---
+
+## Option B: OpenRouter（代替・無料）
 
 ### セットアップ手順
 
@@ -31,14 +70,14 @@ z.ai 有料化対応として、無料で利用可能な LLM API を 2 つの選
 2. **環境変数を設定**
 
    ```bash
-   # apps/api/.env または .env.local に以下を追加
-   LLM_API_KEY=sk-or-...  # OpenRouter API キー
+   # apps/api/.env または .env.local に以下を設定
+   LLM_API_KEY=sk-or-YOUR_OPENROUTER_KEY_HERE
    LLM_BASE_URL=https://openrouter.ai/api
    ```
 
-3. **モデル選択**（オプション）
+3. **モデル選択**（無料モデルを使う場合）
 
-   デフォルトは `claude-sonnet-4-6` ですが、無料モデルを使う場合は以下をいずれかに変更：
+   以下をいずれかに変更：
 
    ```bash
    # 汎用モデル（推奨）
@@ -58,16 +97,6 @@ z.ai 有料化対応として、無料で利用可能な LLM API を 2 つの選
    ```bash
    # テストの実行
    bun run test
-   
-   # または curl でエンドポイント確認
-   curl -X POST https://openrouter.ai/api/v1/messages \
-     -H "Authorization: Bearer sk-or-..." \
-     -H "Content-Type: application/json" \
-     -d '{
-       "model": "llama-3.3-70b-specdec",
-       "messages": [{"role": "user", "content": "Hello"}],
-       "max_tokens": 100
-     }'
    ```
 
 ### レート制限の注意
@@ -80,7 +109,7 @@ Investigation Agent 4 つを並列実行した場合、単一実行で ~5 リク
 
 ---
 
-## Option B: Ollama（代替案）
+## Option C: Ollama（代替・ローカル無料）
 
 ### セットアップ手順
 
@@ -201,17 +230,21 @@ cat apps/api/.env.local
 
 ## デフォルト設定の推奨
 
-学習・開発用途では **OpenRouter 推奨**：
+### 開発・検証用途（推奨）
 
-- セットアップが簡単
-- スケーラブル（クラウド）
-- テスト環境での選択肢が豊富
+**Anthropic 本家** をデフォルトに設定：
 
-本番環境やプライベート環境では **Ollama 検討**：
+- 最高品質（Claude Sonnet 4.6）
+- JSON 構造化出力の安定性
+- 競合調査用途での品質を優先
+- 既に暫定運用中で設定が確立している
 
-- 完全無料・無制限
-- データが社内に閉じる
-- ローカルスペックが確保できる場合
+### 無料で利用する場合
+
+**OpenRouter（クラウド）** または **Ollama（ローカル）** から選択：
+
+- **OpenRouter**: セットアップが簡単、スケーラブル、レート制限あり
+- **Ollama**: 完全無料・無制限、ローカルスペック必要
 
 ---
 
