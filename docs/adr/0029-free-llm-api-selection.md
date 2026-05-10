@@ -50,12 +50,14 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 ```
 
 **推奨理由**:
+
 - 最高品質（Claude Sonnet 4.6）— 競合調査用途での出力品質を優先
 - JSON 構造化出力の安定性が確実
 - 学習プロジェクト（ADR-0002）のため、プロダクション品質の体験が重要
 - 既に暫定運用中で、設定・テストが確立している
 
 **制約**:
+
 - 従量課金（課金リスク）
 - 開発中は Anthropic API キーが必須
 
@@ -66,22 +68,26 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 **設定方法**: `LLM_BASE_URL=https://openrouter.ai/api`
 
 **利用可能な無料モデル**（2026 年 5 月時点）:
+
 - Llama 3.3 70B — 高品質な汎用モデル
 - DeepSeek R1 — 推論タスク向け
 - Qwen 3 Coder 480B — コード生成向け
 - その他 26+ モデル
 
 **レート制限**:
+
 - 20 requests/minute
 - 200 requests/day
 - 対開発・検証用途としては十分
 
 **採用シーン**:
+
 - 開発コスト削減が優先課題の場合
 - プロトタイピング段階での試験運用
 - z.ai 有料化後の予算制約対応
 
 **制約**:
+
 - JSON 出力の安定性が Claude Sonnet 4.6 より低い可能性（要テスト）
 - 競合調査用途では出力品質が重要なため、テストで検証必要
 - 無料モデルのため、精度・応答速度が落ちる可能性
@@ -93,6 +99,7 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 **設定方法**: `ANTHROPIC_BASE_URL=http://localhost:11434`
 
 **利用可能な無料モデル**（ローカル実行）:
+
 - Llama 3.3 70B
 - Llama 3.1 405B（GPU メモリ大）
 - Mistral 7B（軽量）
@@ -101,11 +108,13 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 **レート制限**: なし（完全ローカル）
 
 **採用シーン**:
+
 - プライベート環境（データを社内に閉じたい）
 - 無制限トライアル（API 呼び出し制限なし）
 - GPU を備えたローカル環境がある場合
 
 **制約**:
+
 - Llama 3.3 70B は ~40GB メモリ必要
 - モデルのダウンロード・管理がローカル
 - M1/M2 Mac や RTX 4090 等のハイスペック環境推奨
@@ -121,12 +130,12 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 
 ### ネガティブ / リスク
 
-- **出力品質の低下** — Sonnet 4.6 → Llama 3.3 70B では JSON 構造化出力の安定性が低下する可能性
+- **出力品質の低下** — OpenRouter / Ollama の無料モデル使用時、JSON 構造化出力の安定性が Sonnet 4.6 より低下する可能性
   - **緩和策**: テストスイート（`bun run test`）を拡充し、出力品質を監視する
-- **デフォルト推奨の決定が必要** — OpenRouter vs Ollama の本運用選択は別途 Issue で決定する
-  - **方針**: 初期デフォルトは OpenRouter（クラウド、スケーラブル）とし、環境変数で Ollama に切り替え可能にする
 - **OpenRouter のレート制限** — 無料ティア 20 req/min は並列実行（Investigation Agent ×4）では余裕が必要
-  - **評価**: MVP 範囲では十分（実際の実行パターンで都度確認）
+  - **評価**: MVP 範囲では十分（実際の実行パターンで都度確認。必要に応じて Ollama に切り替え）
+- **Anthropic 本家への継続依存** — 従量課金によるコスト増加のリスク
+  - **緩和策**: 本 Decision により 2 つの無料代替案（OpenRouter / Ollama）を用意。将来 OpenRouter / Ollama への完全移行が必要になった場合は本 ADR を supersede する新 ADR を切る
 
 ### 中立
 
@@ -138,4 +147,9 @@ LLM_API_KEY=sk-ant-YOUR_KEY_HERE
 - 新規 ガイド（`docs/guides/free-llm-setup.md`）で OpenRouter / Ollama の選択フロー・セットアップ手順を記載
 - `apps/api/.env.example` を更新し、複数の設定例を併記
 - テスト実行で動作確認
-- 本 ADR の Decision より、デフォルトは Anthropic 本家に設定（既存の暫定運用を継続）
+
+## デフォルト設定
+
+**本番デフォルト**: Anthropic 本家（既存の暫定運用を継続）。環境変数 `LLM_BASE_URL` で OpenRouter / Ollama に切り替え可能。
+
+将来、OpenRouter / Ollama への完全移行が必要になった場合は、その時点で本 ADR を supersede する新 ADR を切る。
