@@ -127,6 +127,8 @@ claude -w feat-auth --tmux   # tmux ペインに配置
 ```text
 .env
 .env.local
+apps/api/.env
+apps/web/.env
 ```
 
 worktree 作成時にカスタム処理を実行したい場合は `.claude/settings.json` にフックを定義する。
@@ -176,6 +178,10 @@ DevContainer での起動:
 cd ../agent-team-studio--feat-auth
 cp .env.example .env
 # .env を編集（WORKTREE_ID / APP_PORT / DB_PORT / DB_VOLUME）
+cp apps/api/.env.example apps/api/.env
+# apps/api/.env の LLM_API_KEY を設定する（PORT は通常 3000 のまま）
+cp apps/web/.env.example apps/web/.env
+# 通常は変更不要（API_PORT=3000 / WEB_PORT=5173 のまま）
 code .
 # Reopen in Container → コンテナ内で bun install
 # 初回のみ claude login を再実行（main と認証共有されない理由は devcontainer.md「Claude ホームの共有」参照）
@@ -211,6 +217,7 @@ isolation: worktree
 
 - **Claude ホームは共有**: すべての DevContainer で `agent-team-studio-claude-home` named volume をマウント（プロジェクトメモリ・skills/agents・OAuth トークンが共有・永続化される。ただし split / Rebuild では `~/.claude.json` 非共有のため再ログインのみ必要）
 - **nested の DB 安全策**: カテゴリ C の DB 改修で nested を選ぶときは前述の前提（`search_path` 分離 or `CREATE DATABASE wt_<name>`）を必ず適用
+- **nested の並行 dev ポート**: 同一コンテナ内で複数の dev server を立ち上げる場合、内部ポートが競合する。`apps/api/.env` の `PORT`（API）と `apps/web/.env` の `API_PORT` / `WEB_PORT`（Vite）を main と異なる値に設定する（例: `PORT=3001`, `API_PORT=3001`, `WEB_PORT=5174`）
 - **split のリソース上限**: split worktree は同時 2 つまでを目安にする（main と合わせて最大 3 コンテナ。`docker compose stop` で休眠も活用）
 - **Playwright のポート設定**: ルート `.env` の `APP_PORT` でホスト側公開ポートを worktree ごとに切替（コンテナ内 listen ポートは 3000 固定。Playwright 正式導入時に詳細を [devcontainer.md](./devcontainer.md) に追記予定）
 
