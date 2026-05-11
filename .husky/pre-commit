@@ -1,5 +1,6 @@
-# staged files のみ検査（secretlint を確実に通すため先頭に配置）
+# secretlint を必ず実行するため lint-staged を先頭に配置
 # 注意: markdownlint-cli2 はファイルパス直接渡しになるため .markdownlint-cli2.jsonc の ignores は機能しない
+#       （_dev は .gitignore 対象のためステージングされず実害なし）
 bunx lint-staged
 bun run lint
 bun run type-check

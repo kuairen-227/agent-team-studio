@@ -20,10 +20,6 @@
     "db:seed": "turbo run db:seed",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "*.md": "markdownlint-cli2",
-    "**/*": "secretlint"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.0",
