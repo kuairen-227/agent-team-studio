@@ -14,9 +14,10 @@
       "Skill(review)",
       "mcp__context7",
       "mcp__playwright",
-      "Bash(bun -v)",
+      "Bash(bun ls:*)",
       "Bash(bun run:*)",
       "Bash(bun test:*)",
+      "Bash(bun -v)",
       "Bash(bunx shadcn:*)",
       "Bash(cat:*)",
       "Bash(ls:*)",
@@ -52,7 +53,8 @@
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh run list:*)",
-      "Bash(npm info:*)"
+      "Bash(npm info:*)",
+      "Bash(wait:*)"
     ],
     "deny": [
       "Read(**/.env)",
