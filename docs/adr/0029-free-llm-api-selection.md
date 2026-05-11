@@ -133,7 +133,6 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 - **既存コード変更なし** — `llm-client.ts` の内部実装（`LLM_BASE_URL` 参照）のみで対応可能
 - **開発コスト削減** — z.ai 有料化による開発中断を回避
 - **柔軟性** — OpenRouter → Ollama、または無料 → 有料モデルへの切り替えが環境変数で可能
-- **学習価値** — Anthropic 互換 API の複数実装（OpenRouter / Ollama）で API 標準化の重要性を体験
 - **動作確認済み** — OpenRouter・Ollama の Anthropic 互換エンドポイント（`/v1/messages`）を公式ドキュメントで確認済み
 
 ### ネガティブ / リスク
