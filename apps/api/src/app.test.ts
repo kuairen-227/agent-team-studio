@@ -304,4 +304,36 @@ describe("GET /api/executions/:id", () => {
     expect(body.details).toEqual({ resource: "execution", id: "exec-missing" });
     expect(body.message).toBeTruthy();
   });
+
+  test("repo が例外を投げると 500 + ApiInternalError 形を返す", async () => {
+    const app = buildApp({
+      getExecution: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    const res = await app.request("/api/executions/exec-1");
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as ApiInternalError;
+    expect(body.errorCode).toBe("internal_error");
+    expect(body.message).toBeTruthy();
+    expect(body.message).not.toContain("DB connection failed");
+  });
+
+  // completed + result=null は API 設計上到達しないが、route 層が result=null のまま 200 を返すことを境界として固定する。
+  test("Execution が存在し result が null のとき 200 + result=null を返す", async () => {
+    const app = buildApp({
+      getExecution: async () => execRow,
+      getAgentExecutionsByExecutionId: async () => [agentRow],
+      getResultByExecutionId: async () => null,
+    });
+
+    const res = await app.request("/api/executions/exec-1");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as GetExecutionResponse;
+    expect(body.id).toBe("exec-1");
+    expect(body.result).toBeNull();
+  });
 });

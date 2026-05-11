@@ -12,9 +12,11 @@ import type {
   InvestigationAgentExecutionDetail,
   InvestigationFinding,
   MissingPerspective,
+  PerspectiveMatrixRow,
 } from "@agent-team-studio/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +73,6 @@ export function ExecutionResultView({ executionId }: { executionId: string }) {
       <Alert variant="destructive" className="mt-4">
         <AlertTitle>結果の取得に失敗しました</AlertTitle>
         <AlertDescription>
-          <p>時間をおいて再度お試しください。</p>
           <Button
             variant="outline"
             size="sm"
@@ -79,7 +80,7 @@ export function ExecutionResultView({ executionId }: { executionId: string }) {
             onClick={() => refetch()}
             disabled={isFetching}
           >
-            {isFetching ? "読み込み中…" : "再読み込み"}
+            再読み込み
           </Button>
         </AlertDescription>
       </Alert>
@@ -90,16 +91,24 @@ export function ExecutionResultView({ executionId }: { executionId: string }) {
     return <CompletedResultView execution={data} />;
   }
 
+  // completed フェーズで result なしは理論上到達しない（WS 設計上 result 存在が保証される）。
+  // 万一発生した場合の安全網として導線を提供する。
   return (
-    <p className="mt-4 text-sm text-muted-foreground">
-      結果データが見つかりません。
-    </p>
+    <Alert variant="destructive" className="mt-4">
+      <AlertTitle>結果データを取得できませんでした</AlertTitle>
+      <AlertDescription>
+        <Link to="/" className="underline">
+          テンプレート一覧へ
+        </Link>
+      </AlertDescription>
+    </Alert>
   );
 }
 
 /**
  * 統合エージェント失敗時（Result 未作成）に調査エージェントの出力を表示する。
- * API から取得し、出力が 1 件もない場合は何も描画しない。
+ * このコンポーネントは失敗 UI の補足表示として使われるため、fetch 失敗・ロード中は
+ * 無音で何も描画しない（主要な失敗メッセージは呼び出し元が担う）。
  */
 export function InvestigationOutputsView({
   executionId,
@@ -112,20 +121,26 @@ export function InvestigationOutputsView({
       fetchJson<GetExecutionResponse>(`/api/executions/${executionId}`),
   });
 
+  // fetch 失敗・ロード中は呼び出し元の失敗 UI のみを表示する（意図的なサイレント処理）。
   if (status !== "success") return null;
 
   const withOutput = data.agentExecutions.filter(
     (ae): ae is InvestigationAgentExecutionDetail =>
-      ae.role === "investigation" && ae.output !== undefined,
+      ae.role === "investigation" && ae.output != null,
   );
 
   if (withOutput.length === 0) return null;
 
   return (
     <div className="mt-6 space-y-4">
-      <h2 className="text-base font-semibold">
-        各エージェントの調査結果（統合前）
-      </h2>
+      <div>
+        <h2 className="text-base font-semibold">
+          各エージェントの調査結果（統合前）
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          統合エージェントが失敗したため、各調査エージェントの出力を表示しています。
+        </p>
+      </div>
       {withOutput.map((ae) => (
         <InvestigationOutputCard key={ae.id} ae={ae} />
       ))}
@@ -169,15 +184,12 @@ function ResultMatrix({
   missing,
   competitors,
 }: {
-  matrix: GetExecutionResponse["result"] extends undefined
-    ? never
-    : NonNullable<GetExecutionResponse["result"]>["structured"]["matrix"];
+  matrix: PerspectiveMatrixRow[];
   missing: MissingPerspective[];
   competitors: string[];
 }) {
   const missingSet = new Set(missing.map((m) => m.perspective));
 
-  // 4 観点すべてを表示対象とする（matrix に含まれない観点は missing セルで表示）。
   const perspectives = ALL_PERSPECTIVES.filter(
     (p) => matrix.some((r) => r.perspective === p) || missingSet.has(p),
   );
@@ -185,67 +197,78 @@ function ResultMatrix({
   return (
     <div>
       <h2 className="mb-3 text-base font-semibold">結果マトリクス</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="p-2 text-left font-medium">観点</th>
-              {competitors.map((c) => (
-                <th key={c} className="p-2 text-left font-medium">
-                  {c}
+      {perspectives.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          結果データがありません。
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th scope="col" className="p-2 text-left font-medium">
+                  観点
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {perspectives.map((perspective) => {
-              const row = matrix.find((r) => r.perspective === perspective);
-              const isMissing = missingSet.has(perspective);
+                {competitors.map((c) => (
+                  <th scope="col" key={c} className="p-2 text-left font-medium">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {perspectives.map((perspective) => {
+                const row = matrix.find((r) => r.perspective === perspective);
+                const isMissing = missingSet.has(perspective);
 
-              return (
-                <tr key={perspective} className="border-b last:border-b-0">
-                  <td className="p-2 font-medium text-muted-foreground">
-                    {PERSPECTIVE_NAME[perspective]}
-                  </td>
-                  {competitors.map((competitor) => {
-                    if (isMissing || !row) {
+                return (
+                  <tr key={perspective} className="border-b last:border-b-0">
+                    <th
+                      scope="row"
+                      className="p-2 text-left font-medium text-muted-foreground"
+                    >
+                      {PERSPECTIVE_NAME[perspective]}
+                    </th>
+                    {competitors.map((competitor) => {
+                      if (isMissing || !row) {
+                        return (
+                          <td key={competitor} className="p-2">
+                            <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              未取得
+                            </span>
+                          </td>
+                        );
+                      }
+                      const cell = row.cells.find(
+                        (c) => c.competitor === competitor,
+                      );
+                      if (!cell) {
+                        return (
+                          <td
+                            key={competitor}
+                            className="p-2 text-muted-foreground"
+                          >
+                            —
+                          </td>
+                        );
+                      }
                       return (
-                        <td key={competitor} className="p-2">
-                          <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            missing
+                        <td key={competitor} className="p-2 align-top">
+                          <p className="leading-relaxed">{cell.summary}</p>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            確度:{" "}
+                            {EVIDENCE_LEVEL_LABEL[cell.source_evidence_level]}
                           </span>
                         </td>
                       );
-                    }
-                    const cell = row.cells.find(
-                      (c) => c.competitor === competitor,
-                    );
-                    if (!cell) {
-                      return (
-                        <td
-                          key={competitor}
-                          className="p-2 text-muted-foreground"
-                        >
-                          —
-                        </td>
-                      );
-                    }
-                    return (
-                      <td key={competitor} className="p-2 align-top">
-                        <p className="leading-relaxed">{cell.summary}</p>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          確度:{" "}
-                          {EVIDENCE_LEVEL_LABEL[cell.source_evidence_level]}
-                        </span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -256,7 +279,6 @@ function OverallInsights({ insights }: { insights: string[] }) {
       <h2 className="mb-3 text-base font-semibold">総合インサイト</h2>
       <ul className="space-y-2">
         {insights.map((insight, i) => (
-          // インデックスをキーに使う（insights はサーバー生成の固定リスト）
           // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
           <li key={i} className="flex gap-2 text-sm">
             <span className="mt-0.5 shrink-0 text-muted-foreground">•</span>
@@ -292,6 +314,8 @@ function MissingPerspectivesSection({
   );
 }
 
+type CopyState = "idle" | "success" | "error";
+
 function ExportActions({
   markdown,
   executionId,
@@ -299,12 +323,27 @@ function ExportActions({
   markdown: string;
   executionId: string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
+  const [downloaded, setDownloaded] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const downloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
+    };
+  }, []);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(markdown);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopyState("success");
+    } catch {
+      setCopyState("error");
+    }
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopyState("idle"), 2000);
   };
 
   const handleDownload = () => {
@@ -313,18 +352,38 @@ function ExportActions({
     const a = document.createElement("a");
     a.href = url;
     a.download = `competitive-analysis-${executionId}.md`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setDownloaded(true);
+    if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
+    downloadTimerRef.current = setTimeout(() => setDownloaded(false), 2000);
   };
 
+  const copyLabel =
+    copyState === "success"
+      ? "コピーしました"
+      : copyState === "error"
+        ? "コピーに失敗しました"
+        : "Markdown をコピー";
+
   return (
-    <div className="flex gap-2">
-      <Button variant="outline" onClick={handleCopy}>
-        {copied ? "コピーしました" : "Markdown をコピー"}
-      </Button>
-      <Button variant="outline" onClick={handleDownload}>
-        ダウンロード
-      </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={handleCopy}>
+          {copyLabel}
+        </Button>
+        <Button variant="outline" onClick={handleDownload}>
+          {downloaded ? "ダウンロードしました" : "ダウンロード"}
+        </Button>
+      </div>
+      {/* スクリーンリーダーへの操作結果通知 */}
+      <span aria-live="polite" className="sr-only">
+        {copyState === "success" && "コピーしました"}
+        {copyState === "error" && "コピーに失敗しました"}
+        {downloaded && "ダウンロードしました"}
+      </span>
     </div>
   );
 }
