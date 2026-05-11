@@ -159,9 +159,8 @@ LLM API の選択
    ```bash
    # apps/api/.env または .env.local に以下を追加
    LLM_BASE_URL=http://localhost:11434
+   LLM_API_KEY=ollama  # Ollama はキー認証不要。任意のダミー値を指定（llm-client.ts の検証回避用）
    ```
-
-   `LLM_API_KEY` は不要（ローカル実行のため）
 
 5. **動作確認**
 
