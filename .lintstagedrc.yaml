@@ -1,0 +1,5 @@
+# *.md は markdownlint-cli2 と secretlint の両方が走る（lint-staged は複数マッチ時に両エントリを実行する）
+# 注意: ファイルパス直接渡しのため .markdownlint-cli2.jsonc の ignores は機能しない（_dev は .gitignore 対象のため実害なし）
+"*.md": markdownlint-cli2
+# **/* は .gitignore 対象ファイル（.env.* 等）を含まないため、secretlintignore との二重保護になっている
+"**/*": secretlint
