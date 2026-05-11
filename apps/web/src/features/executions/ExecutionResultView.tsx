@@ -36,7 +36,7 @@ const PERSPECTIVE_NAME: Record<CompetitorPerspectiveKey, string> = {
   strategy: "戦略",
   product: "製品",
   investment: "投資",
-  partnership: "提携",
+  partnership: "パートナーシップ",
 };
 
 const MISSING_REASON_LABEL: Record<MissingPerspective["reason"], string> = {
@@ -168,11 +168,11 @@ function CompletedResultView({
         missing={structured.missing}
         competitors={competitors}
       />
-      {structured.overall_insights.length > 0 && (
-        <OverallInsights insights={structured.overall_insights} />
-      )}
       {structured.missing.length > 0 && (
         <MissingPerspectivesSection missing={structured.missing} />
+      )}
+      {structured.overall_insights.length > 0 && (
+        <OverallInsights insights={structured.overall_insights} />
       )}
       <ExportActions markdown={markdown} executionId={execution.id} />
     </div>
@@ -314,7 +314,7 @@ function MissingPerspectivesSection({
   );
 }
 
-type CopyState = "idle" | "success" | "error";
+type ActionState = "idle" | "success" | "error";
 
 function ExportActions({
   markdown,
@@ -323,8 +323,8 @@ function ExportActions({
   markdown: string;
   executionId: string;
 }) {
-  const [copyState, setCopyState] = useState<CopyState>("idle");
-  const [downloaded, setDownloaded] = useState(false);
+  const [copyState, setCopyState] = useState<ActionState>("idle");
+  const [downloadState, setDownloadState] = useState<ActionState>("idle");
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const downloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -341,24 +341,33 @@ function ExportActions({
       setCopyState("success");
     } catch {
       setCopyState("error");
+    } finally {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopyState("idle"), 2000);
     }
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopyState("idle"), 2000);
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `competitive-analysis-${executionId}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setDownloaded(true);
-    if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
-    downloadTimerRef.current = setTimeout(() => setDownloaded(false), 2000);
+    try {
+      const blob = new Blob([markdown], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `competitive-analysis-${executionId}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setDownloadState("success");
+    } catch {
+      setDownloadState("error");
+    } finally {
+      if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
+      downloadTimerRef.current = setTimeout(
+        () => setDownloadState("idle"),
+        2000,
+      );
+    }
   };
 
   const copyLabel =
@@ -368,21 +377,39 @@ function ExportActions({
         ? "コピーに失敗しました"
         : "Markdown をコピー";
 
+  const downloadLabel =
+    downloadState === "success"
+      ? "ダウンロードしました"
+      : downloadState === "error"
+        ? "ダウンロードに失敗しました"
+        : "ダウンロード";
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <Button variant="outline" onClick={handleCopy}>
+        <Button
+          variant="outline"
+          onClick={handleCopy}
+          disabled={copyState !== "idle"}
+        >
           {copyLabel}
         </Button>
-        <Button variant="outline" onClick={handleDownload}>
-          {downloaded ? "ダウンロードしました" : "ダウンロード"}
+        <Button
+          variant="outline"
+          onClick={handleDownload}
+          disabled={downloadState !== "idle"}
+        >
+          {downloadLabel}
         </Button>
       </div>
-      {/* スクリーンリーダーへの操作結果通知 */}
+      {/* スクリーンリーダーへの操作結果通知（コピーとDLを独立させ同時読み上げ競合を防ぐ） */}
       <span aria-live="polite" className="sr-only">
         {copyState === "success" && "コピーしました"}
         {copyState === "error" && "コピーに失敗しました"}
-        {downloaded && "ダウンロードしました"}
+      </span>
+      <span aria-live="polite" className="sr-only">
+        {downloadState === "success" && "ダウンロードしました"}
+        {downloadState === "error" && "ダウンロードに失敗しました"}
       </span>
     </div>
   );
@@ -393,6 +420,7 @@ function InvestigationOutputCard({
 }: {
   ae: InvestigationAgentExecutionDetail;
 }) {
+  // 呼び出し元フィルタで output != null が保証済み。防衛的ガードとして残す。
   if (!ae.output) return null;
   const { perspective, findings } = ae.output;
 

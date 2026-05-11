@@ -291,6 +291,7 @@ describe("GET /api/executions/:id", () => {
     expect(body.agentExecutions).toHaveLength(1);
     expect(body.result?.id).toBe("result-1");
     expect(body.result?.markdown).toBe("# レポート");
+    expect(body.result?.structured.overall_insights).toEqual(["所見1"]);
   });
 
   test("Execution が存在しないとき 404 + ApiNotFoundError 形を返す", async () => {
@@ -321,8 +322,8 @@ describe("GET /api/executions/:id", () => {
     expect(body.message).not.toContain("DB connection failed");
   });
 
-  // completed + result=null は API 設計上到達しないが、route 層が result=null のまま 200 を返すことを境界として固定する。
-  test("Execution が存在し result が null のとき 200 + result=null を返す", async () => {
+  // completed + result=null は API 設計上到達しないが、route 層が result=undefined のまま 200 を返すことを境界として固定する。
+  test("Execution が存在し result が null のとき 200 + result=undefined を返す", async () => {
     const app = buildApp({
       getExecution: async () => execRow,
       getAgentExecutionsByExecutionId: async () => [agentRow],
@@ -334,6 +335,6 @@ describe("GET /api/executions/:id", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as GetExecutionResponse;
     expect(body.id).toBe("exec-1");
-    expect(body.result).toBeNull();
+    expect(body.result).toBeUndefined();
   });
 });

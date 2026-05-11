@@ -81,6 +81,12 @@ MVP のコア概念。ADR-0005 の MVP 機能一覧と [user-stories.md](./user-
 | completed | 完了 | 正常終了 | [US-3](./user-stories.md#us-3-エージェントの進捗をリアルタイムで見る) |
 | failed | 失敗 | エラーにより終了。UI では原因メッセージを併記 | [US-3](./user-stories.md#us-3-エージェントの進捗をリアルタイムで見る) |
 
+### 結果表示
+
+| 英語名 | 日本語 | 定義 | 関連 |
+| --- | --- | --- | --- |
+| evidence_level | 確度 | 調査エージェントが収集した根拠の強さ。UI では「強 / 中 / 弱 / 不足」と表示（`strong` / `moderate` / `weak` / `insufficient`） | [US-4](./user-stories.md#us-4-統合結果を閲覧しエクスポートする) |
+
 ### その他
 
 | 英語名 | 日本語 | 定義 | 関連 |
