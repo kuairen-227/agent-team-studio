@@ -22,10 +22,7 @@
 
 ## 文体規約
 
-- 簡潔に書く。前置き・繰り返し・要約を省き、結論から述べる
-- AI特有の冗長な表現（過剰な丁寧語、不要な言い換え、水増し的な修飾）を避ける
-- ドキュメント・コミットメッセージ等、すべてのテキスト出力に適用する
-- 詳細: [principles §6](docs/principles/README.md)
+詳細: [principles §6](docs/principles/README.md)
 
 ## 設計・開発原則
 
@@ -33,17 +30,11 @@
 
 CLAUDE.md は AI が常時参照する起動時ガイダンスとして要点を残し、principles が詳細・全体像を担う。各エージェント（`.claude/agents/*`）とスキル（`.claude/skills/*`）も principles を前提とする。
 
-### 密結合の回避
-
-ドキュメント・コメント・コードを問わず、過剰な相互参照・関連付けは避ける。参照は必要最小限に留め、密結合を生まない。
-
-- ドキュメント間の参照は [ADR-0021](docs/adr/0021-doc-cross-reference-policy.md)（ハブ＆スポーク + 緩い水平参照）に従う。README をハブとし、双方向リンク・セクション精度の重複参照を作らない
-- コードコメントは「リンク的説明」（他ファイルや他関数への参照）より、その箇所単独で意味が通る記述を優先する
-
 ## 主要コマンド
 
 | コマンド | 説明 |
 | --- | --- |
+| `bun run dev` | 開発サーバー起動（全ワークスペース、Turborepo 経由） |
 | `bun run lint` | Biome による静的解析（全ワークスペース、Turborepo 経由） |
 | `bun run lint:fix` | Biome による lint・format の自動修正（全ワークスペース、Turborepo 経由） |
 | `bun run lint:md` | Markdown の lint（markdownlint-cli2） |
@@ -51,6 +42,17 @@ CLAUDE.md は AI が常時参照する起動時ガイダンスとして要点を
 | `bun run type-check` | TypeScript 型チェック（全ワークスペース、Turborepo 経由） |
 | `bun run test` | テスト実行（全ワークスペース、Turborepo 経由） |
 | `bun run build` | ビルド（依存順に全ワークスペース、Turborepo 経由） |
+| `bun run db:generate` | スキーマからクライアント生成（全ワークスペース、Turborepo 経由） |
+| `bun run db:migrate` | DB マイグレーション実行（全ワークスペース、Turborepo 経由） |
+| `bun run db:seed` | シードデータ投入（全ワークスペース、Turborepo 経由） |
+
+## DB 接続
+
+`DATABASE_URL` は docker-compose が `.env` の部品変数から組み立ててアプリコンテナに注入する。`-c` で任意の SQL を実行できる。
+
+```bash
+psql "$DATABASE_URL" -c "SELECT 1"
+```
 
 ## コーディング規約
 
