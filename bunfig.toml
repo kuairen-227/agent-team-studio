@@ -2,9 +2,13 @@
 # npm に publish 直後の新しいバージョンを一定期間 install させない。
 # 公開〜検知の時間差 (例: 2026-05-11 TanStack 侵害は約20分で検知) で
 # 悪意あるバージョンを踏むリスクを低減する。
-# Dependabot cooldown (semver-patch-days: 3) と整合した 3 日 = 259200 秒。
+# Dependabot cooldown (semver-patch-days: 3) と数値を揃えた独立した防御層
+# (Dependabot 経路は cooldown が、ローカル経路は本設定がそれぞれ単独で遮断する) で、
+# 3 日 = 259200 秒。
 # 有効な文脈: ローカル bun add / lockfile 更新時 (解決が走るタイミング)。
 # CI (--frozen-lockfile) は解決をスキップして lockfile 通り install するため不適用。
+# 不適用ケース: registry を介さない直接 install (例: tarball / git / link 依存) は
+# publish 時刻を取得できないため本設定の対象外となる。
 minimumReleaseAge = 259200
 
 # 補足: Bun はデフォルトで依存パッケージのライフサイクルスクリプトを実行しない
