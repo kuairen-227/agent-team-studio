@@ -3,6 +3,8 @@
 # 公開〜検知の時間差 (例: 2026-05-11 TanStack 侵害は約20分で検知) で
 # 悪意あるバージョンを踏むリスクを低減する。
 # Dependabot cooldown (semver-patch-days: 3) と整合した 3 日 = 259200 秒。
+# 有効な文脈: ローカル bun add / lockfile 更新時 (解決が走るタイミング)。
+# CI (--frozen-lockfile) は解決をスキップして lockfile 通り install するため不適用。
 minimumReleaseAge = 259200
 
 # 補足: Bun はデフォルトで依存パッケージのライフサイクルスクリプトを実行しない
