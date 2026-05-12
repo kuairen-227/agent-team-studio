@@ -4,13 +4,9 @@
  * WS 接続状態に応じて:
  * - connecting: 接続中テキスト
  * - running: エージェントごとのステータスバッジ + 出力ストリーミング
- * - completed: 結果閲覧（GET /api/executions/:id へリダイレクト）
- * - failed: 失敗メッセージ
+ * - completed: 結果マトリクス + エクスポート（GET /api/executions/:id が SSoT）
+ * - failed: 失敗メッセージ。integration_failed の場合は調査エージェント出力も表示
  * - error: WS エラー Alert + 履歴一覧への導線
- *
- * US-4 の結果表示（マトリクス・エクスポート）は completed 遷移後に
- * ExecutionResultPage で担う（#120 で実装）。本 Issue では completed 後の
- * リダイレクト or 簡易メッセージを置く。
  */
 
 import type {
@@ -21,8 +17,11 @@ import { getRouteApi } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ExecutionResultView,
+  InvestigationOutputsView,
+} from "./ExecutionResultView";
 import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
 
 const Route = getRouteApi("/executions/$executionId");
@@ -84,12 +83,9 @@ export function ExecutionProgressPage() {
           接続エラー
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>接続エラー</AlertTitle>
+          <AlertTitle>WebSocket 接続に失敗しました</AlertTitle>
           <AlertDescription>
             <p>{message}</p>
-            <p className="mt-1">
-              履歴一覧（準備中）から過去の実行を確認できます。
-            </p>
           </AlertDescription>
         </Alert>
         {wsState.agents.size > 0 && (
@@ -108,11 +104,7 @@ export function ExecutionProgressPage() {
           実行完了
         </h1>
         <AgentList agents={agents} />
-        <div className="mt-6">
-          <Button variant="outline" disabled>
-            結果を表示（準備中）
-          </Button>
-        </div>
+        <ExecutionResultView executionId={executionId} />
       </section>
     );
   }
@@ -124,15 +116,12 @@ export function ExecutionProgressPage() {
           実行失敗
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>実行失敗</AlertTitle>
-          <AlertDescription>
-            <p>{REASON_MESSAGES[wsState.reason]}</p>
-            <p className="mt-1">
-              履歴一覧（準備中）から過去の実行を確認できます。
-            </p>
-          </AlertDescription>
+          <AlertTitle>{REASON_MESSAGES[wsState.reason]}</AlertTitle>
         </Alert>
         <AgentList agents={agents} />
+        {wsState.reason === "integration_failed" && (
+          <InvestigationOutputsView executionId={executionId} />
+        )}
       </section>
     );
   }

@@ -1,10 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import type {
+  AgentExecutionRow,
+  ExecutionRow,
+  ResultRow,
+} from "@agent-team-studio/db";
+import type {
   ApiInternalError,
   ApiNotFoundError,
   ApiValidationError,
   CompetitorAnalysisParameters,
   CreateExecutionResponse,
+  GetExecutionResponse,
   GetTemplateResponse,
   GetTemplatesResponse,
 } from "@agent-team-studio/shared";
@@ -233,5 +239,106 @@ describe("POST /api/executions", () => {
     expect(body.message).toBeTruthy();
     // 内部例外メッセージが API レスポンスに漏洩しないことを境界として固定する。
     expect(body.message).not.toContain("DB connection failed");
+  });
+});
+
+describe("GET /api/executions/:id", () => {
+  const execRow: ExecutionRow = {
+    id: "exec-1",
+    templateId: "tpl-1",
+    parameters: { competitors: ["Acme", "Globex"] },
+    status: "completed",
+    errorMessage: null,
+    createdAt: new Date("2026-05-04T00:00:00.000Z"),
+    startedAt: new Date("2026-05-04T00:01:00.000Z"),
+    completedAt: new Date("2026-05-04T00:02:00.000Z"),
+  };
+
+  const agentRow: AgentExecutionRow = {
+    id: "ae-1",
+    executionId: "exec-1",
+    agentId: "investigation_strategy",
+    role: "investigation",
+    status: "completed",
+    output: null,
+    errorMessage: null,
+    createdAt: new Date("2026-05-04T00:00:00.000Z"),
+    startedAt: new Date("2026-05-04T00:01:00.000Z"),
+    completedAt: new Date("2026-05-04T00:02:00.000Z"),
+  };
+
+  const resultRow: ResultRow = {
+    id: "result-1",
+    executionId: "exec-1",
+    markdown: "# レポート",
+    structured: { matrix: [], overall_insights: ["所見1"], missing: [] },
+    createdAt: new Date("2026-05-04T00:02:00.000Z"),
+  };
+
+  test("Execution が存在するとき 200 + GetExecutionResponse 形を返す", async () => {
+    const app = buildApp({
+      getExecution: async () => execRow,
+      getAgentExecutionsByExecutionId: async () => [agentRow],
+      getResultByExecutionId: async () => resultRow,
+    });
+
+    const res = await app.request("/api/executions/exec-1");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as GetExecutionResponse;
+    expect(body.id).toBe("exec-1");
+    expect(body.status).toBe("completed");
+    expect(body.agentExecutions).toHaveLength(1);
+    expect(body.agentExecutions[0]?.id).toBe("ae-1");
+    expect(body.agentExecutions[0]?.role).toBe("investigation");
+    expect(body.result?.id).toBe("result-1");
+    expect(body.result?.markdown).toBe("# レポート");
+    expect(body.result?.structured.overall_insights).toEqual(["所見1"]);
+    expect(body.result?.structured.matrix).toEqual([]);
+    expect(body.result?.structured.missing).toEqual([]);
+  });
+
+  test("Execution が存在しないとき 404 + ApiNotFoundError 形を返す", async () => {
+    const app = buildApp({ getExecution: async () => null });
+
+    const res = await app.request("/api/executions/exec-missing");
+
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as ApiNotFoundError;
+    expect(body.errorCode).toBe("not_found");
+    expect(body.details).toEqual({ resource: "execution", id: "exec-missing" });
+    expect(body.message).toBeTruthy();
+  });
+
+  test("repo が例外を投げると 500 + ApiInternalError 形を返す", async () => {
+    const app = buildApp({
+      getExecution: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    const res = await app.request("/api/executions/exec-1");
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as ApiInternalError;
+    expect(body.errorCode).toBe("internal_error");
+    expect(body.message).toBeTruthy();
+    expect(body.message).not.toContain("DB connection failed");
+  });
+
+  // WS 設計上 completed 時に result 欠落は起きないが、route 層の境界として固定する。
+  test("Execution が存在し result が null のとき 200 + result=undefined を返す", async () => {
+    const app = buildApp({
+      getExecution: async () => execRow,
+      getAgentExecutionsByExecutionId: async () => [agentRow],
+      getResultByExecutionId: async () => null,
+    });
+
+    const res = await app.request("/api/executions/exec-1");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as GetExecutionResponse;
+    expect(body.id).toBe("exec-1");
+    expect(body.result).toBeUndefined();
   });
 });
