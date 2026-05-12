@@ -83,12 +83,9 @@ export function ExecutionProgressPage() {
           接続エラー
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>接続エラー</AlertTitle>
+          <AlertTitle>WebSocket 接続に失敗しました</AlertTitle>
           <AlertDescription>
             <p>{message}</p>
-            <p className="mt-1">
-              履歴一覧（準備中）から過去の実行を確認できます。
-            </p>
           </AlertDescription>
         </Alert>
         {wsState.agents.size > 0 && (
@@ -119,13 +116,7 @@ export function ExecutionProgressPage() {
           実行失敗
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>実行失敗</AlertTitle>
-          <AlertDescription>
-            <p>{REASON_MESSAGES[wsState.reason]}</p>
-            <p className="mt-1">
-              履歴一覧（準備中）から過去の実行を確認できます。
-            </p>
-          </AlertDescription>
+          <AlertTitle>{REASON_MESSAGES[wsState.reason]}</AlertTitle>
         </Alert>
         <AgentList agents={agents} />
         {wsState.reason === "integration_failed" && (

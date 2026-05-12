@@ -2,7 +2,9 @@
  * 実行結果表示コンポーネント（US-4）。
  *
  * GET /api/executions/:id を SSoT として結果マトリクス・エクスポートを提供する。
- * 完了状態・統合失敗状態の両方に対応し、ページリロード後も同一 URL で閲覧できる。
+ * このコンポーネント自体は result の有無で表示を切り替えるのみで、
+ * integration_failed 時の調査エージェント出力表示は呼び出し元が
+ * InvestigationOutputsView を並置することで対応する。
  */
 
 import type {
