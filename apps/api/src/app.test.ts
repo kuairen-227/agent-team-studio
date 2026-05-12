@@ -289,9 +289,13 @@ describe("GET /api/executions/:id", () => {
     expect(body.id).toBe("exec-1");
     expect(body.status).toBe("completed");
     expect(body.agentExecutions).toHaveLength(1);
+    expect(body.agentExecutions[0]?.id).toBe("ae-1");
+    expect(body.agentExecutions[0]?.role).toBe("investigation");
     expect(body.result?.id).toBe("result-1");
     expect(body.result?.markdown).toBe("# レポート");
     expect(body.result?.structured.overall_insights).toEqual(["所見1"]);
+    expect(body.result?.structured.matrix).toEqual([]);
+    expect(body.result?.structured.missing).toEqual([]);
   });
 
   test("Execution が存在しないとき 404 + ApiNotFoundError 形を返す", async () => {
@@ -322,7 +326,7 @@ describe("GET /api/executions/:id", () => {
     expect(body.message).not.toContain("DB connection failed");
   });
 
-  // completed + result=null は API 設計上到達しないが、route 層が result=undefined のまま 200 を返すことを境界として固定する。
+  // WS 設計上 completed 時に result 欠落は起きないが、route 層の境界として固定する。
   test("Execution が存在し result が null のとき 200 + result=undefined を返す", async () => {
     const app = buildApp({
       getExecution: async () => execRow,
