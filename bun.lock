@@ -59,7 +59,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@agent-team-studio/shared": "workspace:*",
-        "@anthropic-ai/sdk": "^0.95.1",
+        "@anthropic-ai/sdk": "^0.95.2",
       },
     },
     "packages/db": {
@@ -95,7 +95,7 @@
 
     "@agent-team-studio/web": ["@agent-team-studio/web@workspace:apps/web"],
 
-    "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.95.1", "", { "dependencies": { "json-schema-to-ts": "^3.1.1", "standardwebhooks": "^1.0.0" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-OO9AF7hmAoU492c/mD7Q2cPqI2WNAj7rAPHlawgBeUgpwiboLRiDs+grsErGWeHHP9ZRWfzq2OVrODTt8aITVg=="],
+    "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.95.2", "", { "dependencies": { "json-schema-to-ts": "^3.1.1", "standardwebhooks": "^1.0.0" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-Egddwo3sheo1PzUrMkZnH6VkQYwS0h/b/i8vSK8Ta9M45UQipAMeDFH57dYuDAfXMEUUGeKw6CMlremgMZgrSQ=="],
 
     "@azu/format-text": ["@azu/format-text@1.0.2", "", {}, "sha512-Swi4N7Edy1Eqq82GxgEECXSSLyn6GOb5htRFPzBDdUkECGXtlf12ynO5oJSpWKPwCaUssOu7NfhDcCWpIC6Ywg=="],
 
