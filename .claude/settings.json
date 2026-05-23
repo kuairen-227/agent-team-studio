@@ -42,9 +42,9 @@
       "Bash(git worktree list:*)",
       "Bash(git worktree remove:*)",
       "Bash(grep:*)",
+      "Bash(gh issue close:*)",
       "Bash(gh issue comment:*)",
       "Bash(gh issue create:*)",
-      "Bash(gh issue close:*)",
       "Bash(gh issue edit:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
@@ -78,6 +78,10 @@
       "Bash(git clean -f:*)",
       "Bash(curl:*)",
       "Bash(wget:*)",
+      "Bash(pkill -9:*)",
+      "Bash(pkill -KILL:*)",
+      "Bash(pkill -u:*)",
+      "Bash(pkill -g:*)",
       "mcp__playwright__browser_run_code_unsafe",
       "mcp__playwright__browser_evaluate"
     ]
