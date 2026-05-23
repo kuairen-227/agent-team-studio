@@ -8,8 +8,11 @@ allowed-tools: Bash(gh issue create:*) Bash(gh issue list:*) Bash(gh issue view:
 
 # create-issue
 
-プロジェクトの規約に従って GitHub Issue を作成する。
+プロジェクトの規約に従って **単発 GitHub Issue** を作成する。
 `$ARGUMENTS` から Issue の種別とタイトル・内容を判断する。
+
+本スキルは Issue 規約（テンプレ構造・ラベル・マイルストーン選定・タイトル文体）の SSoT を持つ。
+**複数 Issue の一括起票・親子関係（sub_issues）整理・マイルストーン操作を伴う場合は [`/manage-issue`](../manage-issue/SKILL.md) を使う**。`/manage-issue` は本スキルの規約を参照しつつ、バッチ起票と構造化操作を担当する。
 
 Issue テンプレート:
 
@@ -106,3 +109,4 @@ gh issue create --title "<タイトル>" --body "<本文>" --label "<ラベル1>
 - **重複チェック**: 類似の Issue が既に存在する場合はユーザーに報告し、新規作成するか既存 Issue への追記にするか判断を仰ぐ
 - **情報不足時の対応**: ユーザーの入力が曖昧な場合は、テンプレートの必須セクションを満たすために質問する。ただし過度な質問は避け、合理的に推測できる部分は埋める
 - **decision Issue と ADR の関係**: decision 種別の Issue は議論・検討の場であり、結論が出たら ADR として記録する流れになる。Issue 本文にその旨を記載するとよい
+- **複数件・親子付きは /manage-issue へ**: ユーザーの要望が「複数 Issue の起票」「親子関係（sub_issues）あり」「マイルストーン description 更新を伴う」のいずれかに該当する場合、本スキルではなく [`/manage-issue`](../manage-issue/SKILL.md) を使うようユーザーに案内する
