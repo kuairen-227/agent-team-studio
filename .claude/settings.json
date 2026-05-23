@@ -49,8 +49,8 @@
       "Bash(gh pr checks:*)",
       "Bash(gh pr comment:*)",
       "Bash(gh pr create:*)",
-      "Bash(gh pr edit:*)",
       "Bash(gh pr diff:*)",
+      "Bash(gh pr edit:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh run list:*)",
@@ -62,6 +62,7 @@
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.local)",
+      "Bash(gh run rerun --debug:*)",
       "Bash(rm -rf *)",
       "Bash(git push --force:*)",
       "Bash(git reset --hard:*)",
