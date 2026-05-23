@@ -410,6 +410,8 @@ describe("createExecutionsService.listExecutions", () => {
     expect(result).toEqual({ items: [], total: 0 });
   });
 
+  // 主題は createdAt の Date → ISO 変換。startedAt / completedAt は
+  // baseExecutionRow から継承され、null マッピングは後続テストで個別に押さえる。
   test("複数行 → createdAt が ISO 文字列", async () => {
     const row1: ExecutionRow = { ...baseExecutionRow, id: "exec-1" };
     const row2: ExecutionRow = {
@@ -425,5 +427,36 @@ describe("createExecutionsService.listExecutions", () => {
     expect(result.items[0]?.id).toBe("exec-1");
     expect(result.items[0]?.createdAt).toBe("2026-05-04T00:00:00.000Z");
     expect(result.items[1]?.createdAt).toBe("2026-05-05T00:00:00.000Z");
+  });
+
+  // startedAt / completedAt は failed / pending で null になる。DB の null を
+  // ExecutionSummary（`?: string`）の undefined に変換する経路の退行検知。
+  test("startedAt / completedAt が null の行は undefined にマップされる", async () => {
+    const pendingRow: ExecutionRow = {
+      ...baseExecutionRow,
+      id: "exec-pending",
+      status: "pending",
+      startedAt: null,
+      completedAt: null,
+    };
+    const failedRow: ExecutionRow = {
+      ...baseExecutionRow,
+      id: "exec-failed",
+      status: "failed",
+      startedAt: new Date("2026-05-04T00:01:00.000Z"),
+      completedAt: null,
+    };
+    const service = buildService({
+      listExecutions: async () => [pendingRow, failedRow],
+    });
+
+    const result = await service.listExecutions();
+
+    expect(result.items[0]?.status).toBe("pending");
+    expect(result.items[0]?.startedAt).toBeUndefined();
+    expect(result.items[0]?.completedAt).toBeUndefined();
+    expect(result.items[1]?.status).toBe("failed");
+    expect(result.items[1]?.startedAt).toBe("2026-05-04T00:01:00.000Z");
+    expect(result.items[1]?.completedAt).toBeUndefined();
   });
 });

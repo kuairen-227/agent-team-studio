@@ -3,10 +3,10 @@ import {
   createRoute,
   createRouter,
   Outlet,
-  redirect,
 } from "@tanstack/react-router";
 import { AppHeader } from "@/components/AppHeader";
 import { ExecutionProgressPage } from "@/features/executions/ExecutionProgressPage";
+import { HistoryListPage } from "@/features/history/HistoryListPage";
 import { TemplateListPage } from "@/features/templates/TemplateListPage";
 import { TemplateNewPage } from "@/features/templates/TemplateNewPage";
 
@@ -39,13 +39,10 @@ const executionRoute = createRoute({
   component: ExecutionProgressPage,
 });
 
-// Stub: US-5 で実装予定
 const historyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/history",
-  beforeLoad: () => {
-    throw redirect({ to: "/" });
-  },
+  component: HistoryListPage,
 });
 
 const routeTree = rootRoute.addChildren([

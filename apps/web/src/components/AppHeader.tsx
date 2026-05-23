@@ -1,11 +1,15 @@
 /**
  * グローバルヘッダー（[ui-patterns.md §4](docs/design/ui-patterns.md) のヘッダー固定方針）。
- *
- * 「履歴一覧」は US-5 で実装するため、現時点ではリンクを置かない。
- * 画面追加時にナビ項目を増やす。
  */
 
 import { Link } from "@tanstack/react-router";
+
+// 現在地ナビ項目に付与する activeProps（Nielsen #1 Visibility of system status）。
+// `activeOptions.exact` で `/` がすべてのパスで active 化されるのを防ぐ。
+const navActiveProps = {
+  className: "underline font-medium",
+  "aria-current": "page",
+} as const;
 
 export function AppHeader() {
   return (
@@ -15,8 +19,20 @@ export function AppHeader() {
           Agent Team Studio
         </Link>
         <nav className="flex gap-4 text-sm">
-          <Link className="hover:underline" to="/">
+          <Link
+            className="hover:underline"
+            to="/"
+            activeOptions={{ exact: true }}
+            activeProps={navActiveProps}
+          >
             テンプレート一覧
+          </Link>
+          <Link
+            className="hover:underline"
+            to="/history"
+            activeProps={navActiveProps}
+          >
+            履歴一覧
           </Link>
         </nav>
       </div>

@@ -13,7 +13,7 @@ import type {
   TemplateSummary,
 } from "@agent-team-studio/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,6 @@ async function loadTemplates(): Promise<EnrichedTemplate[]> {
 }
 
 export function TemplateListPage() {
-  const navigate = useNavigate();
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const {
@@ -62,11 +61,7 @@ export function TemplateListPage() {
 
   return (
     <section>
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="mb-4 text-xl font-semibold focus:outline-none"
-      >
+      <h1 ref={headingRef} tabIndex={-1} className="mb-4 text-xl font-semibold">
         テンプレート一覧
       </h1>
       {status === "pending" && <TemplateListSkeleton />}
@@ -74,7 +69,6 @@ export function TemplateListPage() {
         <Alert variant="destructive">
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
-            <p>時間をおいて再度お試しください。</p>
             <Button
               variant="outline"
               size="sm"
@@ -95,15 +89,7 @@ export function TemplateListPage() {
         <ul className="grid gap-4 md:grid-cols-2">
           {items.map((template) => (
             <li key={template.id}>
-              <TemplateCard
-                template={template}
-                onSelect={() =>
-                  navigate({
-                    to: "/templates/$templateId/new",
-                    params: { templateId: template.id },
-                  })
-                }
-              />
+              <TemplateCard template={template} />
             </li>
           ))}
         </ul>
@@ -112,49 +98,39 @@ export function TemplateListPage() {
   );
 }
 
-function TemplateCard({
-  template,
-  onSelect,
-}: {
-  template: EnrichedTemplate;
-  onSelect: () => void;
-}) {
+function TemplateCard({ template }: { template: EnrichedTemplate }) {
   return (
-    <Card
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      className="cursor-pointer transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <Link
+      to="/templates/$templateId/new"
+      params={{ templateId: template.id }}
+      aria-label={`${template.name} を実行`}
+      className="block rounded-xl transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <CardHeader>
-        <CardTitle>{template.name}</CardTitle>
-        <CardDescription>{template.description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <h2 className="mb-2 text-xs font-medium text-muted-foreground">
-          エージェント構成
-        </h2>
-        <ul className="space-y-1 text-sm">
-          {template.agents.map((agent) => (
-            <li
-              key={agent.agent_id}
-              className="flex justify-between gap-2 leading-tight"
-            >
-              <span className="font-mono text-xs text-muted-foreground">
-                {agent.agent_id}
-              </span>
-              <span>{describeAgent(agent)}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{template.name}</CardTitle>
+          <CardDescription>{template.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <h2 className="mb-2 text-xs font-medium text-muted-foreground">
+            エージェント構成
+          </h2>
+          <ul className="space-y-1 text-sm">
+            {template.agents.map((agent) => (
+              <li
+                key={agent.agent_id}
+                className="flex justify-between gap-2 leading-tight"
+              >
+                <span className="font-mono text-xs text-muted-foreground">
+                  {agent.agent_id}
+                </span>
+                <span>{describeAgent(agent)}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
