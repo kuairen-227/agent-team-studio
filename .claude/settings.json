@@ -85,6 +85,9 @@
       "Bash(pkill -u:*)",
       "Bash(pkill -U:*)",
       "Bash(pkill -g:*)",
+      "Bash(pkill -G:*)",
+      "Bash(pkill -s:*)",
+      "Bash(pkill -P:*)",
       "mcp__playwright__browser_run_code_unsafe",
       "mcp__playwright__browser_evaluate"
     ]
