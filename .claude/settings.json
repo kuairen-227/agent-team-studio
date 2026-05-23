@@ -80,7 +80,10 @@
       "Bash(wget:*)",
       "Bash(pkill -9:*)",
       "Bash(pkill -KILL:*)",
+      "Bash(pkill -SIG:*)",
+      "Bash(pkill --signal:*)",
       "Bash(pkill -u:*)",
+      "Bash(pkill -U:*)",
       "Bash(pkill -g:*)",
       "mcp__playwright__browser_run_code_unsafe",
       "mcp__playwright__browser_evaluate"
