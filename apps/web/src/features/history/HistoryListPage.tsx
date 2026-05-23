@@ -9,14 +9,13 @@
  */
 
 import type {
-  ExecutionStatus,
   ExecutionSummary,
   GetExecutionsResponse,
   GetTemplatesResponse,
   TemplateSummary,
 } from "@agent-team-studio/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +26,8 @@ import { fetchJson } from "@/lib/api";
 
 type HistoryItem = ExecutionSummary & { templateName: string };
 
+// Promise.all のため一方が失敗すると両方失敗扱いになる（履歴とテンプレ名は
+// 不可分のため許容）。片側だけ失敗時の部分表示が要件化したら useQueries に切り替える。
 async function loadHistory(): Promise<HistoryItem[]> {
   const [executions, templates] = await Promise.all([
     fetchJson<GetExecutionsResponse>("/api/executions"),
@@ -56,7 +57,6 @@ function formatDateTime(iso: string): string {
 }
 
 export function HistoryListPage() {
-  const navigate = useNavigate();
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const {
@@ -65,7 +65,7 @@ export function HistoryListPage() {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["history"],
+    queryKey: ["executions"],
     queryFn: loadHistory,
   });
 
@@ -102,7 +102,7 @@ export function HistoryListPage() {
       )}
       {status === "success" && items.length === 0 && (
         <div className="text-center text-sm text-muted-foreground">
-          <p className="mb-2">まだ実行がありません。</p>
+          <p className="mb-2">まだ実行がありません</p>
           <Link className="underline" to="/">
             テンプレート一覧から実行する
           </Link>
@@ -112,15 +112,7 @@ export function HistoryListPage() {
         <ul className="space-y-3" aria-label="実行履歴">
           {items.map((item) => (
             <li key={item.id}>
-              <HistoryCard
-                item={item}
-                onSelect={() =>
-                  navigate({
-                    to: "/executions/$executionId",
-                    params: { executionId: item.id },
-                  })
-                }
-              />
+              <HistoryCard item={item} />
             </li>
           ))}
         </ul>
@@ -129,38 +121,27 @@ export function HistoryListPage() {
   );
 }
 
-function HistoryCard({
-  item,
-  onSelect,
-}: {
-  item: HistoryItem;
-  onSelect: () => void;
-}) {
+function HistoryCard({ item }: { item: HistoryItem }) {
   return (
-    <Card
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      className="cursor-pointer transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <Link
+      to="/executions/$executionId"
+      params={{ executionId: item.id }}
+      className="block rounded-xl transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle className="text-base">{item.templateName}</CardTitle>
-        <Badge variant={item.status as ExecutionStatus} />
-      </CardHeader>
-      <CardContent>
-        <p className="text-xs text-muted-foreground">
-          <time dateTime={item.createdAt}>
-            {formatDateTime(item.createdAt)}
-          </time>
-        </p>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardTitle className="text-base">{item.templateName}</CardTitle>
+          <Badge variant={item.status} />
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground">
+            <time dateTime={item.createdAt}>
+              {formatDateTime(item.createdAt)}
+            </time>
+          </p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
