@@ -6,7 +6,7 @@
       "name": "agent-team-studio",
       "devDependencies": {
         "@biomejs/biome": "^2.4.15",
-        "@secretlint/secretlint-rule-preset-recommend": "^13.0.0",
+        "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
         "@types/bun": "^1.3.14",
         "husky": "^9.1.7",
         "lint-staged": "^17.0.5",
@@ -355,7 +355,7 @@
 
     "@secretlint/resolver": ["@secretlint/resolver@13.0.2", "", {}, "sha512-Ko50V0P3YAtEO20xBTczOzguBVk6+taSqkoAPHoOSdsTsSq1gzeYggY1UC8vVEHPGyRp/mb2QOuwIShdJZ8JFg=="],
 
-    "@secretlint/secretlint-rule-preset-recommend": ["@secretlint/secretlint-rule-preset-recommend@13.0.0", "", {}, "sha512-aKjoMnyMmQ1wDxLPUH0IdnM7yPOwSopT4ZhWoctthAW7nfYQoLmHKiTI8bUKOGU9n4VfVPG8N84vXmT3sG7d/g=="],
+    "@secretlint/secretlint-rule-preset-recommend": ["@secretlint/secretlint-rule-preset-recommend@13.0.2", "", {}, "sha512-D03Kw51qOgffj9zNlJFZUarVmP8zGcCZNi7A14+vZtHskbbBPEsS/f09idb48rrlMSaRMBN29IkqfbmPyL9xtw=="],
 
     "@secretlint/source-creator": ["@secretlint/source-creator@13.0.2", "", { "dependencies": { "@secretlint/types": "13.0.2", "istextorbinary": "^9.5.0" } }, "sha512-tSooHad8QL+lqHP88zH9F8GMoR7bHUqPja5M/QnNHGnvOq/8OT1V8t1uigm6jlD03oJWNLwwF8QeHIedWKJ13g=="],
 
