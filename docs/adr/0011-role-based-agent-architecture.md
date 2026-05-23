@@ -6,6 +6,7 @@ accepted
 
 - 作成日: 2026-04-20
 - 関連: ADR-0007（前提）, ADR-0006（前提）
+- 後日改称: 本 ADR で導入した `/manage-task` スキルは [ADR-0030](./0030-rename-manage-task-to-manage-issue.md) で `/manage-issue` に改称・責務拡張された
 
 ## Context
 
