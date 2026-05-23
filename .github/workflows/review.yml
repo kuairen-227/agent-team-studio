@@ -3,7 +3,6 @@ name: Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-  merge_group:
 
 permissions:
   contents: read
@@ -11,26 +10,20 @@ permissions:
   id-token: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   review:
-    if: ${{ github.event_name == 'merge_group' || (!github.event.pull_request.draft && github.event.pull_request.user.login != 'dependabot[bot]') }}
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.user.login != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Skip review for merge queue
-        if: github.event_name == 'merge_group'
-        run: echo "Merge queue — review already performed on PR"
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        if: github.event_name == 'pull_request'
         with:
           fetch-depth: 1
 
       - name: Run Claude Code review
-        if: github.event_name == 'pull_request'
         uses: anthropics/claude-code-action@8c196b2f61a66bfdf93322bde3a3e668669089ed # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
