@@ -1,9 +1,9 @@
 ---
 name: cleanup-merged-branch
 description: PR マージ後の post-merge クリーンアップ。現在のブランチを記録 → main へ戻り → 最新を pull → マージ済みのローカルブランチを安全削除する軽量スキル。
-when_to_use: ユーザーが「マージしました」「マージ完了」「マージしたよ」「PR マージしたよ」「マージ後の整理」「マージ済みブランチ削除」などと言ったとき
+when_to_use: ユーザーが「マージしました」「マージ完了」「マージしたよ」「PR マージしたよ」「マージ後の整理」「マージ済みブランチ削除」「クリーンアップして」「後片付けして」「ブランチ整理して」などと言ったとき
 model: haiku
-allowed-tools: Bash(git branch:*) Bash(git switch:*) Bash(git pull:*) Bash(git fetch:*) Bash(git status:*) Bash(git log:*)
+allowed-tools: Bash(git branch:*) Bash(git switch:*) Bash(git pull:*) Bash(git status:*) Bash(git log:*)
 ---
 
 # cleanup-merged-branch
@@ -31,6 +31,7 @@ git status --porcelain
 ```
 
 - 出力がある場合は警告し、ユーザーに **コミット / stash / 破棄** の判断を仰いで終了。自動で stash したり破棄したりしない。
+- stash を選んだ場合は本スキルを再実行すれば残りのクリーンアップを完了できる旨も併せて案内する。
 
 ### 3. main へ切り替えて最新を pull
 
@@ -47,8 +48,10 @@ git branch -d "$CURRENT_BRANCH"
 ```
 
 - **`-d`（小文字）を使う**。マージされていないブランチは削除されない安全モード。
-- 失敗した場合（未マージ・別 worktree で checkout 中 等）はエラーをそのままユーザーに報告し、`-D`（強制削除）への切り替えは**ユーザー判断に委ねる**。
-- 既に削除済みの場合（remote 経由で自動削除等）もエラーになるが、想定内として報告して続行。
+- 失敗した場合、エラーメッセージをそのままユーザーに報告したうえで、以下のいずれに該当するかを切り分けて案内する：
+  - **(a) GitHub の squash merge / rebase merge + 自動ブランチ削除の組合せでの "通常失敗"**：これらのマージ方式では local 側にはマージ済みフラグが付かないため、`-d` が `not fully merged` で失敗する。これは**正常な挙動**。マージ済みが確実であれば `-D`（強制削除）を使ってよい — 判断はユーザーに仰ぐ
+  - **(b) 本当に未マージ / 別 worktree で checkout 中 等**：原因の切り分けが必要。`-D` への切り替えは**ユーザー判断に委ねる**
+- 既にローカルで削除済みの場合もエラーになるが、想定内として報告して続行。
 
 ### 5. 状態確認
 
@@ -56,7 +59,7 @@ git branch -d "$CURRENT_BRANCH"
 git log --oneline -3
 ```
 
-直近 3 コミットを表示して完了。マージされた PR のスカッシュコミットが先頭に来ていることを軽く触れる。
+直近 3 コミットを表示して完了。マージされた PR の最新コミットが先頭に来ていることを軽く触れる（merge 方式により merge commit / squash commit / rebase commit のいずれかになる）。
 
 ## 注意点
 
