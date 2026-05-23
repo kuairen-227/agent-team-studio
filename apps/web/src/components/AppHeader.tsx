@@ -1,8 +1,5 @@
 /**
  * グローバルヘッダー（[ui-patterns.md §4](docs/design/ui-patterns.md) のヘッダー固定方針）。
- *
- * 「履歴一覧」は US-5 で実装するため、現時点ではリンクを置かない。
- * 画面追加時にナビ項目を増やす。
  */
 
 import { Link } from "@tanstack/react-router";
@@ -17,6 +14,9 @@ export function AppHeader() {
         <nav className="flex gap-4 text-sm">
           <Link className="hover:underline" to="/">
             テンプレート一覧
+          </Link>
+          <Link className="hover:underline" to="/history">
+            履歴一覧
           </Link>
         </nav>
       </div>
