@@ -6,6 +6,7 @@
   },
   "permissions": {
     "allow": [
+      "Skill(cleanup-merged-branch)",
       "Skill(create-adr)",
       "Skill(create-issue)",
       "Skill(create-pr)",
