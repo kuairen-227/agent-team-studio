@@ -26,8 +26,8 @@ Claude API を用いた LLM 呼び出しの設計方針。`packages/agent-core/s
 
 | エージェント | temperature | max_tokens | 根拠 |
 | --- | --- | --- | --- |
-| Investigation Agent | 0.3 | 2,048 | 事実整理タスク。低 temperature で一貫性を確保。観点あたり競合 3〜5 件の JSON 出力に 2,048 で十分 |
-| Integration Agent | 0.2 | 4,096 | 矛盾抑制のためさらに低く設定。マトリクス Markdown + JSON の両方を出力するため 4,096 |
+| Investigation Agent | 0.3 | 1,500 | 事実整理タスク。低 temperature で一貫性を確保。観点あたり競合 3〜5 件の JSON 出力に 1,500 で十分 |
+| Integration Agent | 0.2 | 3,000 | 矛盾抑制のためさらに低く設定。マトリクス Markdown + JSON の両方を出力するため 3,000 |
 
 `top_p`, `top_k` はデフォルト値（未指定）とする。temperature で十分に制御できるため。
 
@@ -98,7 +98,7 @@ Hero UC（3 競合 × 4 観点）1 回の実行で想定されるトークン量
 | system prompt | ~500 | 役割定義 + 出力フォーマット指示 |
 | user message | ~3,000 | 競合リスト + 参考情報（最大 10,000 文字 ≒ 3,000 トークン） |
 | **入力合計** | **~3,500** | |
-| 出力（JSON） | ~800 | 競合 3 件 × 3〜5 ポイント（`max_tokens: 2048` で上限制御） |
+| 出力（JSON） | ~800 | 競合 3 件 × 3〜5 ポイント（`max_tokens: 1500` で上限制御） |
 | **入出力合計** | **~4,300** | |
 
 ### Integration Agent（1 エージェント）
