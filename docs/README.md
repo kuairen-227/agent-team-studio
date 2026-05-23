@@ -11,6 +11,7 @@
 | [adr](./adr/README.md) | Architecture Decision Records（意思決定記録） |
 | [guides](./guides/README.md) | 運用ガイド（ブランチ戦略、GitHub 運用等） |
 | [principles](./principles/README.md) | 設計・開発原則（領域横断的な判断軸の SSoT） |
+| [validation](./validation/) | 検証・ドッグフーディング記録（PM / エンジニアが参照する受入確認の実施ログ） |
 
 ## 位置付け
 
