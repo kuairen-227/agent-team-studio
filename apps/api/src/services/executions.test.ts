@@ -410,6 +410,8 @@ describe("createExecutionsService.listExecutions", () => {
     expect(result).toEqual({ items: [], total: 0 });
   });
 
+  // 主題は createdAt の Date → ISO 変換。startedAt / completedAt は
+  // baseExecutionRow から継承され、null マッピングは後続テストで個別に押さえる。
   test("複数行 → createdAt が ISO 文字列", async () => {
     const row1: ExecutionRow = { ...baseExecutionRow, id: "exec-1" };
     const row2: ExecutionRow = {

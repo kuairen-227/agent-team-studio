@@ -12,7 +12,6 @@ import type {
   ExecutionSummary,
   GetExecutionsResponse,
   GetTemplatesResponse,
-  TemplateSummary,
 } from "@agent-team-studio/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -34,7 +33,7 @@ async function loadHistory(): Promise<HistoryItem[]> {
     fetchJson<GetTemplatesResponse>("/api/templates"),
   ]);
   const nameById = new Map<string, string>(
-    templates.items.map((t: TemplateSummary) => [t.id, t.name]),
+    templates.items.map((t) => [t.id, t.name]),
   );
   return executions.items.map((e) => ({
     ...e,
