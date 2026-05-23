@@ -11,6 +11,7 @@
 | [adr](./adr/README.md) | Architecture Decision Records（意思決定記録） |
 | [guides](./guides/README.md) | 運用ガイド（ブランチ戦略、GitHub 運用等） |
 | [principles](./principles/README.md) | 設計・開発原則（領域横断的な判断軸の SSoT） |
+| [validation](./validation/) | 検証・ドッグフーディング記録（PM / エンジニアが参照する受入確認の実施ログ） |
 
 ## 位置付け
 
@@ -19,6 +20,7 @@
 - **adr/**: なぜその判断に至ったか（Decision / Rationale）
 - **guides/**: チームとしてどう運用するか（Operations）
 - **principles/**: どの軸で判断するか（Cross-cutting Principles）
+- **validation/**: 検証を実際にどう実施したか（Evidence / Results）— [ADR-0013](./adr/0013-doc-placement-policy.md) の標準カテゴリ外だが、受入確認記録を product/design/adr と分離して配置する
 
 ## 配置ポリシー
 
