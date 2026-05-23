@@ -178,13 +178,12 @@ export function TemplateNewPage() {
         }
         setSubmitState({
           kind: "submit-error",
-          message:
-            err?.message ?? "実行を開始できませんでした。再度お試しください",
+          message: err?.message ?? "実行を開始できませんでした",
         });
       } catch {
         setSubmitState({
           kind: "submit-error",
-          message: "実行を開始できませんでした。再度お試しください",
+          message: "実行を開始できませんでした",
         });
       }
     },
@@ -208,7 +207,6 @@ export function TemplateNewPage() {
         <Alert variant="destructive">
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
-            <p>時間をおいて再度お試しください。</p>
             <Button
               type="button"
               variant="outline"

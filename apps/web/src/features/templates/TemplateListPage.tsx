@@ -61,11 +61,7 @@ export function TemplateListPage() {
 
   return (
     <section>
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="mb-4 text-xl font-semibold focus:outline-none"
-      >
+      <h1 ref={headingRef} tabIndex={-1} className="mb-4 text-xl font-semibold">
         テンプレート一覧
       </h1>
       {status === "pending" && <TemplateListSkeleton />}
@@ -73,7 +69,6 @@ export function TemplateListPage() {
         <Alert variant="destructive">
           <AlertTitle>テンプレートを取得できませんでした</AlertTitle>
           <AlertDescription>
-            <p>時間をおいて再度お試しください。</p>
             <Button
               variant="outline"
               size="sm"
@@ -108,6 +103,7 @@ function TemplateCard({ template }: { template: EnrichedTemplate }) {
     <Link
       to="/templates/$templateId/new"
       params={{ templateId: template.id }}
+      aria-label={`${template.name} を実行`}
       className="block rounded-xl transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Card>

@@ -76,11 +76,7 @@ export function HistoryListPage() {
 
   return (
     <section>
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="mb-4 text-xl font-semibold focus:outline-none"
-      >
+      <h1 ref={headingRef} tabIndex={-1} className="mb-4 text-xl font-semibold">
         履歴一覧
       </h1>
       {status === "pending" && <HistoryListSkeleton />}
@@ -88,7 +84,6 @@ export function HistoryListPage() {
         <Alert variant="destructive">
           <AlertTitle>履歴を取得できませんでした</AlertTitle>
           <AlertDescription>
-            <p>時間をおいて再度お試しください。</p>
             <Button
               variant="outline"
               size="sm"
@@ -126,12 +121,13 @@ function HistoryCard({ item }: { item: HistoryItem }) {
     <Link
       to="/executions/$executionId"
       params={{ executionId: item.id }}
+      aria-label={`${item.templateName} の実行詳細`}
       className="block rounded-xl transition hover:ring-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-base">{item.templateName}</CardTitle>
-          <Badge variant={item.status} />
+          <Badge variant={item.status} live={false} />
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
