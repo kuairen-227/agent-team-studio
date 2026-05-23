@@ -20,7 +20,7 @@
 - **adr/**: なぜその判断に至ったか（Decision / Rationale）
 - **guides/**: チームとしてどう運用するか（Operations）
 - **principles/**: どの軸で判断するか（Cross-cutting Principles）
-- **validation/**: 検証を実際にどう実施したか（Evidence / Results）— ADR-0013 の標準カテゴリ外だが、受入確認記録を product/design/adr と分離して配置する
+- **validation/**: 検証を実際にどう実施したか（Evidence / Results）— [ADR-0013](./adr/0013-doc-placement-policy.md) の標準カテゴリ外だが、受入確認記録を product/design/adr と分離して配置する
 
 ## 配置ポリシー
 
