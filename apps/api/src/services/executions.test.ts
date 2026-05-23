@@ -426,4 +426,35 @@ describe("createExecutionsService.listExecutions", () => {
     expect(result.items[0]?.createdAt).toBe("2026-05-04T00:00:00.000Z");
     expect(result.items[1]?.createdAt).toBe("2026-05-05T00:00:00.000Z");
   });
+
+  // startedAt / completedAt は failed / pending で null になる。DB の null を
+  // ExecutionSummary（`?: string`）の undefined に変換する経路の退行検知。
+  test("startedAt / completedAt が null の行は undefined にマップされる", async () => {
+    const pendingRow: ExecutionRow = {
+      ...baseExecutionRow,
+      id: "exec-pending",
+      status: "pending",
+      startedAt: null,
+      completedAt: null,
+    };
+    const failedRow: ExecutionRow = {
+      ...baseExecutionRow,
+      id: "exec-failed",
+      status: "failed",
+      startedAt: new Date("2026-05-04T00:01:00.000Z"),
+      completedAt: null,
+    };
+    const service = buildService({
+      listExecutions: async () => [pendingRow, failedRow],
+    });
+
+    const result = await service.listExecutions();
+
+    expect(result.items[0]?.status).toBe("pending");
+    expect(result.items[0]?.startedAt).toBeUndefined();
+    expect(result.items[0]?.completedAt).toBeUndefined();
+    expect(result.items[1]?.status).toBe("failed");
+    expect(result.items[1]?.startedAt).toBe("2026-05-04T00:01:00.000Z");
+    expect(result.items[1]?.completedAt).toBeUndefined();
+  });
 });
