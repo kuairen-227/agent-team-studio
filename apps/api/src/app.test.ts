@@ -11,6 +11,7 @@ import type {
   CompetitorAnalysisParameters,
   CreateExecutionResponse,
   GetExecutionResponse,
+  GetExecutionsResponse,
   GetTemplateResponse,
   GetTemplatesResponse,
 } from "@agent-team-studio/shared";
@@ -238,6 +239,72 @@ describe("POST /api/executions", () => {
     expect(body.errorCode).toBe("internal_error");
     expect(body.message).toBeTruthy();
     // 内部例外メッセージが API レスポンスに漏洩しないことを境界として固定する。
+    expect(body.message).not.toContain("DB connection failed");
+  });
+});
+
+describe("GET /api/executions", () => {
+  const execRow1: ExecutionRow = {
+    id: "exec-1",
+    templateId: "tpl-1",
+    parameters: { competitors: ["Acme"] },
+    status: "completed",
+    errorMessage: null,
+    createdAt: new Date("2026-05-05T00:00:00.000Z"),
+    startedAt: new Date("2026-05-05T00:01:00.000Z"),
+    completedAt: new Date("2026-05-05T00:02:00.000Z"),
+  };
+  const execRow2: ExecutionRow = {
+    id: "exec-2",
+    templateId: "tpl-1",
+    parameters: { competitors: ["Beta"] },
+    status: "running",
+    errorMessage: null,
+    createdAt: new Date("2026-05-04T00:00:00.000Z"),
+    startedAt: new Date("2026-05-04T00:01:00.000Z"),
+    completedAt: null,
+  };
+
+  test("repo の戻り値を items + total 形で 200 で返す", async () => {
+    const app = buildApp({ listExecutions: async () => [execRow1, execRow2] });
+
+    const res = await app.request("/api/executions");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as GetExecutionsResponse;
+    expect(body.total).toBe(2);
+    expect(body.items).toHaveLength(2);
+    expect(body.items[0]?.id).toBe("exec-1");
+    expect(body.items[0]?.templateId).toBe("tpl-1");
+    expect(body.items[0]?.status).toBe("completed");
+    expect(body.items[0]?.createdAt).toBe("2026-05-05T00:00:00.000Z");
+    expect(body.items[1]?.id).toBe("exec-2");
+    expect(body.items[1]?.completedAt).toBeUndefined();
+  });
+
+  test("0 件は items=[] + total=0 を返す", async () => {
+    const app = buildApp({ listExecutions: async () => [] });
+
+    const res = await app.request("/api/executions");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as GetExecutionsResponse;
+    expect(body).toEqual({ items: [], total: 0 });
+  });
+
+  test("repo が例外を投げると 500 + ApiInternalError 形を返す", async () => {
+    const app = buildApp({
+      listExecutions: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    const res = await app.request("/api/executions");
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as ApiInternalError;
+    expect(body.errorCode).toBe("internal_error");
+    expect(body.message).toBeTruthy();
     expect(body.message).not.toContain("DB connection failed");
   });
 });
