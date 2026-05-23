@@ -281,6 +281,8 @@ describe("GET /api/executions", () => {
     expect(body.items[0]?.startedAt).toBe("2026-05-05T00:01:00.000Z");
     expect(body.items[0]?.completedAt).toBe("2026-05-05T00:02:00.000Z");
     expect(body.items[1]?.id).toBe("exec-2");
+    expect(body.items[1]?.status).toBe("running");
+    expect(body.items[1]?.createdAt).toBe("2026-05-04T00:00:00.000Z");
     expect(body.items[1]?.startedAt).toBe("2026-05-04T00:01:00.000Z");
     expect(body.items[1]?.completedAt).toBeUndefined();
   });
