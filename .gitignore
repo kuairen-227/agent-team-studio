@@ -17,7 +17,6 @@ dist/
 # Claude Code
 .claude/settings.local.json
 .claude/worktrees/
-.claude-pr/
 
 # Playwright MCP (実行時 snapshot / console / network ログ。ADR-0024)
 .playwright-mcp/
