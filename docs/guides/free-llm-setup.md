@@ -304,7 +304,7 @@ cat apps/api/.env.local
 | --- | --- | --- | --- | --- |
 | Groq | 30 RPM / 1000 RPD / TPM 6,000 | モデル依存 | ❌（OpenAI 互換のみ） | TPM 6,000 では 1 リクエストで 8000 tokens 出力が上限超過 |
 | Google Gemini Flash | 1,500 RPD / 1M TPM | 無制限 | ❌（gateway 経由のみ） | SDK 境界拡張が必要 |
-| Cerebras | 1M tokens/day | context cap 8,192 | ❌（OpenAI 互換のみ） | context cap が 8,192 で入力+出力が窮屈 |
+| Cerebras | 1M tokens/day | — (context cap 8,192 で制約) | ❌（OpenAI 互換のみ） | context cap が 8,192 で入力+出力が窮屈 |
 
 ---
 
