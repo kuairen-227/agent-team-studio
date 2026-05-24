@@ -4,7 +4,6 @@
 
 ```text
 実施日: 2026-05-24
-実施者: Kaito Sasaki
 LLM サービス: Claude.ai (Claude Sonnet 4.6)
 
 所要時間: 0分30秒
