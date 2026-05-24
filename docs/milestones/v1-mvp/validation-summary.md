@@ -1,0 +1,73 @@
+# MVP 検証結果統合サマリ
+
+- **対象マイルストーン**: v1 - MVP Implementation
+- **検証対象**: ADR-0005 §MVP 成功基準 1〜4
+- **根拠 Issue**: #192（本サマリ）/ C 系 #198（→ #200–203）/ D 系 #199（→ #204–205）
+- **作成日**: 2026-05-24
+
+---
+
+## 1. Executive Summary
+
+MVP（Agent Team Studio）は ADR-0005 §MVP 成功基準 1〜4 のすべてで合格水準を達成した。定量基準（1: 30 分以内完走 / 2: 手動比 50% 削減）はいずれも **PASS**、定性基準（3: 出力品質 / 4: 体感）はいずれも **CONDITIONAL PASS**。総合は **CONDITIONAL PASS** とし、コア仮説（エージェントチームによる時間削減・提案資料ドラフト品質の達成）の検証は完了したと判断する。CONDITIONAL の引き金となった出典 URL 欠如・ファクトチェック未実装・待機時 UX の課題は v2 ロードマップに送付する。
+
+---
+
+## 2. 成功基準別の判定
+
+| # | 成功基準（ADR-0005） | 判定 | 数値・観察根拠 | 出典 |
+| - | --- | --- | --- | --- |
+| 1 | 定量: 30 分以内に完走 | **PASS** | MVP 実行 1 分 25 秒（30 分基準に対しマージン約 28.6 分）。エラーなし完走 | [acceptance-protocol §6 / §7](./acceptance-protocol.md) / [c3-log](./c3-log.md) |
+| 2 | 定量: 手動比 50% 以上の時間削減 | **PASS** | 削減率 ≈ 86.5%（実質手動時間 10.5 分 = C2 0.5 分 + 推定収集時間 10 分、MVP 1.42 分）。推定収集時間が 2.85 分以上であれば 50% 基準を満たすため、推定の不確実性を考慮しても判定は揺るがない | [acceptance-protocol §6 / §7](./acceptance-protocol.md) / [c2-log](./c2-log.md) |
+| 3 | 定性: 提案資料ドラフトに着手できる出力品質 | **CONDITIONAL PASS** | 4 観点 × 3 社 = 12 セル充足、確度ラベル・総合インサイト 5 件・Markdown エクスポートでドラフト品質を達成。一方、入力データ（参考情報テキスト）に含まれていた n8n 評価額の内部矛盾（「前回 2.5 億ドル比約 2 倍」と実数 52 億ドルの不整合）を MVP が引き継ぎ出力。MVP は出力中で齟齬を明示しており設計の堅牢性は確認されたが、出典 URL 欠如・入力データ事実誤り検出機構の不在は課題 | [acceptance-protocol §7](./acceptance-protocol.md) / [dogfooding-log §5-3 / §5-5](../../validation/dogfooding-log.md) |
+| 4 | 定性: ドッグフーディングで「手動より明確に楽」 | **CONDITIONAL PASS** | ADR-0005 基準 4「手動より明確に楽」自体は dogfooding-log §5-4 E4 で充足。並列ストリーミングによる「チームが動いている」体感と Markdown エクスポートで「欲しかったものが得られた」感を獲得。CONDITIONAL の引き金は acceptance-protocol §4 追加チェックリストの「離脱衝動」項目であり、待機中に生テキスト / 内部 JSON が表示されることで不安が増幅される UX 課題 | [acceptance-protocol §7](./acceptance-protocol.md) / [dogfooding-log §5-4 / §5-5](../../validation/dogfooding-log.md) |
+
+---
+
+## 3. 総合判定
+
+**CONDITIONAL PASS**。v1 - MVP Implementation マイルストーンの受入基準は満たすと判断する。
+
+- 定量基準（1・2）はいずれも PASS。ADR-0005 が想定する「手動 3 時間→MVP 1.5 時間以内」のコア仮説は、本検証スケール（実質手動時間 10.5 分 → MVP 1.42 分）でも削減率 86.5% を達成し、定量的に実証された
+- 定性基準（3・4）はいずれも CONDITIONAL PASS。基本的な出力品質・体験は満たし、提案資料ドラフトへの到達性と「手動より明確に楽」という主観評価が確認された一方、ファクトチェック未実装と待機 UX に v2 で対応すべき課題が残る
+- 課題は v1 のリリースをブロックするレベルではなく、v2 改善でリカバリ可能と判断
+
+---
+
+## 4. v2 へ送付する課題
+
+CONDITIONAL の根拠となった課題、および dogfooding-log §5-6 の v2 候補を集約する。優先順位の確定は #193（v2 候補優先順位仮置き）で実施。
+
+| # | 課題 | 影響する基準 | 出典 |
+| - | --- | --- | --- |
+| V1 | 出典 URL 表示（確度「弱 / 不足」セルの独立検証を可能にする） | 3 | dogfooding-log §5-6 #5 / acceptance-protocol §7 |
+| V2 | 入力データのファクトチェック機構（参考情報テキスト内の事実誤り・内部矛盾を検出する仕組み） | 3 | acceptance-protocol §7 / c3-log 全体所見 2 |
+| V3 | 待機時 UI の構造化（生テキスト / 内部 JSON の整形・抽象化で進捗の安心感を高める） | 4 | acceptance-protocol §7 / c3-log 体感メモ |
+| V4 | 入力時の透明性向上（調査観点 4 つ固定をフォームに表示し、何が調査されるか事前把握可能にする） | 4 | dogfooding-log §5-6 #2 |
+| V5 | LLM エラー画面メッセージの改善（「LLM エラー」のみ表示でユーザー案内が不足） — 既起票 #214 | 4 | dogfooding-log §5-6 #3 |
+| V6 | 履歴一覧のフィルタリング機能（失敗・完了の混在による視認性低下） | 4 | dogfooding-log §5-6 #4 |
+| V7 | seed テストの整備（SSoT 転記ミス検出の自動化） | — | dogfooding-log §5-6 #6 |
+| V8 | `bun run db:seed` の既存レコード更新方針（seed 定義変更が既存 DB に自動反映されない） | — | dogfooding-log §5-6 #7 |
+| V9 | 大規模シナリオでの再検証（ADR-0005 想定スケール「手動 3 時間級」に近い長時間・多社シナリオ） | 1, 2 | acceptance-protocol §7 「計測規模に関する注記」 |
+| V10 | 統合エージェントの `max_tokens=8000` が OpenRouter 無料枠超過の可能性 — 既起票 #212 | — | dogfooding-log §5-6 #1 / #212 |
+
+---
+
+## 5. 検証の範囲と限界
+
+- **n=1 運用**: 学習プロジェクトの実態に合わせ、C2 / C3 / D2 はすべて実施者 1 名で計測。統計的有意性は主張しない
+- **シナリオ規模**: 実質手動時間 10.5 分・MVP 1.42 分というスケールで実施しており、ADR-0005 が想定する「手動 3 時間→MVP 1.5 時間以内」とは一桁以上異なる。削減率の数値自体は基準を満たすが、大規模シナリオでの再検証は v2 課題（V9）
+- **手動ベースラインの参考情報収集**: C2 では参考情報テキストを Claude Code が事前収集した（acceptance-protocol §1 「収集タイミング」例外）。実質手動時間の算定には推定収集時間（10 分）を加算済み。推定根拠の詳細は c2-log 計測メタデータを参照
+- **dogfooding-log と acceptance-protocol §7 の判定差**: dogfooding-log §5-5 では基準 3・4 ともに PASS、acceptance-protocol §7 では CONDITIONAL PASS。後者は acceptance-protocol §4 追加チェックリスト（事実誤り検出・離脱衝動）を含むため厳格。本サマリは統合判定として acceptance-protocol §7（より厳格な側）を採用
+
+---
+
+## 6. 参照ドキュメント
+
+- ADR: [ADR-0005 MVP スコープ](../../adr/0005-mvp-scope.md) §MVP 成功基準
+- 検証プロトコル: [acceptance-protocol.md](./acceptance-protocol.md)（C 系 #198 配下の成果物）
+- 手動ベースライン計測: [c2-log.md](./c2-log.md)
+- MVP 実行計測: [c3-log.md](./c3-log.md)
+- ドッグフーディングログ: [dogfooding-log.md](../../validation/dogfooding-log.md)（D 系 #199 配下の成果物）
+- 親トラッカ: #116（MVP 実装トラッカ）
+- 次工程: #193（v2 候補優先順位仮置き）
