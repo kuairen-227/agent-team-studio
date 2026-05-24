@@ -52,6 +52,7 @@
       "Bash(gh api repos/:owner/:repo/issues:*)",
       "Bash(gh api repos/:owner/:repo/issues/*/sub_issues:*)",
       "Bash(gh api -X POST repos/:owner/:repo/issues:*)",
+      "Bash(gh api repos/:owner/:repo/pulls:*)",
       "Bash(gh api repos/:owner/:repo/milestones:*)",
       "Bash(gh api -X PATCH repos/:owner/:repo/milestones:*)",
       "Bash(gh label list:*)",
