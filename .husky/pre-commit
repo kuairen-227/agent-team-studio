@@ -1,3 +1,9 @@
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" = "main" ]; then
+  echo "Error: main への直接コミットは禁止されています。ブランチを切ってください。"
+  exit 1
+fi
+
 # secretlint を必ず実行するため lint-staged を先頭に配置
 # 注意: markdownlint-cli2 はファイルパス直接渡しになるため .markdownlint-cli2.jsonc の ignores は機能しない
 #       （_dev は .gitignore 対象のためステージングされず実害なし）
