@@ -46,7 +46,7 @@ type WsMessage =
     };
 
 type AgentFailReason = "llm_error" | "output_parse_error" | "timeout" | "internal_error";
-type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | "timeout";
+type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | "timeout" | "internal_error";
 ```
 
 設計上の補足:

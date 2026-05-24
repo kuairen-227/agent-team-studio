@@ -190,9 +190,7 @@ URL ルーティングを本節で確定する（§4 で参照した screen-flow
 
 ### 8.4 ライブラリ選定
 
-[ADR-0025](../adr/0025-spa-routing-library.md) で **React Router v7** を採用。判断基準（①バンドルサイズ、②型安全性、③将来 SSR 移行の余地）と不採用案（wouter / TanStack Router / Next.js）の評価は ADR-0025 に集約する。
-
-US-1（Issue #117）段階では、TanStack Router 等への乗り換えコストを低位に保つため `loader` / `action` 等の Router 固有 API は使わず、`fetch` は `useEffect` 内に留める方針を取る（詳細は ADR-0025 Decision 参照）。
+[ADR-0027](../adr/0027-tanstack-router.md) で **TanStack Router** を採用（ADR-0025 の React Router v7 を supersede）。型安全な path/search params・TanStack Query との公式統合・エコシステム統一が主な採用理由。詳細は ADR-0027 を参照。
 
 ### 8.5 ルート不在時の挙動
 
