@@ -19,7 +19,7 @@ LLM API の選択
   │  │  └─ OpenRouter（無料モデル）
   │  │     - セットアップが簡単
   │  │     - スケーラブル
-  │  │     - レート制限: 20 req/min, 50 req/day（$10 のクレジット購入で 1,000 req/day）
+  │  │     - レート制限: 20 req/min, 50 req/day（$10 入金で 1,000 req/day へ緩和）
   │  │
   │  └─ ローカル実行、無制限実行したい
   │     └─ Ollama
@@ -117,7 +117,7 @@ LLM API の選択
 
 - 20 requests/minute（共通）
 - 50 requests/day（クレジット未購入時、リセット: UTC 00:00）
-- 1,000 requests/day（$10 以上のクレジット購入で緩和）
+- 1,000 requests/day（$10 入金で緩和）
 
 **制限値の評価**: Investigation Agent 4 つ + Integration Agent 1 つで 1 実行あたり ~5 リクエスト消費するため、無購入だと 1 日 ~10 実行が上限。継続検証では Ollama への切り替えか OpenRouter へのクレジット投入を検討してください。
 
