@@ -9,7 +9,7 @@ superseded by [0027](./0027-tanstack-router.md)
 
 ## Context
 
-Walking Skeleton（Issue #82 / PR #114）まではテンプレート一覧のみの単一画面で、ルーティングを持たない構成だった。MVP 実装フェーズ（v0.5）で US-1〜US-5 を構成する 4 ルート（`/`、`/templates/:templateId/new`、`/executions/:executionId`、`/history`）を扱うため、SPA ルーティングライブラリを確定する必要がある。
+Walking Skeleton（Issue #82 / PR #114）まではテンプレート一覧のみの単一画面で、ルーティングを持たない構成だった。MVP 実装フェーズ（v1.0）で US-1〜US-5 を構成する 4 ルート（`/`、`/templates/:templateId/new`、`/executions/:executionId`、`/history`）を扱うため、SPA ルーティングライブラリを確定する必要がある。
 
 [ui-patterns.md §8.4](../design/ui-patterns.md) では候補として React Router v7 / wouter / TanStack Router を挙げ、判断基準として ①バンドルサイズ ②型安全性 ③将来 SSR 移行の余地 を記していた。本 ADR で最終決定を下す。
 
