@@ -19,7 +19,7 @@ LLM API の選択
   │  │  └─ OpenRouter（無料モデル）
   │  │     - セットアップが簡単
   │  │     - スケーラブル
-  │  │     - レート制限: 20 req/min, 50 req/day
+  │  │     - レート制限: 20 req/min, 50 req/day（$10 入金で 1000 req/day）
   │  │
   │  └─ ローカル実行、無制限実行したい
   │     └─ Ollama
@@ -99,16 +99,27 @@ LLM API の選択
    bun run test
    ```
 
+### モデル別の max output tokens 上限
+
+本プロジェクトの統合 Agent は `max_tokens=8000` を要求する（3 社 × 4 観点のマトリクス生成で 3000 では出力切れになることを #205 ドッグフーディングで確認）。OpenRouter は**個別リクエストの max_tokens を制限せず**、モデルごとの最大出力に従う。以下の無料モデルは 8000 tokens 出力を満たす：
+
+| モデル ID | Context | Max Output | 統合 Agent (8000) |
+| --- | --- | --- | --- |
+| `deepseek/deepseek-r1:free` | 164K | 16,000 | OK |
+| `meta-llama/llama-3.3-70b-instruct:free` | 131K | 32,768 | OK |
+| `qwen/qwen3-coder:free` | 256K | 16,000 | OK |
+
+実利用前に [openrouter.ai/models](https://openrouter.ai/models) で対象モデルの "Max Output" を確認してください（モデルや時期により更新されます）。
+
 ### レート制限の注意
 
-無料ティアのレート制限（クレジット未購入時）:
+無料ティアのレート制限:
 
-- 20 requests/minute
-- 50 requests/day（リセット: UTC 00:00）
+- 20 requests/minute（共通）
+- 50 requests/day（クレジット未購入時、リセット: UTC 00:00）
+- 1,000 requests/day（10 USD 以上のクレジット購入で緩和）
 
-注: 10 以上のクレジット購入で 1000 requests/day に緩和されます。
-
-**制限値の評価**: Investigation Agent 4 つを並列実行した場合、単一実行で ~5 リクエスト消費するため、50 req/day では実運用に不十分。必要に応じて Ollama への切り替えや OpenRouter へのクレジット投入を検討してください。
+**制限値の評価**: Investigation Agent 4 つ + Integration Agent 1 つで 1 実行あたり ~5 リクエスト消費するため、無購入だと 1 日 ~10 実行が上限。継続検証では Ollama への切り替えか OpenRouter へのクレジット投入を検討してください。
 
 ---
 
@@ -187,6 +198,10 @@ LLM API の選択
 | Llama 3.3 70B | 40GB+ | NVIDIA/Metal | MacBook Pro M2 Max, RTX 4080/4090 |
 | Llama 3.1 405B | 1.5TB+ | 8x A100/H100（80GB各） | 非推奨（エンタープライズ環境向け） |
 
+### max_tokens の確認
+
+Ollama は Modelfile の `num_predict` でモデルごとに出力上限が定義される（既定は無制限〜モデル定義値）。統合 Agent の `max_tokens=8000` を満たすには 70B 級モデル（Llama 3.3 70B 等）を推奨。7B 級は出力品質も低下しがちなので、競合調査用途では `bun run test` の出力で品質を確認してから本番投入してください。
+
 ---
 
 ## 設定値の確認
@@ -254,6 +269,27 @@ cat apps/api/.env.local
 
 - **OpenRouter**: セットアップが簡単、スケーラブル、レート制限あり
 - **Ollama**: 完全無料・無制限、ローカルスペック必要
+
+---
+
+## プロバイダー切替時のチェックリスト
+
+新しい LLM プロバイダーへ切り替える前に以下を確認する。`max_tokens_by_role.integration=8000` がプロジェクトの最低要件（[llm-integration.md](../design/llm-integration.md) 参照）。
+
+1. **Anthropic 互換 endpoint を提供しているか** — `/v1/messages` を実装していること。OpenAI 互換のみの場合は `llm-client.ts` の SDK 境界拡張が別途必要（[ADR-0020](../adr/0020-llm-sdk-selection.md) §Decision 2）
+2. **対象モデルの Max Output Tokens が 8000 以上か** — 統合 Agent の出力切れを防ぐため
+3. **対象モデルの Context Window が ~12K 以上か** — 入力 ~4K + 出力 ~8K を収容するため
+4. **レート制限が実運用に耐えるか** — 1 実行で ~5 リクエスト消費を基準に評価
+
+### 不採用プロバイダー（参考）
+
+調査済みだが現状の SDK 境界（Anthropic SDK ネイティブ）では採用しない選択肢。SDK 境界拡張を行う場合の候補として参考までに記録する。
+
+| プロバイダー | 無料枠 | Max Output | Anthropic 互換 | 不採用理由 |
+| --- | --- | --- | --- | --- |
+| Groq | 30 RPM / 1000 RPD / TPM 6,000 | モデル依存 | ❌（OpenAI 互換のみ） | TPM 6,000 では 1 リクエストで 8000 tokens 出力が上限超過 |
+| Google Gemini Flash | 1,500 RPD / 1M TPM | 無制限 | ❌（gateway 経由のみ） | SDK 境界拡張が必要 |
+| Cerebras | 1M tokens/day | context cap 8,192 | ❌（OpenAI 互換のみ） | context cap が 8,192 で入力+出力が窮屈 |
 
 ---
 
