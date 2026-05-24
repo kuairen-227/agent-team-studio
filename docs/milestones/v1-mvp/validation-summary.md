@@ -73,4 +73,4 @@ CONDITIONAL の根拠となった課題、および dogfooding-log §5-6 の v2 
 - MVP 実行計測: [c3-log.md](./c3-log.md)
 - ドッグフーディングログ: [dogfooding-log.md](../../validation/dogfooding-log.md)（D 系 #199 配下の成果物）
 - 親トラッカ: #116（MVP 実装トラッカ）
-- 次工程: #193（v2 候補優先順位仮置き）
+- 次工程: #193（v2 候補優先順位仮置き）→ [v2-priority-memo.md](./v2-priority-memo.md)
