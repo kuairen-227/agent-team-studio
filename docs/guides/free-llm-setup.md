@@ -106,6 +106,21 @@ LLM API の選択
 - [openrouter.ai/collections/free-models](https://openrouter.ai/collections/free-models) で無料モデル一覧から Max Output が 8K 以上のモデルを選ぶ（`:free` 接尾辞なしの stealth モデル含む）
 - `:free` モデルのカタログは頻繁に変動するため、本ガイドにモデル一覧は記載しない（陳腐化を避けるため）
 
+#### 重要: 無料モデルでもクレジット入金が実質必要
+
+OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation（事前与信）** を行う。`:free` モデル（無料）であっても、`max_tokens` 分のコストをクレジット残高から予約しようとし、残高が足りないと 402 を返す。実際の応答が小さくても、`max_tokens` の上限値で予約される。
+
+```text
+例: max_tokens=1500 を要求し、利用可能枠が 756 tokens 分しか残っていない場合、
+    無料モデルでも以下のエラーで失敗:
+
+    LLM API error: 402
+    "This request requires more credits, or fewer max_tokens.
+     You requested up to 1500 tokens, but can only afford 756."
+```
+
+新規アカウントには小さな試用枠があるが、本プロジェクトの Investigation Agent (`max_tokens=1500`) / Integration Agent (`max_tokens=8000`) を継続実行するには **クレジット入金（$10〜）が事実上必須**。完全無料運用を希望する場合は Option C（Ollama）を選択してください。
+
 ### レート制限の注意
 
 無料ティアのレート制限は **2 段構え**で、後者が実用上のボトルネックになりやすい。
