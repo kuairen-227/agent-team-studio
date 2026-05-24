@@ -31,7 +31,7 @@ Claude API を用いた LLM 呼び出しの設計方針。`packages/agent-core/s
 
 `top_p`, `top_k` はデフォルト値（未指定）とする。temperature で十分に制御できるため。
 
-> **プロバイダー切替時の注意**: `max_tokens=8000` はモデル側の Max Output Tokens 内に収まる必要がある。Anthropic 本家・OpenRouter 主要無料モデル（DeepSeek R1 / Llama 3.3 70B 等）は満たすが、低トークン制限のプロバイダー（例: Cerebras 無料枠の context cap 8,192）では出力が切れる可能性がある。切替時のチェックリストは [free-llm-setup.md](../guides/free-llm-setup.md#プロバイダー切替時のチェックリスト) 参照。
+> **プロバイダー切替時の注意**: `max_tokens=8000` はモデル側の Max Output Tokens 内に収まる必要がある。Anthropic 本家・OpenRouter 主要無料モデル（DeepSeek R1 / Llama 3.3 70B 等）は満たすが、低トークン制限のプロバイダー（例: Cerebras 無料枠は context cap 8,192 のため入出力合計が窮屈で 8,000 tokens の出力を確保できない）では採用できない。切替時は `docs/guides/free-llm-setup.md` のチェックリストを参照。
 
 ## ストリーミング方式
 

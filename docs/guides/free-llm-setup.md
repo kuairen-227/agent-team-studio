@@ -19,7 +19,7 @@ LLM API の選択
   │  │  └─ OpenRouter（無料モデル）
   │  │     - セットアップが簡単
   │  │     - スケーラブル
-  │  │     - レート制限: 20 req/min, 50 req/day（$10 入金で 1000 req/day）
+  │  │     - レート制限: 20 req/min, 50 req/day（$10 のクレジット購入で 1,000 req/day）
   │  │
   │  └─ ローカル実行、無制限実行したい
   │     └─ Ollama
@@ -81,13 +81,13 @@ LLM API の選択
 
    ```bash
    # 汎用モデル（推奨）
-   LLM_MODEL=llama-3.3-70b-specdec  # Llama 3.3 70B
+   LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free  # Llama 3.3 70B
 
    # または推論タスク向け
-   LLM_MODEL=deepseek-r1  # DeepSeek R1
+   LLM_MODEL=deepseek/deepseek-r1:free  # DeepSeek R1
 
    # または コード生成向け
-   LLM_MODEL=qwen/qwen-coder-480b  # Qwen 3 Coder 480B
+   LLM_MODEL=qwen/qwen3-coder:free  # Qwen 3 Coder
    ```
 
    利用可能なモデル一覧: [openrouter.ai/models](https://openrouter.ai/models)
@@ -117,7 +117,7 @@ LLM API の選択
 
 - 20 requests/minute（共通）
 - 50 requests/day（クレジット未購入時、リセット: UTC 00:00）
-- 1,000 requests/day（10 USD 以上のクレジット購入で緩和）
+- 1,000 requests/day（$10 以上のクレジット購入で緩和）
 
 **制限値の評価**: Investigation Agent 4 つ + Integration Agent 1 つで 1 実行あたり ~5 リクエスト消費するため、無購入だと 1 日 ~10 実行が上限。継続検証では Ollama への切り替えか OpenRouter へのクレジット投入を検討してください。
 
@@ -200,7 +200,7 @@ LLM API の選択
 
 ### max_tokens の確認
 
-Ollama は Modelfile の `num_predict` でモデルごとに出力上限が定義される（既定は無制限〜モデル定義値）。統合 Agent の `max_tokens=8000` を満たすには 70B 級モデル（Llama 3.3 70B 等）を推奨。7B 級は出力品質も低下しがちなので、競合調査用途では `bun run test` の出力で品質を確認してから本番投入してください。
+Ollama は Modelfile の `num_predict` でモデルごとに出力上限が定義される（既定は `-1` = 無制限）。統合 Agent の `max_tokens=8000` を満たすには 70B 級モデル（Llama 3.3 70B 等）を推奨。7B 級は出力品質も低下しがちなので、競合調査用途では `bun run test` の出力で品質を確認してから本番投入してください。
 
 ---
 
@@ -276,9 +276,9 @@ cat apps/api/.env.local
 
 新しい LLM プロバイダーへ切り替える前に以下を確認する。`max_tokens_by_role.integration=8000` がプロジェクトの最低要件（[llm-integration.md](../design/llm-integration.md) 参照）。
 
-1. **Anthropic 互換 endpoint を提供しているか** — `/v1/messages` を実装していること。OpenAI 互換のみの場合は `llm-client.ts` の SDK 境界拡張が別途必要（[ADR-0020](../adr/0020-llm-sdk-selection.md) §Decision 2）
+1. **Anthropic 互換 endpoint を提供しているか** — `/v1/messages` を実装していること。OpenAI 互換のみの場合は `llm-client.ts` の SDK 境界拡張が別途必要（[ADR-0020](../adr/0020-llm-sdk-selection.md)）
 2. **対象モデルの Max Output Tokens が 8000 以上か** — 統合 Agent の出力切れを防ぐため
-3. **対象モデルの Context Window が ~12K 以上か** — 入力 ~4K + 出力 ~8K を収容するため
+3. **対象モデルの Context Window が ~13K 以上か** — 入力 ~4.4K + 出力 ~8K = ~12.4K を収容するため
 4. **レート制限が実運用に耐えるか** — 1 実行で ~5 リクエスト消費を基準に評価
 
 ### 不採用プロバイダー（参考）
