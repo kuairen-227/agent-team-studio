@@ -5,7 +5,7 @@
 accepted
 
 - 作成日: 2026-05-24
-- 関連: ADR-0005（MVP スコープと v2 以降のロードマップ）, ADR-0025（v0.5 表記を使用）, Issue #193（v0.6 表記を使用 / CLOSED）
+- 関連: ADR-0005（MVP スコープと v2 以降のロードマップ）, ADR-0025（superseded by 0027 だが §Context の v0.5 表記が残存するため修正対象とする）, Issue #193（v0.6 表記を使用 / CLOSED）
 
 ## Context
 
@@ -49,13 +49,16 @@ SemVer の「最初の安定リリース = 1.0」という一般慣行とは案 
 ### 適用範囲
 
 - **新規**: ADR / Issue / マイルストーン / ドキュメントは本規約に従う
+- **修正対象の網羅性**: `grep -rn "v0\." docs/` で全件確認済み（Ollama バージョン参照を除く）。下記「既存修正」「修正しない既存記述」で全件を網羅する
 - **既存修正**（本 ADR と同 PR で実施）:
   - **ADR-0025**: 「MVP 実装フェーズ（v0.5）」→「MVP 実装フェーズ（v1.0）」
   - **ADR-0030**: Consequences 内「v0.5 完了タスク整理など」→「v1.0 MVP 完了タスク整理など」
   - **`docs/milestones/v1-mvp/v2-priority-memo.md`**: `v0.6` → `v1.1` / `v0.7` → `v1.2` を全置換
+  - **`docs/guides/github-workflow.md`**: マイルストーン命名例「`v0.1 - Project Setup`」→「`v1.0 - MVP Implementation`」（新規約に従う例示に更新）
 - **修正しない既存記述**:
   - **Issue #193**（CLOSED）: 本文の「v0.6 以降」は修正しない（CLOSED Issue の本文を後から書き換えると履歴の意図が不透明になるため）。本 ADR で「v1.1 以降と読み替える」ことを明示する
-  - **GH マイルストーン `v1 - MVP Implementation`**: 維持
+  - **GH マイルストーン `v1 - MVP Implementation`**: 維持（既に本規約と整合しているため変更不要）
+  - **ADR-0005 §v2 以降のロードマップ概観**: 表記の `v2` / `v3` は本 ADR で `v2.0` / `v3.0` と読み替える（本 ADR が SSoT）。ADR-0005 本体の表書き換えは行わない
 
 ## Consequences
 
