@@ -82,9 +82,9 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 **利用可能な無料モデル**（2026 年 5 月時点）:
 
-- Llama 3.3 70B — 高品質な汎用モデル
-- DeepSeek R1 — 推論タスク向け
-- Qwen 3 Coder 480B — コード生成向け
+- `meta-llama/llama-3.3-70b-instruct:free` — 高品質な汎用モデル
+- `deepseek/deepseek-r1:free` — 推論タスク向け
+- `qwen/qwen3-coder:free` — コード生成向け
 - その他 26+ モデル
 
 **特徴**:
