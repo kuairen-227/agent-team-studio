@@ -11,7 +11,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "lint:md": "markdownlint-cli2",
-    "lint:md-links": "find . \\( -path '*/node_modules' -o -path './_dev' -o -path './.playwright-mcp' -o -path './.claude/worktrees' -o -name 'template.md' \\) -prune -o -name '*.md' -print | xargs markdown-link-check --config .markdown-link-check.json --quiet",
+    "lint:md-links": "find . \\( -path '*/node_modules' -o -path './_dev' -o -path './.playwright-mcp' -o -path './.claude/worktrees' -o -name 'template.md' \\) -prune -o -name '*.md' -print0 | xargs -0 -r markdown-link-check --config .markdown-link-check.json --quiet",
     "lint:secret": "secretlint '**/*'",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
