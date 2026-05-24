@@ -85,7 +85,7 @@ Anthropic SDK 内蔵のリトライ機能に委任する。独自リトライロ
 
 - Investigation Agent 1 つが失敗しても他の Investigation Agent は続行する
 - Integration Agent は利用可能な Investigation 結果のみで統合を実行する
-- 全 Investigation Agent が失敗した場合、Integration Agent は実行せず `execution:error` を送信する
+- 全 Investigation Agent が失敗した場合、Integration Agent は実行せず `execution:failed` を送信する
 
 ## トークン見積もり
 

@@ -46,13 +46,13 @@ type WsMessage =
     };
 
 type AgentFailReason = "llm_error" | "output_parse_error" | "timeout" | "internal_error";
-type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | "timeout";
+type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | "timeout" | "internal_error";
 ```
 
 設計上の補足:
 
 - `status` の語彙は [data-model.md §5](./data-model.md) の `AgentExecution.status`（`pending | running | completed | failed`）と一致させる
-- `agentId` の表記規則は [agent-execution.md §3](./agent-execution.md)（`<role>:<key>` 形式）に従う
+- `agentId` の表記規則は [agent-execution.md §3](./agent-execution.md)（`<role>_<key>` 形式。ただし integration は key なし単一値 `integration`）に従う
 - `reason` の語彙は [agent-execution.md §5](./agent-execution.md) の `AgentFailReason` / `ExecutionFailReason` と一致させる
 - `timestamp` は `agent_started/agent_completed/agent_failed` のいずれかの発火時刻を 1 フィールドに集約
 - `timestamp` は `agent:status` のみに持たせる。`agent:output` chunk は TCP 順序で十分（chunk ごとの timestamp はノイズになる）、`execution:completed` / `execution:failed` の完了時刻は DB 側が正（[`agent-execution.md §4`](./agent-execution.md) で `Execution.completed_at` が INSERT 済み、REST `GET /api/executions/:id` で取得可能）。WS 側に二重管理を持ち込まない
@@ -60,7 +60,7 @@ type ExecutionFailReason = "all_investigations_failed" | "integration_failed" | 
 
 ## AgentEvent → WsMessage 写像
 
-本表は Investigation / Integration を問わず、すべての `AgentExecution` に一律適用する（`agentId` の `<role>:<key>` 表記のみ異なる）。
+本表は Investigation / Integration を問わず、すべての `AgentExecution` に一律適用する（`agentId` の `<role>_<key>` 表記のみ異なる。integration は `integration` 単一値）。
 
 | `AgentEvent.kind` | `WsMessage` | 写像内容 |
 | --- | --- | --- |
