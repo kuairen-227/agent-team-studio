@@ -15,3 +15,4 @@
 | [development-tools.md](./development-tools.md) | 開発ツール（psql / Drizzle Studio / PostgreSQL 拡張） |
 | [env.md](./env.md) | 環境変数・シークレット管理 |
 | [dependabot.md](./dependabot.md) | Dependabot 運用ガイド（PR 種別ごとの作業・auto-merge・cooldown） |
+| [free-llm-setup.md](./free-llm-setup.md) | LLM API 設定ガイド（Anthropic / OpenRouter / Ollama の切り替え） |
