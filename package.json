@@ -11,7 +11,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "lint:md": "markdownlint-cli2",
-    "lint:md-links": "git ls-files -z '*.md' ':(exclude)*template.md' | xargs -0 -r markdown-link-check --config .markdown-link-check.json --quiet",
+    "lint:md-links": "git ls-files -z '*.md' ':(exclude)*template.md' | xargs -0 markdown-link-check --config .markdown-link-check.json --quiet",
     "lint:secret": "secretlint '**/*'",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
