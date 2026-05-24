@@ -40,6 +40,7 @@ CLAUDE.md は AI が常時参照する起動時ガイダンスとして要点を
 | `bun run lint` | Biome による静的解析（全ワークスペース、Turborepo 経由） |
 | `bun run lint:fix` | Biome による lint・format の自動修正（全ワークスペース、Turborepo 経由） |
 | `bun run lint:md` | Markdown の lint（markdownlint-cli2） |
+| `bun run lint:md-links` | Markdown 内ローカルリンクの検証（markdown-link-check） |
 | `bun run lint:secret` | 機密情報の検出（secretlint） |
 | `bun run type-check` | TypeScript 型チェック（全ワークスペース、Turborepo 経由） |
 | `bun run test` | テスト実行（全ワークスペース、Turborepo 経由） |

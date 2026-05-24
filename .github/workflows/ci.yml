@@ -21,6 +21,7 @@ jobs:
 
       - run: bun run lint
       - run: bun run lint:md
+      - run: bun run lint:md-links
       - run: bun run lint:secret
 
   type-check:
