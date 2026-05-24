@@ -99,27 +99,42 @@ LLM API の選択
    bun run test
    ```
 
-### モデル別の max output tokens 上限
+### モデル選択と max_tokens
 
-本プロジェクトの統合 Agent は `max_tokens=8000` を要求する（3 社 × 4 観点のマトリクス生成で 3000 では出力切れになることを #205 ドッグフーディングで確認）。OpenRouter は**個別リクエストの max_tokens を制限せず**、モデルごとの最大出力に従う。以下の無料モデルは 8000 tokens 出力を満たす：
+本プロジェクトの統合 Agent は `max_tokens=8000` を要求する（3 社 × 4 観点のマトリクス生成で 3000 では出力切れになることを #205 ドッグフーディングで確認）。OpenRouter は個別リクエストの `max_tokens` を制限せず、モデルごとの Max Output に従う。要件を満たす無料モデルの選択は以下を参照：
 
-| モデル ID | Context | Max Output | 統合 Agent (8000) |
-| --- | --- | --- | --- |
-| `deepseek/deepseek-r1:free` | 164K | 16,000 | OK |
-| `meta-llama/llama-3.3-70b-instruct:free` | 131K | 32,768 | OK |
-| `qwen/qwen3-coder:free` | 256K | 16,000 | OK |
-
-実利用前に [openrouter.ai/models](https://openrouter.ai/models) で対象モデルの "Max Output" を確認してください（モデルや時期により更新されます）。
+- [openrouter.ai/models](https://openrouter.ai/models) で `Free` フィルタを適用し、Max Output が 8K 以上のモデルを選ぶ
+- `:free` モデルのカタログは頻繁に変動するため、本ガイドにモデル一覧は記載しない（陳腐化を避けるため）
 
 ### レート制限の注意
 
-無料ティアのレート制限:
+無料ティアのレート制限は **2 段構え**で、後者が実用上のボトルネックになりやすい。
+
+#### 1. OpenRouter 全体の制限
 
 - 20 requests/minute（共通）
 - 50 requests/day（クレジット未購入時、リセット: UTC 00:00）
 - 1,000 requests/day（$10 入金で緩和）
 
-**制限値の評価**: Investigation Agent 4 つ + Integration Agent 1 つで 1 実行あたり ~5 リクエスト消費するため、無購入だと 1 日 ~10 実行が上限。継続検証では Ollama への切り替えか OpenRouter へのクレジット投入を検討してください。
+#### 2. upstream provider の制限
+
+`:free` モデルは OpenRouter が複数の upstream provider にルーティングするが、無料バリアントは backup provider が限定的で、provider 側の rate limit を踏むと `429 (Provider rate-limited)` が頻発する。さらに provider が一斉に落ちると `404 (No endpoints found)` も発生する。
+
+```text
+例: 同一 API キーで連続リクエストすると 3 モデルとも同じ provider (Venice 等)
+    に振られ、1 つの provider 制限で全モデルが一時不通になる
+```
+
+**実運用の推奨**:
+
+- 動作確認・短時間の検証用途に留める
+- 本格運用は以下のいずれかを推奨:
+  - Anthropic 本家（Option A）
+  - OpenRouter で BYOK 設定（[Integrations 設定](https://openrouter.ai/settings/integrations) で Together / Groq 等の自前キーを登録すると自分のキー基準のレート制限になる）
+  - Ollama（Option C）でローカル実行
+- リトライ実装: Anthropic SDK の `maxRetries: 3` で 429 は自動リトライされるが、`retry_after_seconds` が長い場合は手動で別モデルへフォールバックも検討
+
+**制限値の評価**: Investigation Agent 4 つ + Integration Agent 1 つで 1 実行あたり ~5 リクエスト消費するため、無購入だと OpenRouter 全体制限で 1 日 ~10 実行が上限。加えて provider 制限で更に削れるため、継続検証では BYOK か Ollama 切替を検討してください。
 
 ---
 
