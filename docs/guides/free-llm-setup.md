@@ -90,7 +90,7 @@ LLM API の選択
    LLM_MODEL=qwen/qwen3-coder:free  # Qwen 3 Coder
    ```
 
-   利用可能なモデル一覧: [openrouter.ai/models](https://openrouter.ai/models)
+   利用可能な無料モデル一覧: [openrouter.ai/collections/free-models](https://openrouter.ai/collections/free-models)（`:free` 接尾辞付きと Owl Alpha 等の stealth モデル両方を網羅。全モデル検索は [openrouter.ai/models](https://openrouter.ai/models)）
 
 4. **動作確認**
 
@@ -103,7 +103,7 @@ LLM API の選択
 
 本プロジェクトの統合 Agent は `max_tokens=8000` を要求する（3 社 × 4 観点のマトリクス生成で 3000 では出力切れになることを #205 ドッグフーディングで確認）。OpenRouter は個別リクエストの `max_tokens` を制限せず、モデルごとの Max Output に従う。要件を満たす無料モデルの選択は以下を参照：
 
-- [openrouter.ai/models](https://openrouter.ai/models) で `Free` フィルタを適用し、Max Output が 8K 以上のモデルを選ぶ
+- [openrouter.ai/collections/free-models](https://openrouter.ai/collections/free-models) で無料モデル一覧から Max Output が 8K 以上のモデルを選ぶ（`:free` 接尾辞なしの stealth モデル含む）
 - `:free` モデルのカタログは頻繁に変動するため、本ガイドにモデル一覧は記載しない（陳腐化を避けるため）
 
 ### レート制限の注意
