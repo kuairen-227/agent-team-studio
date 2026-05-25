@@ -1,5 +1,18 @@
 {
   "enabledMcpjsonServers": ["context7", "playwright"],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/post-edit-lint.sh"
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "bash /workspaces/agent-team-studio/.claude/status-line-command.sh"
