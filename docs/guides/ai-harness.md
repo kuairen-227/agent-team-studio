@@ -8,36 +8,28 @@
 
 ## 全体構成
 
-```
-                    ユーザー（人間）
-                         │
-                    slash command
-                         │
-                    ┌────▼──────┐
-               ┌───┤  skills/  ├───┐
-               │   └───────────┘   │
-               │ 定型手順の自動化   │
-               │                   │ 委譲
-               ▼                   ▼
-       ┌──────────────┐   ┌──────────────┐
-       │   CLAUDE.md  │   │   agents/    │
-       │    rules/    │   │              │
-       └──────┬───────┘   └──────────────┘
-              │ 常に読まれる文脈      専門視点の提供
-              │
-    ┌─────────┼─────────────────────────────┐
-    │         ▼                             │
-    │  ┌─────────────┐  ┌───────────────┐  │
-    │  │   hooks/    │  │  MCP servers  │  │
-    │  └─────────────┘  └───────────────┘  │
-    │  tool call への                外部連携 │
-    │  自動副作用                            │
-    │                                       │
-    │  ┌─────────────────────────────────┐  │
-    │  │       permissions (settings)    │  │
-    │  └─────────────────────────────────┘  │
-    │  ハーネス全体の安全網                  │
-    └───────────────────────────────────────┘
+```mermaid
+flowchart TD
+    User(["ユーザー"])
+    User -->|"slash command"| Skills["skills/\n定型手順の自動化"]
+    Skills -->|"委譲"| Agents["agents/\n専門視点の提供"]
+
+    subgraph memory["memory 層 — 文脈注入"]
+        CLAUDE["CLAUDE.md\n常時ロード"]
+        Rules["rules/\nパスマッチでロード"]
+    end
+
+    Skills -.->|"参照"| memory
+
+    subgraph infra["基盤層"]
+        Hooks["hooks/\ntool call への自動副作用"]
+        MCP["MCP servers\n外部連携"]
+        Perms["permissions\n全 tool call の安全網"]
+    end
+
+    Skills -.->|"PostToolUse"| Hooks
+    Skills -.->|"tool call"| MCP
+    Perms -.->|"制御"| Skills
 ```
 
 ## 各コンポーネントの設計意図
