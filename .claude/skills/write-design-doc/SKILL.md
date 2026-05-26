@@ -10,9 +10,7 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 `docs/design/` 配下のドキュメントを作成・更新する。`$ARGUMENTS` から対象ファイルと操作を判断する。
 
-配置ガイドライン:
-
-!`cat docs/design/README.md`
+配置ガイドラインは rules の `design-docs`（`docs/design/**` 編集時に自動ロード）が提供する。
 
 ## 手順
 
