@@ -171,7 +171,7 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
    curl -fsSL https://ollama.ai/install.sh | sh
    ```
 
-   Windows / その他: [ollama.ai](https://ollama.ai)
+   Windows: 3 つの選択肢がある（Windows ネイティブ / WSL2 / Docker）。詳細とプロジェクトでの推奨は後述の「Windows での実行方式」を参照。
 
 2. **Ollama を起動**
 
@@ -218,6 +218,58 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
        "max_tokens": 100
      }'
    ```
+
+### Windows での実行方式
+
+Windows では Ollama サーバを動かす場所として 3 つの選択肢がある。本プロジェクトは DevContainer（WSL2 + Docker Desktop バックエンド）内で `apps/api` が動作するため、「セットアップ容易性 × GPU 利用 × DevContainer からの到達性」が評価軸になる。
+
+#### 選択肢の比較
+
+| 観点 | A. Windows ネイティブ | B. WSL2 (distro 内) | C. Docker コンテナ |
+| --- | --- | --- | --- |
+| インストール容易性 | ◎ GUI installer | △ WSL2 distro + install script | ○ `docker run` |
+| GPU (NVIDIA) | ◎ Windows ドライバ自動利用、CUDA ランタイム同梱 | ○ Windows ドライバを WSL2 経由で自動利用 | △ NVIDIA Container Toolkit + Docker Desktop GPU passthrough が必須 |
+| GPU 推論性能 | ベースライン | ネイティブ -5% 以内 | ネイティブ -3〜5% 以内（passthrough 正常時） |
+| CPU 推論性能 | △ Linux より遅め | ◎ Linux ネイティブ並 | ◎ Linux ネイティブ並 |
+| DevContainer 接続 | `host.docker.internal:11434`（要 `OLLAMA_HOST=0.0.0.0`） | `host.docker.internal:11434` | `http://ollama:11434`（compose 同一ネットワーク） |
+| モデル永続化 | Windows ユーザディレクトリ | distro 削除で消失 | named volume |
+| 撤去容易性 | ○ アンインストール | ○ distro 削除 | ◎ コンテナ・volume 削除 |
+
+GPU 推論時はどの方式も性能差はネイティブ比 5% 以内で実質誤差。CPU 推論なら Linux 系（B/C）が有利。Docker Desktop の GPU passthrough は Windows ドライバ ≥ 525.60.11 と NVIDIA Container Toolkit が前提で、構成不備時は CPU フォールバックして性能が 10× 落ちるリスクがある。
+
+#### 推奨: A. Windows ネイティブ
+
+最短で検証ループに入れ、NVIDIA GPU がドライバ追加なしで自動認識される。
+
+1. [ollama.ai](https://ollama.ai) から Windows installer を取得して実行する。
+2. DevContainer から接続できるようリッスン先を全インタフェースに開放する。Ollama 起動前に PowerShell で実行し、Ollama を再起動する。
+
+   ```powershell
+   setx OLLAMA_HOST "0.0.0.0:11434"
+   ```
+
+3. `apps/api/.env` で接続先を Windows ホストに向ける（前述の手順 4 の `LLM_BASE_URL` を以下に置き換え）。
+
+   ```bash
+   LLM_BASE_URL=http://host.docker.internal:11434
+   LLM_API_KEY=ollama
+   ```
+
+4. モデル pull 以降は前述の手順 3 以降と同じ。
+
+#### 代替: C. Docker (docker-compose 連携)
+
+ネイティブで詰まった場合のフォールバック。`docker-compose.yml` に `ollama` サービスを追加すれば `apps/api` から `http://ollama:11434` で接続でき、ネットワーク設定がシンプルになる。GPU 利用時は NVIDIA Container Toolkit のセットアップが追加負担。
+
+#### 非推奨: B. WSL2 単独
+
+ネイティブと性能差がほぼ無いのに構築コストは高く、管理対象が増える割にメリットが薄い。Linux ツールチェーンとの統合が主目的でない限り選ばない。
+
+#### 出典・参考
+
+- [Ollama on Windows 11: Native App vs. WSL for Local LLMs (Windows Forum)](https://windowsforum.com/threads/ollama-on-windows-11-native-app-vs-wsl-for-local-llms.379552/)
+- [Ollama on Windows vs. WSL: Which is faster? (Windows Central)](https://www.windowscentral.com/artificial-intelligence/ollama-on-wsl-works-just-as-well-as-natively-on-windows-11)
+- [Docker - Ollama 公式](https://docs.ollama.com/docker)
 
 ### ローカルスペック要件
 
