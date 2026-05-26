@@ -1,158 +1,140 @@
 # AI 駆動開発ハーネス
 
-本リポジトリが Claude Code と協働するために整備した開発環境の全体構成。意思決定の背景は [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) と [ADR-0011](../adr/0011-role-based-agent-architecture.md) を参照。
+本リポジトリの Claude Code 協働環境の設計。意思決定の背景は [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) と [ADR-0011](../adr/0011-role-based-agent-architecture.md) を参照。
+
+## 設計思想
+
+ハーネスは「AI が迷わず動ける環境」ではなく、「**AI と人間が同じ制約の中で動く環境**」として設計している。ルールは AI を縛るためではなく、人間が書いても AI が書いても同じ品質になるための共通の型を提供する。
 
 ## 全体構成
 
 ```
-.claude/
-├── settings.json        # hooks / permissions / status-line / MCP
-├── hooks/               # hook スクリプト
-│   └── post-edit-lint.sh
-├── agents/              # 専門知識エージェント定義
-│   ├── po.md
-│   ├── pm.md
-│   ├── architect.md
-│   ├── qa.md
-│   └── designer.md
-├── rules/               # ファイルパスマッチで自動ロードされる制約
-│   ├── typescript.md    # *.ts / *.tsx
-│   ├── design-docs.md   # docs/design/**
-│   └── product-docs.md  # docs/product/**
-└── skills/              # スラッシュコマンド（定型作業の自動化）
-    ├── process-issue/
-    ├── manage-issue/
-    ├── review/
-    ├── create-adr/
-    ├── create-issue/
-    ├── create-pr/
-    ├── implement-feature/
-    ├── write-design-doc/
-    ├── write-product-doc/
-    ├── resolve-review/
-    ├── cleanup-merged-branch/
-    └── judge-dev-mode/
+                    ユーザー（人間）
+                         │
+                    slash command
+                         │
+                    ┌────▼──────┐
+               ┌───┤  skills/  ├───┐
+               │   └───────────┘   │
+               │ 定型手順の自動化   │
+               │                   │ 委譲
+               ▼                   ▼
+       ┌──────────────┐   ┌──────────────┐
+       │   CLAUDE.md  │   │   agents/    │
+       │    rules/    │   │              │
+       └──────┬───────┘   └──────────────┘
+              │ 常に読まれる文脈      専門視点の提供
+              │
+    ┌─────────┼─────────────────────────────┐
+    │         ▼                             │
+    │  ┌─────────────┐  ┌───────────────┐  │
+    │  │   hooks/    │  │  MCP servers  │  │
+    │  └─────────────┘  └───────────────┘  │
+    │  tool call への                外部連携 │
+    │  自動副作用                            │
+    │                                       │
+    │  ┌─────────────────────────────────┐  │
+    │  │       permissions (settings)    │  │
+    │  └─────────────────────────────────┘  │
+    │  ハーネス全体の安全網                  │
+    └───────────────────────────────────────┘
 ```
 
-## レイヤー別の役割
+## 各コンポーネントの設計意図
 
-### memory 層
+### CLAUDE.md + rules/ — 文脈の経済性
 
-Claude Code が参照するコンテキストの仕組み。
+**問い**: なぜ全部を CLAUDE.md に書かないのか？
 
-| コンポーネント | ロード条件 | 内容 |
+コンテキストウィンドウは有限なリソース。常時ロードするものはプロジェクト横断で必要な最小限にとどめ、ドメイン固有の知識は必要な瞬間だけ注入する。
+
+| | CLAUDE.md | rules/ |
 | --- | --- | --- |
-| `CLAUDE.md` | 常時（セッション起動時） | プロジェクト全体横断の起動時ガイダンス。文体・コーディング規約・主要コマンド・プロジェクト管理規約 |
-| `docs/principles/README.md` | CLAUDE.md から参照（常時参照可能） | 設計・開発原則の SSoT。CLAUDE.md が要点を持ち、principles が詳細・全体像を担う |
-| `.claude/rules/*.md` | frontmatter の `paths:` に一致するファイルを編集したとき | ドメイン固有の追加制約。CLAUDE.md の補完であり、移動・置換ではない |
+| ロード条件 | 常時（セッション起動時） | frontmatter の `paths:` に一致するファイルを編集したとき |
+| 設計意図 | コンテキストのベースライン | ドメイン固有の追加制約。CLAUDE.md の補完 |
+| 置くもの | 全作業横断の規約・コマンド・原則 | 「そのパスを編集するときだけ必要な知識」 |
 
-**rules 設計の原則**: CLAUDE.md に横断的な内容を置き、rules には「そのパスを編集するときだけ必要な知識」を追加する。
+**rules/ と skills/ の関係**:
 
-### tools 層
+`write-design-doc` スキルと `design-docs.md` ルールは内容が一部重なる。意図的な重なりであり、役割の軸が違う。
 
-Claude Code が使う専門知識とワークフローの定義。
-
-**エージェント（専門知識の領域）**:
-
-| エージェント | 専門領域 | 主な利用場面 |
+| | rules/ | skills/ |
 | --- | --- | --- |
-| `po` | プロダクト価値・JTBD | プロダクト判断・要件レビュー |
-| `pm` | プロジェクト管理 | 進捗分析・リスク管理 |
-| `architect` | 構造設計・ADR 整合性 | 設計レビュー・実装レビュー |
-| `qa` | 品質保証・テスト設計 | テストレビュー・実装レビュー |
-| `designer` | UI/UX・ブランド | UX レビュー |
+| 発動 | 受動的（パスマッチで自動） | 能動的（明示的に呼び出し） |
+| 設計意図 | スキルを使わない ad-hoc 編集でも制約を効かせる | 制約の確認 + 手順（SSoT チェック・コンプライアンス検証）を構造化する |
 
-エージェントは「行為」ではなく「専門知識の領域」として定義する（ADR-0011）。レビューはエージェントの組合せで表現する。
+スキルが `!cat README.md` でルール相当の内容を動的注入している場合、ルール側に一本化できる（スキルの注入を削除）。現状は重複があるが、どちらを読んでも同じ制約が働くため実害はない。
 
-**スキル（定型作業の自動化）**: 繰り返し実行され手順が定型化できる作業を slash command として実装する（[CLAUDE.md](../../CLAUDE.md) のスコープ定義を参照）。
+### agents/ — 視点の分離
 
-### automation 層
+**問い**: なぜロールをスキル内に直接書かないのか？
 
-tool call に連動して自動実行される副作用。
+複数のスキルが同じ専門視点を使う。インライン記述では同じ知識が散在し、一貫性が崩れる。エージェントを「専門知識の領域」として独立させることで、スキルは手順だけを担い、知識は再利用できる。
 
-| hook | トリガー | 処理 |
-| --- | --- | --- |
-| `post-edit-lint.sh` | Edit / Write ツール実行後 | 編集ファイルが `*.ts` / `*.tsx` の場合、biome で自動 lint & format |
-
-PostToolUse hook が ADR-0007 品質保証の「第 3 層フィードバックループ Phase 1」を実現する。Stop hook・PreToolUse hook は現時点で導入しない（コスト > 効果）。
-
-### integration 層
-
-外部ツールとの連携。`.mcp.json` および `settings.json` の `enabledMcpjsonServers` で制御する。
-
-| MCP サーバー | 用途 |
+| エージェント | 専門領域 |
 | --- | --- |
-| `context7` | ライブラリ・フレームワーク公式ドキュメントの参照 |
-| `playwright` | 実装中の UI 動作確認（E2E テストではない。[ai-ui-verification.md](./ai-ui-verification.md) を参照） |
+| `po` | プロダクト価値・JTBD |
+| `pm` | 進捗・リスク・依存関係 |
+| `architect` | 構造設計・ADR 整合性 |
+| `qa` | テスト設計・品質・セキュリティ |
+| `designer` | UI/UX・ブランド |
 
-### safety 層
+「レビュー」はエージェントとして定義しない。レビューは行為であり専門領域ではないため、`review` スキルが対象に応じてエージェントを組み合わせる（ADR-0011）。
 
-`settings.json` の `permissions` で tool 呼び出しの許可・拒否を管理する。
+### hooks/ — 確実性の担保
 
-- **allow**: 許可パターンを明示列挙（デフォルト拒否）。`Bash(git push --force:*)` 等の破壊的操作は deny に明示する
-- **deny**: `.env` 読み取り・`rm -rf`・`curl/wget`・`git reset --hard` 等
-- **運用**: 数セッション後に `/fewer-permission-prompts` スキルで使用ログを分析し、allowlist を随時更新する
+**問い**: なぜ「TS/TSX を編集したら lint をかけて」と AI に指示するだけでは不十分なのか？
 
-### observability 層
+指示は確率的に従われる。フックは決定論的に実行される。lint・format のように「必ず実行されなければ意味がない」副作用は、AI の判断を経由させない。
 
-`settings.json` の `statusLine` でステータスバーに現在のコンテキストを表示する。`.claude/status-line-command.sh` が実装する。
+現在のフック:
 
-## 追加判断ガイド
+| フック | トリガー | 設計根拠 |
+| --- | --- | --- |
+| `post-edit-lint.sh` | Edit/Write 後に `*.ts` / `*.tsx` を検出 | ADR-0007 品質保証第 3 層 Phase 1。修正ループを AI に自動フィードバック |
+
+Stop hook・PreToolUse hook は「コスト > 効果」と判断し未導入。フックは増やすほど実行コストが上がるため、追加は慎重に行う。
+
+### MCP — 外部知識へのアクセス
+
+**問い**: なぜ MCP サーバーを使うのか？
+
+訓練データのカットオフを超えた最新ドキュメントへのアクセスと、実ブラウザでの動作確認が必要なため。ライブラリ選定・API 変更への追従は `context7` が担い、UI 実装の動作確認は `playwright` が担う。
+
+MCP は「外部ツール連携の必要性が生じたら導入」する方針（ADR-0007）。現在は 2 サーバーのみ。
+
+### permissions — 安全網の多重化
+
+**問い**: AI への指示（CLAUDE.md の禁止事項）だけでは不十分か？
+
+指示は前段の防御線。`permissions.deny` は最後の防御線。`rm -rf`・`git push --force`・`.env` 読み取りなどは、AI が判断を誤った場合でもハーネスが物理的にブロックする。
+
+「AI を信頼しないのではなく、**ミスが起きても取り返せる環境にする**」設計。
+
+## 追加判断の軸
 
 ### rule を追加するとき
 
-**判断基準**: 特定のファイルパスを編集するときだけ必要な制約・知識があるか。
-
-```yaml
-# .claude/rules/新ルール.md の frontmatter 例
----
-paths:
-  - "対象パス/**"
----
-```
-
-注意: CLAUDE.md に書くべき横断的な内容を rules に移さない。
+「特定のファイルパスを編集するときだけ必要な制約」かどうか。CLAUDE.md に書くべき横断的な内容を rules に移さない（文脈の経済性が崩れる）。
 
 ### skill を追加するとき
 
-**判断基準**: 「繰り返し実行され、手順が定型化できる作業」か（ADR-0007）。
-
-```yaml
-# SKILL.md の frontmatter 例
----
-name: スキル名
-description: 一文で用途を説明
-when_to_use: ユーザーが〜と言ったとき
-allowed-tools: Read Edit Write Bash(...)
----
-```
-
-skills/ はユーザーが trigger する slash command として機能する。agents/ から委譲されることもある。
+「繰り返し実行でき、手順が定型化できるか」（ADR-0007 の基準）。手順が定まらない作業はスキル化せず、その都度 AI と対話する。
 
 ### agent を追加するとき
 
-**判断基準**: 既存の 5 エージェント（PO/PM/Architect/QA/Designer）でカバーできない独立した専門知識の領域があるか（ADR-0011）。「行為」ではなく「専門領域」として定義できるか。
-
-```yaml
-# .claude/agents/新エージェント.md の frontmatter 例
----
-name: エージェント名
-description: 専門領域の説明（tools ではなく知識・視点を記述）
----
-```
+既存 5 エージェントでカバーできない独立した専門知識の領域があるか。「行為」ではなく「専門領域」として定義できるか（ADR-0011 の原則）。
 
 ### hook を追加するとき
 
-**判断基準**: tool call に連動して毎回自動実行すべき副作用があるか。人間の確認なしに安全に実行できるか。
-
-`settings.json` に `hooks` エントリを追加し、スクリプトは `.claude/hooks/` に配置する。hook は常に `exit 0` で終了し、処理ブロックを起こさない。
+「AI の判断を経由させると確実性が下がる副作用」かどうか。lint・format のような自動修正が対象。確認を要する操作はフックにしない（permissions や AI への指示で対応）。
 
 ## 参照
 
 | ドキュメント | 内容 |
 | --- | --- |
-| [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) | ハイブリッドエージェント方式・チェックポイントモデル・品質保証 3 層構成の採択理由 |
-| [ADR-0011](../adr/0011-role-based-agent-architecture.md) | エージェントを「専門知識の領域」として定義する設計原則 |
+| [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) | ハイブリッドエージェント方式・品質保証 3 層構成の採択理由 |
+| [ADR-0011](../adr/0011-role-based-agent-architecture.md) | エージェントを「専門知識の領域」として定義する原則 |
 | [ADR-0013](../adr/0013-doc-placement-policy.md) | docs/product/ と docs/design/ の配置ポリシー |
 | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) | Playwright MCP 採択理由 |
 | [docs/principles/README.md](../principles/README.md) | 設計・開発原則の SSoT |
