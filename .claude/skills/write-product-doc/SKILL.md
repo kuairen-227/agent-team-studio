@@ -10,10 +10,6 @@ allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
 
 `docs/product/` 配下のドキュメントを作成・更新する。`$ARGUMENTS` から対象ファイルと操作を判断する。
 
-配置ガイドライン:
-
-!`cat docs/product/README.md`
-
 用語集:
 
 !`cat docs/product/glossary.md`
