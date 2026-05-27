@@ -85,6 +85,8 @@ flowchart TD
 | --- | --- | --- |
 | `post-edit-lint.sh` | Edit/Write 後に `*.ts` / `*.tsx` を検出 | ADR-0007 品質保証第 3 層 Phase 1。修正ループを AI に自動フィードバック |
 
+hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する。
+
 Stop hook・PreToolUse hook は「コスト > 効果」と判断し未導入。フックは増やすほど実行コストが上がるため、追加は慎重に行う。
 
 ### MCP — 外部知識へのアクセス

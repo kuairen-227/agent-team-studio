@@ -211,8 +211,6 @@ isolation: worktree
 | `node_modules/` | **独立** | worktree ごとに `bun install` 必要 |
 | `_dev/` | **独立** | `.gitignore` 対象 |
 
-`.claude/settings.json` の `statusLine.command` はメインツリーへの絶対パスを参照している。スクリプト自体はパス非依存だが、メインツリーが移動・削除されると壊れる。
-
 ## 補足ルール
 
 - **Claude ホームは共有**: すべての DevContainer で `agent-team-studio-claude-home` named volume をマウント（プロジェクトメモリ・skills/agents・OAuth トークンが共有・永続化される。ただし split / Rebuild では `~/.claude.json` 非共有のため再ログインのみ必要）
