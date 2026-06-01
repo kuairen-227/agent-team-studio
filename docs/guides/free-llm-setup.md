@@ -25,6 +25,7 @@ LLM API の選択
   │     └─ Ollama
   │        - 完全無料、無制限
   │        - ローカルスペック必要（40GB+）
+  │        - GPU 推論環境が必須（CPU 推論は実用不可。詳細は §Option C）
 ```
 
 ## Option A: Anthropic 本家（推奨）
@@ -238,7 +239,7 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
 PowerShell（管理者権限不要、ユーザー環境変数で OK）:
 
 ```powershell
-# 全 IF で listen させる（DevContainer から host.docker.internal で到達するため）
+# 全ネットワークインターフェースで listen させる（DevContainer から host.docker.internal で到達するため）
 setx OLLAMA_HOST "0.0.0.0:11434"
 
 # 入力 ~4.4K + 出力 8K に対応するコンテキスト枠
