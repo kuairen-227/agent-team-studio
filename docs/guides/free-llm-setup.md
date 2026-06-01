@@ -25,6 +25,7 @@ LLM API の選択
   │     └─ Ollama
   │        - 完全無料、無制限
   │        - ローカルスペック必要（40GB+）
+  │        - GPU 推論環境が必須（CPU 推論は実用不可。詳細は §Option C）
 ```
 
 ## Option A: Anthropic 本家（推奨）
@@ -155,6 +156,8 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
 
 ## Option C: Ollama（代替・ローカル無料）
 
+> **本アプリでの実用判定（重要）**: Issue #229 のドッグフーディングで、**消費者向け CPU 推論（40 GB RAM / Intel Iris Xe）では本アプリの統合 Agent（`max_tokens=8000`）は事実上動かない**ことが判明した（[ドッグフーディングログ §6](../validation/dogfooding-log.md#6-ollama-検証-issue-229) 参照）。**Ollama は GPU 推論環境（NVIDIA CUDA / Apple Metal）が事実上の前提条件**。GPU を持たない場合は Option A / B を選択してください。
+
 ### インストール
 
 1. **Ollama をインストール**
@@ -171,26 +174,28 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
    curl -fsSL https://ollama.ai/install.sh | sh
    ```
 
-   Windows / その他: [ollama.ai](https://ollama.ai)
+   Windows: [ollama.com/download/windows](https://ollama.com/download/windows) から `OllamaSetup.exe` を取得してインストール（管理者権限不要、約 700 MB）。インストール後はタスクトレイに常駐し、`http://localhost:11434` で API が起動する
 
 2. **Ollama を起動**
+
+   macOS / Linux:
 
    ```bash
    ollama serve
    ```
 
-   デフォルトで `http://localhost:11434` でリッスン開始
+   Windows: インストール後は自動起動。手動起動はスタートメニューから「Ollama」を実行
 
 3. **モデルをダウンロード**
 
    別のターミナルで:
 
    ```bash
-   # Llama 3.3 70B（推奨、40GB メモリ必要）
+   # Llama 3.3 70B（GPU 環境向け、40GB メモリ必要）
    ollama pull llama3.3:70b
 
-   # または軽量版
-   ollama pull mistral  # Mistral 7B
+   # または軽量版（GPU なしでも起動はできるが本アプリ実用は不可、後述）
+   ollama pull llama3.1:8b
    ```
 
    ダウンロード時間: モデルサイズ + 回線速度に依存（数時間の場合もあり）
@@ -203,15 +208,23 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
    LLM_API_KEY=ollama  # Ollama はキー認証不要。任意のダミー値を指定（llm-client.ts の検証回避用）
    ```
 
+   テンプレートで使うモデルは DB の `templates.definition.llm.model` に焼かれている。Ollama 用に切り替える場合は SQL UPDATE で書き換える（`seed.ts` は既存レコードを上書きしないため）:
+
+   ```bash
+   psql "$DATABASE_URL" -c "UPDATE templates SET definition = jsonb_set(definition, '{llm,model}', '\"llama3.3:70b\"') WHERE name = '競合調査';"
+   ```
+
 5. **動作確認**
 
    ```bash
    # テストの実行
    bun run test
 
-   # または curl でエンドポイント確認
+   # または curl でエンドポイント確認（Anthropic 互換 /v1/messages、v0.14+）
    curl -X POST http://localhost:11434/v1/messages \
      -H "Content-Type: application/json" \
+     -H "x-api-key: ollama" \
+     -H "anthropic-version: 2023-06-01" \
      -d '{
        "model": "llama3.3:70b",
        "messages": [{"role": "user", "content": "Hello"}],
@@ -219,18 +232,55 @@ OpenRouter は `max_tokens` パラメータに基づく **pre-flight reservation
      }'
    ```
 
-### ローカルスペック要件
+### Windows + DevContainer での追加設定
 
-| モデル | メモリ | GPU | 推奨環境 |
+本リポジトリは DevContainer（Linux コンテナ）内で `apps/api` を起動するため、Ollama を Windows ホストで動かす場合は **DevContainer からホストへ到達できるよう Ollama を `0.0.0.0` で listen させる**必要がある。加えて、本アプリの統合 Agent は入力 ~4.4K + 出力 8K = ~12.4K トークンのコンテキストが必要なため、デフォルト 4096 では出力が切れる。
+
+PowerShell（管理者権限不要、ユーザー環境変数で OK）:
+
+```powershell
+# 全ネットワークインターフェースで listen させる（DevContainer から host.docker.internal で到達するため）
+setx OLLAMA_HOST "0.0.0.0:11434"
+
+# 入力 ~4.4K + 出力 8K に対応するコンテキスト枠
+setx OLLAMA_CONTEXT_LENGTH "16384"
+```
+
+`setx` は新規プロセスにのみ反映されるため、設定後は **Ollama を完全に終了して再起動**する。タスクトレイから Quit、または PowerShell で `Get-Process | Where-Object { $_.Name -like "ollama*" } | Stop-Process -Force` → スタートメニューから再起動。`netstat -ano | findstr :11434` で `0.0.0.0:11434 ... LISTENING` を確認できれば成功。
+
+DevContainer 内の `apps/api/.env` は `LLM_BASE_URL=http://host.docker.internal:11434` を指定する。
+
+### ローカルスペック要件と実測値
+
+「メモリ要件」だけでは本アプリで実用可能とは限らない。本アプリは [`llm-client.ts:28`](../../packages/agent-core/src/llm-client.ts) で Anthropic SDK の **timeout を 120 秒**に設定しているため、生成速度が遅すぎると Investigation Agent が時間切れで死ぬ。実用判定は **「トークン生成速度 × max_tokens が 120 秒以内に収まるか」** で行う必要がある。
+
+| モデル | メモリ | GPU | 生成速度の目安 | 本アプリでの実用性 |
+| --- | --- | --- | --- | --- |
+| Mistral 7B / Llama 3.1 8B | 16GB | 不要（CPU） | 2-10 tok/s | △〜✕（後述・実測 2.38 tok/s で timeout 確定） |
+| Mistral 7B / Llama 3.1 8B | 16GB | NVIDIA/Metal | 30-100 tok/s | ◯（GPU 推論なら Investigation Agent は 30 秒以内に収まる） |
+| Llama 3.3 70B | 40GB+ | NVIDIA/Metal 必須 | 5-20 tok/s（GPU） | ◯（出力品質も統合 Agent に十分） |
+| Llama 3.1 405B | 1.5TB+ | 8x A100/H100 | — | 非推奨（エンタープライズ向け） |
+
+#### 実測ベース: CPU 推論は本アプリで使えない
+
+Issue #229 のドッグフーディング（Windows / Intel Iris Xe / 40 GB RAM / CPU 推論 / `llama3.1:8b`）で計測した数値:
+
+```text
+HTTP 200  elapsed=113.41s  output_tokens=270  → 2.38 tok/s
+```
+
+この速度を本アプリの各 Agent に当てはめると:
+
+| Agent | `max_tokens` | 必要時間（2.38 tok/s） | 120 秒 timeout 内に収まるか |
 | --- | --- | --- | --- |
-| Mistral 7B | 16GB | 不要 | MacBook Pro M1/M2, RTX 3060 |
-| Llama 3.1 8B | 16GB | 不要 | MacBook Pro M1/M2, RTX 3060 |
-| Llama 3.3 70B | 40GB+ | NVIDIA/Metal | MacBook Pro M2 Max, RTX 4080/4090 |
-| Llama 3.1 405B | 1.5TB+ | 8x A100/H100（80GB各） | 非推奨（エンタープライズ環境向け） |
+| Investigation × 4 並列 | 1500 | 約 630 秒 / agent | ✕（5 倍以上オーバー） |
+| Integration | 8000 | 約 3360 秒（56 分） | ✕（論外） |
 
-### max_tokens の確認
+加えて、Llama 3.1 8B は学習データに **Dify / n8n / Zapier 等のドメイン固有プロダクトを十分含まない**ため、競合調査用途では出力品質も実用水準に達しない（モデルが「Dify を知らない」と回答し、fictional な架空機能を生成するケースを確認）。
 
-Ollama は Modelfile の `num_predict` でモデルごとに出力上限が定義される（既定は `-1` = 無制限）。統合 Agent の `max_tokens=8000` を満たすには 70B 級モデル（Llama 3.3 70B 等）を推奨。7B 級は出力品質も低下しがちなので、競合調査用途では `bun run test` の出力で品質を確認してから本番投入してください。
+### max_tokens / num_ctx の扱い
+
+Ollama は Modelfile の `num_predict` でモデルごとに出力上限が定義される（既定は `-1` = 無制限）。本アプリの統合 Agent (`max_tokens=8000`) を完走させるには、上述のとおり **GPU 推論環境で 70B 級モデル**を推奨。`num_ctx`（コンテキストウィンドウ）はデフォルト 4096 のため、`OLLAMA_CONTEXT_LENGTH=16384` 等で明示的に拡張すること。
 
 ---
 

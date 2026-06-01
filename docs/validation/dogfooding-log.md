@@ -220,3 +220,98 @@
 > ```sql
 > UPDATE templates SET definition = jsonb_set(definition, '{llm,max_tokens_by_role,integration}', '8000') WHERE name = '競合調査';
 > ```
+
+---
+
+## 6. Ollama 検証 (Issue #229)
+
+ADR-0029 で「無料代替案（ローカル）」として採用した Ollama を、消費者向けノート PC スペックで実際に試した結果。完全無料運用の現実的な可否を判定する。
+
+### 6-1. 検証メタデータ
+
+```text
+実施日: 2026-05-27
+実施者: kaito sasaki（PM / エンジニア兼任 + Claude Opus 4.7 が DevContainer 側オペレーションを代行）
+検証対象: Issue #229（Ollama でローカル LLM 動作確認 — 完全無料運用の選択肢検証）
+比較対象: §5 の Anthropic 本家（Claude Sonnet 4.6）実施結果
+検証 PC スペック:
+  - OS: Windows
+  - GPU: Intel(R) Iris(R) Xe Graphics（CPU 内蔵、Ollama 加速対象外）
+  - 専用 VRAM: なし
+  - RAM: 40 GB
+  - 推論モード: CPU 推論
+検証モデル: llama3.1:8b（Q4、約 4.7 GB）
+  - 70B クラスは 40 GB RAM では OOM 確定のため、最初から 8B を選択
+アプリ環境: DevContainer から host.docker.internal:11434 経由で Windows 側 Ollama に接続
+```
+
+### 6-2. セットアップ手順と疎通確認結果
+
+| ステップ | 結果 |
+| --- | --- |
+| Ollama Windows ネイティブインストール | OK |
+| `OLLAMA_HOST=0.0.0.0:11434` / `OLLAMA_CONTEXT_LENGTH=16384` 設定 + Ollama 再起動 | OK（`netstat` で `0.0.0.0:11434 LISTENING` 確認） |
+| DevContainer から `/v1/messages`（Anthropic 互換）疎通 | OK（HTTP 200、8.5 秒で 3 トークン応答） |
+| `apps/api/.env` を Ollama 向けに設定 | OK |
+| DB テンプレートの model フィールドを `llama3.1:8b` に更新 | OK（SQL UPDATE） |
+
+接続経路は問題なし。Ollama v0.14+ の `/v1/messages` Anthropic 互換エンドポイントに既存 SDK そのまま接続できることを確認した。
+
+### 6-3. 実測: トークン生成速度
+
+接続疎通後、速度計測目的の短縮プロンプト（`List 5 features of Dify in JSON array format.`）を `max_tokens=500` で実行（生成速度はモデル・コンテキスト長依存で、本番 Agent への外挿時の差は軽微と判断）:
+
+```text
+HTTP 200  elapsed=113.41s
+usage: { input_tokens: 22, output_tokens: 270 }
+stop_reason: end_turn
+output_tokens/sec: 2.38
+```
+
+**実測 2.38 tok/s**。Ollama 公式の参考値や本 Issue 検討段階の見積（CPU 推論 7-8B Q4 で 5-10 tok/s）の下限を下回る。
+
+### 6-4. 致命的制約: SDK タイムアウトとの整合
+
+[`llm-client.ts:28`](../../packages/agent-core/src/llm-client.ts) で Anthropic SDK の `timeout: 120_000`（2 分）を設定している。実測速度に対して本アプリの各 Agent は以下のとおり成立しない:
+
+| Agent | `max_tokens` | 必要時間（2.38 tok/s） | 120 秒 timeout 内 |
+| --- | --- | --- | --- |
+| Investigation × 4 並列 | 1500 | 約 630 秒（10.5 分） | ✕ 5 倍以上オーバー |
+| Integration | 8000 | 約 3360 秒（56 分） | ✕ 論外 |
+
+本アプリのコードを変更せずに使う前提では、現スペック + 8B モデルでは **Investigation Agent の段階で SDK timeout により確実に失敗**する。
+
+### 6-5. 副次的所見: モデル知識の不足
+
+実測時のレスポンスを見ると、`llama3.1:8b` は「Dify を知らない」と正直に回答し、その後 fictional な架空機能を生成した:
+
+> "I couldn't find any information on what 'Dify' is, which makes it difficult to provide a list of its features. ... However, if you'd like me to create a fictional example..."
+
+競合調査用途では **モデルが対象プロダクトを学習データに含むか** が出力品質の前提条件になる。Llama 3.1 8B は Dify / n8n / Zapier 等のドメイン固有プロダクト情報を十分には持たないため、仮に時間制約を回避できたとしても**出力品質が§5 の Anthropic 本家結果に到底及ばない**ことが判明した。
+
+### 6-6. 受け入れ条件判定
+
+| # | 受け入れ条件 | 判定 | 根拠 |
+| - | --- | --- | --- |
+| 1 | Ollama でモデルが起動・応答する | ✅ OK | curl/疎通とも HTTP 200 |
+| 2 | 本アプリの競合調査が 1 回成功 | ❌ NG | Investigation Agent が SDK timeout で失敗（10.5 分必要 vs 2 分上限） |
+| 3 | 出力品質の所感を記録 | ✅ OK | 本 §6 に記録（所感としては NG: モデル知識不足 + fictional 生成） |
+| 4 | スペック要件を free-llm-setup.md に反映 | ✅ OK | CPU 推論 / 70B 不可 / 実測 2.38 tok/s / GPU 必須 を追記 |
+
+### 6-7. 結論
+
+**現スペック（消費者向けノート PC + CPU 推論）では本アプリの Ollama 運用は不可**。
+
+理由:
+
+- 生成速度（2.38 tok/s）が SDK timeout（120 秒）に対し桁が違う
+- 8B モデルでは競合調査ドメインに必要なプロダクト知識が不足
+- 70B モデルは 40 GB RAM では OOM のため検証不可
+
+ADR-0029 の「ローカル無料代替案」としての Ollama の前提（**GPU 推論環境を持つこと**）を本ログ §6-4 / free-llm-setup.md に明示した。GPU を持たない学習プロジェクト運用者にとっての完全無料運用パスは、現状以下のいずれかに収束する:
+
+1. OpenRouter BYOK（Together / Groq 等の自前キー）
+2. Anthropic 本家の従量課金（少額運用）
+3. GPU 環境を別途用意して Ollama 70B（本検証スコープ外）
+
+**Issue #229 の受け入れ条件 2（本アプリで 1 回成功）は現スペックでは満たせないため、Issue 上のクローズ判断は本ログ + free-llm-setup.md 更新をもって「検証完了・結論: 現スペックでは不可」とする**。GPU 環境での再検証は本プロジェクトの方針としては実施しない（検証用 GPU 環境を確保できないため）。完全無料運用パスを必要とする場合は、上記 3 候補（OpenRouter BYOK / Anthropic 少額従量 / 別途 GPU 環境）から選択する。
