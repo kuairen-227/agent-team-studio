@@ -2,12 +2,14 @@
 
 ## Status
 
-proposed
+accepted（短期方針 = 方向1 を採用。中長期の恒久方式は条件付きで保留）
 
 - 作成日: 2026-06-02
-- 関連: ADR-0020（再評価対象・方針4 が本 ADR を予約）, ADR-0029（前提）, Issue #250
+- 関連: ADR-0020（再評価対象・方針4 が本 ADR を予約）, ADR-0029（前提・本 ADR の方式で無料ルートを再決定）, Issue #250
 
-> **注**: 本 ADR は `proposed`。短期方針（方向1）は実機検証に着手するための推奨であり、中長期の最終決定は Issue #250 の実機検証（Gemini/Groq の疎通・完走・品質）の実測結果を待って確定する。ユーザーの承認をもって `accepted` に更新する。
+> **確定状況（2026-06-02）**: 短期方針 **方向1（ゲートウェイ）を accepted** とする。Issue #250 の実機検証（`docs/validation/dogfooding-log.md` §7-11）で LiteLLM ゲートウェイ・アプリ無変更により Gemini/Groq へ疎通でき、Groq Llama 3.3 70B が実用品質で完走することを確認した。これを受け [ADR-0029](./0029-free-llm-api-selection.md) は無料ルートを Groq（ゲートウェイ経由）に再決定した。
+>
+> **中長期（恒久方式）は引き続き保留**。下記 Decision のとおり、Anthropic 少額従量 / OpenRouter BYOK 継続なら現状維持、OpenAI 互換ベンダー恒久採用ならゲートウェイ恒久化 or 方向2′（自前 interface）へ移行。いずれを採るかは運用実績を見て判断し、必要時に本 ADR を更新する。
 
 ## Context
 
