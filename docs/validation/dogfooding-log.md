@@ -315,3 +315,161 @@ ADR-0029 の「ローカル無料代替案」としての Ollama の前提（**G
 3. GPU 環境を別途用意して Ollama 70B（本検証スコープ外）
 
 **Issue #229 の受け入れ条件 2（本アプリで 1 回成功）は現スペックでは満たせないため、Issue 上のクローズ判断は本ログ + free-llm-setup.md 更新をもって「検証完了・結論: 現スペックでは不可」とする**。GPU 環境での再検証は本プロジェクトの方針としては実施しない（検証用 GPU 環境を確保できないため）。完全無料運用パスを必要とする場合は、上記 3 候補（OpenRouter BYOK / Anthropic 少額従量 / 別途 GPU 環境）から選択する。
+
+## 7. 無料 LLM API 市場調査と ADR-0029 再評価 (Issue #250)
+
+ADR-0029 が採用した 2 ルート（OpenRouter `:free` / Ollama ローカル）が両方とも実機で前提を覆された（§6 / #212 / #246）ため、別ルート（Gemini / Groq 等）を市場調査し、本アプリで実機検証して ADR-0029 を再評価する。本節は **市場調査フェーズ**（携帯/DevContainer で完結する範囲）の結果と、実機検証フェーズの **PC 引き継ぎ runbook** を記録する。
+
+### 7-1. 調査メタデータ
+
+```text
+実施日: 2026-06-02
+フェーズ: 市場調査（実機検証は PC 引き継ぎ）
+本アプリ要件（docs/design/llm-integration.md より）:
+  - Investigation Agent ×4 並列: temperature 0.3 / max_tokens 1,500 / 入力 ~3,500 → 1 リクエスト ~5,000 tokens
+  - Integration Agent ×1:       temperature 0.2 / max_tokens 8,000 / 入力 ~4,400 → 1 リクエスト ~12,400 tokens
+  - 1 実行 = ~5 リクエスト / SDK timeout 120 秒（llm-client.ts:28）
+  - 切替点は LLM_BASE_URL + LLM_API_KEY（Anthropic SDK の /v1/messages を前提）
+選定の必須条件:
+  - Max Output Tokens ≥ 8,000（Integration の出力切れ防止）
+  - Context Window ≥ ~13K（入力 ~4.4K + 出力 ~8K = ~12.4K）
+  - Anthropic /v1/messages を話せる（話せない場合はブリッジ or コード変更が必要 → 7-2）
+```
+
+### 7-2. 決定的所見: 候補は全て「非 Anthropic 互換（OpenAI 互換のみ）」
+
+調査した候補（Gemini / Groq / Cerebras / DeepSeek / Mistral / GitHub Models / Together / Fireworks）は **いずれもネイティブな Anthropic `/v1/messages` を提供しない**。すべて OpenAI Chat Completions 互換（一部は独自形式併設）。これは ADR-0029 が Groq / Gemini を「コード変更必要」として却下した壁と同一で、2026 年時点でも解消していない。
+
+本アプリは ADR-0020 で Anthropic SDK ネイティブ（`client.messages.stream()` → `/v1/messages`）を採用しているため、これら候補に到達するには次のいずれかが必要:
+
+| 方式 | 概要 | アプリのコード変更 | ADR への影響 |
+| --- | --- | --- | --- |
+| A. 変換ゲートウェイ/プロキシ | LiteLLM / Braintrust gateway / `groq-for-claude-code` 等が `/v1/messages` を受け、OpenAI 互換へ変換して各ベンダーへ転送 | **不要**（`LLM_BASE_URL` をプロキシに向けるのみ） | ADR-0029 の「コード変更なし」思想を維持。プロキシ採用を ADR に記録 |
+| B. SDK 境界の拡張 | `llm-client.ts` に OpenAI 互換クライアント対応を追加 | 必要 | ADR-0020 が義務付ける **Interface 抽出 ADR** が必要（2 つ目の provider 形状の現実化） |
+
+### 7-3. 学習ポイント: マルチベンダー LLM 対応のベストプラクティス
+
+複数ベンダーのモデルを 1 つのアプリで扱う際の業界標準パターンは 3 つ。本アプリの選定はこの軸で整理できる。
+
+1. **ゲートウェイ/プロキシ層**（LiteLLM・OpenRouter・Portkey・Cloudflare AI Gateway・Braintrust 等）
+   - アプリは単一エンドポイント（多くは OpenAI 互換、一部は Anthropic 互換）にだけ話し、ベンダー差はゲートウェイが吸収する。
+   - 利点: アプリ無変更でベンダー追加／切替、認証・リトライ・フォールバック・コスト計測・可観測性を 1 箇所に集約。
+   - 欠点: ホップが 1 つ増える（レイテンシ・障害点）、データが経由先を通る（OSS の LiteLLM をローカル/自前ホストすれば緩和できる）。
+2. **アプリ内アダプタ抽象化**（自前の `LlmProvider` インターフェース + ベンダー別実装）
+   - 利点: 外部依存なし、境界を自分で所有。
+   - 欠点: ストリーミング差・エラー形・トークナイザ差を自分で保守。本プロジェクトでは ADR-0020 が Interface 抽出 ADR を要求する。
+3. **OpenAI 方言への一本化**
+   - 事実上の業界標準は OpenAI Chat Completions であり、大半のベンダー（Groq/Gemini/Cerebras/DeepSeek/Mistral/Together/Fireworks）が OpenAI 互換を提供し、**Anthropic が外れ値**。「OpenAI 方言を話す」アプリは到達可能ベンダーが最大化する。
+   - 本アプリは ADR-0020 で Anthropic SDK を採用したため、いまこの標準から外れたコスト（= 7-2 のブリッジ必要性）を払っている。
+
+**本プロジェクト（ADR-0002 学習目的）への含意**:
+
+- **短期（検証フェーズ）**: 方式 A（LiteLLM をローカル起動）が最小コスト。アプリ無変更で Gemini/Groq に到達でき、ADR-0029 の「コード変更なし」思想と整合する。→ 7-7 runbook はこれを主軸にする。
+- **中長期（恒久運用）**: 「OpenAI 互換を第一級の SDK 境界にするか」を ADR で判断する論点になる。寄せれば到達ベンダーが最大化するが、ADR-0020（Anthropic SDK ネイティブ）の supersede が必要。検証結果を見て判断する。
+
+### 7-4. 無料枠スペック比較表
+
+> レート制限・無料枠はベンダーが頻繁に変更する。下表は 2026 年 6 月時点の調査値（出典は 7-9）。**実運用前に各 console で最新値を必ず確認すること**（= マルチベンダー運用のベストプラクティスの 1 つ）。
+
+| サービス / モデル | 無料枠（RPM / RPD / TPM） | Context | Max Output | API 形式 | データ利用 | 本アプリ適合（要点） |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Gemini 2.5 Flash** | ~10 RPM / ~250 RPD / ~250K TPM（要 console 確認。過去は 15 / 1,500 / 1M） | 1M | 65,536 | OpenAI 互換 + 独自（Anthropic 非対応） | ⚠️ **無料枠はプロンプトが学習に利用される**（有料/Vertex は対象外） | TPM・Context・Max Output いずれも余裕。RPD 250 でも 1 実行 ~5 req で ~50 実行/日。**ブリッジ必須 + プライバシー留意** |
+| **Groq / Llama 3.3 70B (versatile)** | 30 RPM / 1,000 RPD / **6,000 TPM** / 500K TPD | 128K | 32,768 | OpenAI 互換（Anthropic 非対応） | 学習利用なしと明記 | 超高速（数百 tok/s）だが **TPM 6,000 が致命的**: Integration 単発 ~12.4K tokens が 1 分枠を超過。Dev tier / BYOK が事実上前提。ブリッジ必須 |
+| Cerebras / Llama 3.x | 30 RPM / 1M TPD / 60–100K TPM | **8,192（暫定上限）** | — | OpenAI 互換 | — | Context 8,192 では 入力 ~4.4K + 出力 8K = ~12.4K が収まらず **Integration 不可** |
+| DeepSeek (V3) | サインアップ 500 万 tokens（30 日）、以降従量（激安）。ハードな RPM 制限なし | 64K | 8,192 | OpenAI 互換 | — | コーディング系で高品質・準無料。**恒久無料ではない**。ブリッジ必須 |
+| Mistral La Plateforme | 10 億 tokens/月 / **2 RPM** | 128K（Codestral 256K） | モデル依存 | OpenAI 互換 | — | **2 RPM で Investigation ×4 並列が即 429**。ブリッジ必須 |
+| GitHub Models | アカウントのみ・低レート（検証用） | モデル依存 | モデル依存 | Azure / OpenAI 互換 | — | プロトタイプ用途。継続運用枠は限定的 |
+| Together AI | $25 サインアップクレジット | モデル依存 | モデル依存 | OpenAI 互換 | — | 試用クレジット型（**恒久無料でない**） |
+| Fireworks AI | $1 サインアップクレジット | モデル依存 | モデル依存 | OpenAI 互換 | — | 試用クレジット型（少額・**恒久無料でない**） |
+
+### 7-5. 絞り込み結果（実機検証の対象）
+
+要件（Max Output ≥ 8K / Context ≥ ~13K / レート現実性）と Issue の受け入れ条件から、実機検証フェーズの対象を以下に絞る。
+
+| 優先度 | サービス | 採否理由 |
+| --- | --- | --- |
+| 一次（必須） | **Gemini 2.5 Flash** | スペックは全要件を満たす。残る論点は「ブリッジ経由の疎通」と「無料枠の学習利用（プライバシー）」のみ。検証価値が最も高い |
+| 一次（必須） | **Groq / Llama 3.3 70B** | 受け入れ条件で必須。ただし **TPM 6,000 で Integration 完走は free tier では困難**な見込み。Dev tier / BYOK 切替も視野に検証する |
+| 二次（任意・推奨） | **DeepSeek V3** | OpenAI 互換・高品質・準無料。サインアップクレジットで 1 実行は十分検証可能 |
+| 除外 | Cerebras | Context 8,192 で Integration の入出力が収まらない |
+| 除外 | Mistral | 2 RPM で並列 Investigation が成立しない |
+| 除外 | GitHub Models / Together / Fireworks | 恒久無料でない、または検証用低レート枠のみ。一次/二次が不調な場合の予備 |
+
+### 7-6. 受け入れ条件の進捗（市場調査フェーズ分）
+
+| # | 受け入れ条件 | フェーズ | 状態 |
+| - | --- | --- | --- |
+| 1 | 候補の無料枠仕様を比較表で整理 | 市場調査 | ✅ 完了（7-4） |
+| 2 | Gemini（Flash）で競合調査テンプレートが 1 回成功 | 実機検証 | ⏳ PC 引き継ぎ（7-7） |
+| 3 | Groq（Llama 3.3 70B）で 1 回成功 | 実機検証 | ⏳ PC 引き継ぎ（TPM 制約に留意） |
+| 4 | 有望な二次候補を追加検証（任意） | 実機検証 | ⏳ PC 引き継ぎ（DeepSeek 推奨） |
+| 5 | 各候補の評価軸を記録 | 実機検証 | ⏳ PC 引き継ぎ（本 §7 に追記） |
+| 6 | ADR-0029 を更新し無料運用ルートを再決定 | 再決定 | ⏳ 検証結果待ち |
+| 7 | free-llm-setup.md を再構成 | 再決定 | ⏳ 再決定後 |
+
+### 7-7. PC 引き継ぎ runbook（実機検証フェーズ）
+
+実機検証は API キー発行・ローカルプロキシ起動・アプリ実行を伴うため PC で実施する。方式 A（LiteLLM ゲートウェイ）を主軸とする（7-3 の結論）。
+
+**前提**: 本リポジトリを clone 済み、DevContainer 起動可能、`bun run dev` で起動できること。
+
+1. **API キー発行（カード/クレジット入金不要）**
+   - Gemini: [aistudio.google.com](https://aistudio.google.com) → Get API key（`AIza...`）
+   - Groq: [console.groq.com](https://console.groq.com) → API Keys（`gsk_...`）。free tier の TPM 6,000 制約に留意
+   - （任意）DeepSeek: [platform.deepseek.com](https://platform.deepseek.com) → API Keys
+2. **LiteLLM プロキシを起動**（`/v1/messages` を受けて OpenAI 互換へ変換するブリッジ）
+   - `pip install 'litellm[proxy]'` または Docker
+   - `config.yaml` に `model_list` を定義（例: `gemini/gemini-2.5-flash` / `groq/llama-3.3-70b-versatile`）、各 `*_API_KEY` を env で渡す
+   - `litellm --config config.yaml` で `http://localhost:4000` 起動。Anthropic 形式の入力受理を有効化（LiteLLM の Anthropic `/v1/messages` パススルー）
+3. **アプリ env を差し替え**（`apps/api/.env`）
+   - `LLM_BASE_URL=http://host.docker.internal:4000`（DevContainer から到達するため。ホスト直なら `http://localhost:4000`）
+   - `LLM_API_KEY=<LiteLLM master key（未設定ならダミー文字列）>`（`llm-client.ts` のロード時検証回避用）
+   - DB テンプレートの model を切替（§6 の Ollama 手順と同形式の SQL UPDATE）:
+
+     ```bash
+     # Gemini で検証する場合（Groq は 'llama-3.3-70b-versatile' に差し替え）
+     psql "$DATABASE_URL" -c "UPDATE templates SET definition = jsonb_set(definition, '{llm,model}', '\"gemini-2.5-flash\"') WHERE name = '競合調査';"
+     ```
+
+   - `max_tokens=8000`（Integration）が各モデルの Max Output 内であることを確認（Gemini 65,536 / Groq 32,768 とも OK）
+4. **疎通確認**
+
+   ```bash
+   curl -X POST http://localhost:4000/v1/messages \
+     -H "Content-Type: application/json" \
+     -H "x-api-key: $LLM_API_KEY" \
+     -H "anthropic-version: 2023-06-01" \
+     -d '{"model":"gemini-2.5-flash","messages":[{"role":"user","content":"Hello"}],"max_tokens":100}'
+   ```
+
+   → HTTP 200 が返れば次へ。
+5. **テンプレート 1 実行**: 競合調査テンプレートを起動し、**Investigation ×4 + Integration ×1 が全て完了**することを確認。
+   - Groq は TPM 6,000 で `429` が出る可能性 → リクエスト間隔を空ける / Dev tier・BYOK へ切替を検討
+   - Gemini は RPD 250 / RPM ~10 の範囲内（1 実行 ~5 req なので余裕）
+6. **品質比較（Issue §3）**: 出力を §5（Anthropic 本家）と比較し、評価軸を本 §7 に追記する:
+   - JSON 構造化出力の安定性（パース成功率・スキーマ準拠）
+   - マトリクスの整合性（3 社 × 4 観点の欠落・矛盾）
+   - ドメイン知識の網羅性（Dify / n8n / Zapier 等の実在機能を正しく把握しているか）
+   - 無料枠の実態（疎通可否・完走可否・遭遇したレート制限・所要時間）
+7. **二次候補（任意）**: DeepSeek を同様に LiteLLM 経由で 1 実行。
+8. **再決定**: 結果をもとに **ADR-0029 を更新**（現実的な無料/低コスト運用ルートの再決定 — 方式 A のプロキシ採用を含むか、Anthropic 少額従量 / OpenRouter BYOK 継続かを判断）し、**`free-llm-setup.md` を再構成**する。方式 B（SDK 境界拡張）を選ぶ場合は ADR-0020 supersede の新 ADR を別途切る。
+
+### 7-8. 結論（市場調査フェーズ）
+
+- 候補は全て **非 Anthropic 互換**。本アプリで使うには **ブリッジ（推奨: LiteLLM プロキシ・アプリ無変更）か SDK 境界拡張（要 ADR）** が必須。
+- スペック上の実機検証対象は **Gemini 2.5 Flash（本命）/ Groq Llama 3.3 70B（TPM 制約に留意）/ DeepSeek V3（任意・準無料）**。Cerebras・Mistral・GitHub Models・Together・Fireworks は要件未達または恒久無料でないため除外/予備。
+- ADR-0029 の再決定と free-llm-setup.md 再構成は **実機検証の結果を待って** 実施する（7-7 runbook で PC に引き継ぐ）。
+
+### 7-9. 出典
+
+- Gemini OpenAI 互換のみ（Anthropic 非対応）: [OpenAI compatibility | Gemini API](https://ai.google.dev/gemini-api/docs/openai)、[Call Gemini with the Anthropic SDK | Braintrust](https://www.braintrust.dev/articles/call-gemini-with-anthropic-sdk)
+- Gemini 無料枠・学習利用: [Rate limits | Gemini API](https://ai.google.dev/gemini-api/docs/rate-limits)、[Gemini API Free Tier 2026 | TokenMix](https://tokenmix.ai/blog/gemini-api-free-tier-limits)
+- Gemini 2.5 Flash Context/Max Output: [Models | Gemini API](https://ai.google.dev/gemini-api/docs/models)
+- Groq に Anthropic エンドポイントなし（feature request 段階）: [Feature Request: Anthropic API Endpoint | Groq Community](https://community.groq.com/t/feature-request-anthropic-api-endpoint/380)、[groq-for-claude-code（変換プロキシ）](https://github.com/wearedevx/groq-for-claude-code)
+- Groq 無料枠（30 RPM / 1,000 RPD / 6,000 TPM）: [Rate Limits | GroqDocs](https://console.groq.com/docs/rate-limits)、[Groq Free Tier 2026 | TokenMix](https://tokenmix.ai/blog/groq-free-tier-limits-2026)
+- Groq Llama 3.3 70B Context/Max Output: [Llama-3.3-70B-Versatile | GroqDocs](https://console.groq.com/docs/model/llama-3.3-70b-versatile)
+- Cerebras（1M tokens/day・8,192 context cap・OpenAI 互換）: [Cerebras Free Tier 2026 | TokenMix](https://tokenmix.ai/blog/cerebras-api-key-rate-limits-free-tier-2026)、[OpenAI Compatibility | Cerebras](https://inference-docs.cerebras.ai/resources/openai)
+- DeepSeek / Mistral 無料枠・OpenAI 互換: [Free LLM APIs 2026 | TokenMix](https://tokenmix.ai/blog/free-llm-apis-2026-every-provider-free-tier-tested)
+- GitHub Models 無料枠: [GitHub Models billing | GitHub Docs](https://docs.github.com/billing/managing-billing-for-your-products/about-billing-for-github-models)
+- Together $25 / Fireworks $1 クレジット: [Together AI Free Credits 2026](https://www.getaiperks.com/en/ai/together-ai-free-credits-2026)、[Fireworks AI Free Tier 2026](https://pricepertoken.com/endpoints/fireworks/free)
+- LiteLLM Anthropic `/v1/messages` 対応: [Anthropic API Compatibility | LLM Gateway docs](https://docs.llmgateway.io/features/anthropic-endpoint)
