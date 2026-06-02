@@ -148,6 +148,8 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 - **Anthropic 本家への継続依存** — 従量課金によるコスト増加のリスク
   - **緩和策**: 本 Decision により 2 つの無料代替案（OpenRouter / Ollama）を用意。将来 OpenRouter / Ollama への完全移行が必要になった場合は本 ADR を supersede する新 ADR を切る
 
+> **注**: 上記 Consequences は当初決定（OpenRouter / Ollama）のもの。現行の無料ルート（Groq・ゲートウェイ経由）のリスク（TPM 6,000 制約等）は「## 再決定 §留意」を参照。
+
 ### 中立
 
 - **ADR-0020 の Interface 抽出義務について**: ADR-0020 に「2 つ目の provider が現実化した場合は Interface 抽出 ADR を切る義務」と記述があるが、本決定では OpenRouter と Ollama が両者とも Anthropic 互換エンドポイント（`/v1/messages`）を実装するため、`llm-client.ts` の公開型（Domain Types）は変わらず、既存の Anthropic 互換抽象化で十分。したがって Interface 抽出 ADR は不要
