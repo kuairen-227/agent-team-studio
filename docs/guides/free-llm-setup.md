@@ -7,7 +7,7 @@ LLM プロバイダは環境変数（`LLM_BASE_URL` / `LLM_API_KEY`）と DB テ
 
 参照: [ADR-0029（無料 LLM API の選定）](../adr/0029-free-llm-api-selection.md) / [ADR-0032（マルチベンダー対応方式 = ゲートウェイ）](../adr/0032-llm-multi-vendor-strategy.md)
 
-> **背景（重要）**: 当初の無料ルート（OpenRouter `:free` / Ollama ローカル）は実機検証で前提が崩れた（`:free` は実質クレジット入金必須 #212 / Ollama は CPU 推論で速度不足 #229・#246）。代替候補（Gemini / Groq 等）は **いずれも Anthropic 非互換（OpenAI 互換のみ）** のため、本アプリ（Anthropic SDK ネイティブ）から使うには **変換ゲートウェイ**を挟む。実測の結果 **Groq が無料枠で最も実用的**、Gemini 無料枠は JSON 構造化出力が不安定で非推奨（後述）。
+> **背景（重要）**: 当初の無料ルート（OpenRouter `:free` / Ollama ローカル）は実機検証で前提が崩れた（`:free` は実質クレジット入金必須 #212 / Ollama は CPU 推論で速度不足 #229・#246）。代替候補（Gemini / Groq 等）は **いずれも Anthropic 非互換（OpenAI 互換のみ）** のため、本アプリ（Anthropic SDK ネイティブ）から使うには **変換ゲートウェイ**を挟む。実測の結果 **Groq が無料枠で最も実用的**、Gemini 無料枠は **現アプリの parser 実装のままでは** JSON 構造化出力が不安定で非推奨（後述）。
 
 ## 選択フロー
 
@@ -21,11 +21,12 @@ LLM API の選択
   │  └─ Groq Llama 3.3 70B + LiteLLM ゲートウェイ（Option B）
   │     - 実測 4/4 完走・JSON 安定・マトリクス充実
   │     - 超高速・学習利用なし
+  │     - 留意: ローカルで LiteLLM コンテナの起動が 1 ステップ必要
   │     - 留意: free tier は TPM 6,000（連続/大入力で 429 リスク）
   │
-  └─ 条件付きの代替
-     ├─ OpenRouter BYOK（Option C）— :free は入金実質必須
-     └─ Ollama（Option D）— GPU 推論環境が事実上の前提（CPU は実用不可）
+  └─ 条件付きの代替（Groq の TPM 6,000 が連続/大入力で足りない、または GPU 環境がある等の場合）
+     ├─ OpenRouter BYOK（Option C）— :free は入金実質必須。自前キーでレート枠を拡張したいとき
+     └─ Ollama（Option D）— GPU 推論環境が事実上の前提（CPU は実用不可）。完全ローカル/オフラインにしたいとき
 ```
 
 ## Option A: Anthropic 本家（推奨デフォルト）
@@ -250,6 +251,8 @@ cat apps/api/.env   # 現在の設定を確認
 ---
 
 ## プロバイダー切替時のチェックリスト
+
+> 上記 Option A〜D のいずれかをそのまま使う場合は不要。**新規プロバイダーを追加・切替する際の確認リスト**。
 
 `max_tokens_by_role.integration=8000` がプロジェクトの最低要件（[llm-integration.md](../design/llm-integration.md)）。
 
