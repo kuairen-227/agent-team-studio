@@ -2,10 +2,12 @@
 
 ## Status
 
-accepted
+accepted（再評価中 — Issue #250 / [ADR-0032](./0032-llm-multi-vendor-strategy.md)）
 
 - 作成日: 2026-05-10
-- 関連: ADR-0020（Anthropic SDK 選定）, Issue #156
+- 関連: ADR-0020（Anthropic SDK 選定）, Issue #156, Issue #250（採用 2 ルートの前提崩れと再評価）, ADR-0032（対応方式の選定）
+
+> **再評価中**: 本 ADR が採用した 2 ルートは実機検証で前提が覆れた — OpenRouter `:free` はクレジット入金が事実上必須（#212）、Ollama ローカルは消費者 CPU 推論で速度不足（#229 / PR #246）。Issue #250 で別ルート（Gemini / Groq 等）を市場調査した結果、候補は全て非 Anthropic 互換と判明（`docs/validation/dogfooding-log.md` §7）。対応方式は [ADR-0032](./0032-llm-multi-vendor-strategy.md)（`proposed`）で選定済み。本 ADR の無料運用ルート再決定は #250 の実機検証完了後に行う。
 
 ## Context
 
