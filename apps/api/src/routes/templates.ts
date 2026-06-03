@@ -15,13 +15,14 @@ import type {
   GetTemplatesResponse,
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
+import type { AppEnv } from "../lib/logger.ts";
 import type { TemplatesService } from "../services/templates.ts";
 
 /** `GET /api/templates` と `GET /api/templates/:id` ルートを返すファクトリ。 */
 export function createTemplatesRoutes(deps: {
   templatesService: TemplatesService;
 }) {
-  const app = new Hono();
+  const app = new Hono<AppEnv>();
 
   app.get("/", async (c) => {
     const items = await deps.templatesService.listTemplates();

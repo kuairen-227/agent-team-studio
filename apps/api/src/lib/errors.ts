@@ -70,7 +70,10 @@ export const onError: ErrorHandler<AppEnv> = (err, c) => {
     return c.json(body, 404);
   }
 
-  // request-scoped logger があれば使い、なければ（middleware 未通過の経路）ベースロガーへ退避する。
+  // request-scoped logger があれば使い、なければベースロガーへ退避する。
+  // 現構成では onError が requestId() middleware より前に登録されるため通常は
+  // logger が必ず set されているが、将来 onError 前で throw しうる middleware が
+  // 追加された場合にログを欠落させないための安全網として ?? を保持する。
   (c.get("logger") ?? logger).error({ err }, "unhandled internal error");
 
   const body: ApiInternalError = {
