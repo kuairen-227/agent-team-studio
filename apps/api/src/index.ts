@@ -26,6 +26,7 @@ import {
 import type { AgentRole } from "@agent-team-studio/shared";
 import { createApp } from "./app.ts";
 import { createEventHub } from "./lib/event-hub.ts";
+import { logger } from "./lib/logger.ts";
 import { websocket } from "./lib/ws.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -36,6 +37,10 @@ if (!databaseUrl) {
 const { db } = createDbClient(databaseUrl);
 
 const eventHub = createEventHub();
+
+// engine 経路は 202 受理後の fire-and-forget で HTTP request コンテキスト外のため、
+// request-id ではなく executionId を bind してログする（API→engine の ID 伝搬は #239）。
+const engineLogger = logger.child({ component: "engine" });
 
 /**
  * Execution を取得してエンジンを起動する。
@@ -48,7 +53,7 @@ async function launchEngine(executionId: string): Promise<void> {
     getAgentExecutionsByExecutionId(db, executionId),
   ]);
   if (!execution) {
-    console.error(`[engine] execution not found: ${executionId}`);
+    engineLogger.error({ executionId }, "execution not found");
     eventHub.publish(executionId, {
       kind: "execution_failed",
       reason: "internal_error",
@@ -57,7 +62,10 @@ async function launchEngine(executionId: string): Promise<void> {
   }
   const template = await getTemplateById(db, execution.templateId);
   if (!template) {
-    console.error(`[engine] template not found: ${execution.templateId}`);
+    engineLogger.error(
+      { executionId, templateId: execution.templateId },
+      "template not found",
+    );
     eventHub.publish(executionId, {
       kind: "execution_failed",
       reason: "internal_error",
@@ -97,7 +105,7 @@ const app = createApp({
   listExecutions: () => listExecutions(db),
   startExecution: (executionId) => {
     launchEngine(executionId).catch((err) => {
-      console.error(`[engine] failed for ${executionId}:`, err);
+      engineLogger.error({ executionId, err }, "engine failed");
       eventHub.publish(executionId, {
         kind: "execution_failed",
         reason: "internal_error",

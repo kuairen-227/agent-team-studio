@@ -18,7 +18,9 @@ import type {
   TemplateSummary,
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
+import { requestId } from "hono/request-id";
 import { onError } from "./lib/errors.ts";
+import { type AppEnv, logger } from "./lib/logger.ts";
 // API モジュール全体で Zod のロケールを日本語に統一する副作用 import。
 // 個別 service ではなく app.ts で一括設定し、新しい service が追加されても
 // import 順に依存しないようにする。
@@ -58,9 +60,27 @@ export type AppDeps = {
 };
 
 export function createApp(deps: AppDeps) {
-  const app = new Hono();
+  const app = new Hono<AppEnv>();
 
   app.onError(onError);
+
+  // request-id を払い出し（レスポンスヘッダ X-Request-Id にも付与）、
+  // それを bind した request-scoped child logger を context に格納する。
+  app.use("*", requestId());
+  app.use("*", async (c, next) => {
+    c.set("logger", logger.child({ requestId: c.get("requestId") }));
+    const start = performance.now();
+    await next();
+    c.get("logger").info(
+      {
+        method: c.req.method,
+        path: c.req.path,
+        status: c.res.status,
+        latencyMs: Math.round(performance.now() - start),
+      },
+      "request completed",
+    );
+  });
 
   app.get("/health", (c) => c.json({ status: "ok" }));
 

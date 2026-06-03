@@ -18,6 +18,7 @@ import {
   type WsMessage,
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
+import type { AppEnv } from "../lib/logger.ts";
 import { upgradeWebSocket } from "../lib/ws.ts";
 import type { ExecutionsService } from "../services/executions.ts";
 
@@ -38,7 +39,7 @@ export function createWsRoutes(deps: {
     handler: (event: AgentEvent) => void,
   ) => () => void;
 }) {
-  const app = new Hono();
+  const app = new Hono<AppEnv>();
 
   app.get(
     "/",

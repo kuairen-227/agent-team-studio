@@ -17,13 +17,14 @@ import type {
 } from "@agent-team-studio/shared";
 import { Hono } from "hono";
 import { NotFoundError, ValidationError } from "../lib/errors.ts";
+import type { AppEnv } from "../lib/logger.ts";
 import type { ExecutionsService } from "../services/executions.ts";
 
 export function createExecutionsRoutes(deps: {
   executionsService: ExecutionsService;
   startExecution: (executionId: string) => void;
 }) {
-  const app = new Hono();
+  const app = new Hono<AppEnv>();
 
   app.post("/", async (c) => {
     let body: CreateExecutionRequest;
