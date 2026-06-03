@@ -12,6 +12,7 @@ import type {
   ApiValidationError,
 } from "@agent-team-studio/shared";
 import type { ErrorHandler } from "hono";
+import { type AppEnv, logger } from "./logger.ts";
 
 /** リソース不在を表す例外。`onError` が 404 レスポンスに整形する。 */
 export class NotFoundError extends Error {
@@ -44,8 +45,13 @@ const NOT_FOUND_MESSAGES: Record<
   execution: "指定された実行が見つかりません",
 };
 
-/** `NotFoundError`・`ValidationError`・その他例外を HTTP レスポンスに整形する Hono エラーハンドラ。 */
-export const onError: ErrorHandler = (err, c) => {
+/**
+ * `NotFoundError`・`ValidationError`・その他例外を HTTP レスポンスに整形する Hono エラーハンドラ。
+ *
+ * `NotFoundError` / `ValidationError` は想定内の業務エラーのためログしない。
+ * それ以外（内部例外）は 500 に集約しつつ、原因追跡のため request-id 付きで error ログを残す。
+ */
+export const onError: ErrorHandler<AppEnv> = (err, c) => {
   if (err instanceof ValidationError) {
     const body: ApiValidationError = {
       errorCode: "validation_error",
@@ -63,6 +69,9 @@ export const onError: ErrorHandler = (err, c) => {
     };
     return c.json(body, 404);
   }
+
+  // request-scoped logger があれば使い、なければ（middleware 未通過の経路）ベースロガーへ退避する。
+  (c.get("logger") ?? logger).error({ err }, "unhandled internal error");
 
   const body: ApiInternalError = {
     errorCode: "internal_error",
