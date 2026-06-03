@@ -81,6 +81,7 @@
       "Bash(gh run rerun:*)",
       "Bash(gh run view:*)",
       "Bash(npm info:*)",
+      "Bash(npm view:*)",
       "Bash(wait:*)"
     ],
     "deny": [

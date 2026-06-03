@@ -23,6 +23,7 @@ jobs:
       - run: bun run lint:md
       - run: bun run lint:md-links
       - run: bun run lint:secret
+      - run: bun run lint:spell
 
   type-check:
     runs-on: ubuntu-latest
