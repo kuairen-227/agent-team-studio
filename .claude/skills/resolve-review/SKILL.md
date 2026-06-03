@@ -1,7 +1,7 @@
 ---
 name: resolve-review
 description: PR のレビュー指摘を読み取り、各指摘を評価・対応する。
-when_to_use: ユーザーが「レビュー対応して」「レビューコメント処理して」「指摘対応して」「レビュー修正して」「PR指摘直して」などと言ったとき
+when_to_use: ユーザーが「レビュー対応して」「レビューコメント処理して」「指摘対応して」「レビュー修正して」「PR指摘直して」「rr」（このスキルの略称。単独で言われた場合は resolve-review の起動意図か一言確認してから起動する）などと言ったとき
 argument-hint: "<pr-number>"
 allowed-tools: Bash(gh pr view:*) Bash(gh pr diff:*) Bash(gh pr comment:*) Bash(git status:*) Bash(git log:*) Bash(git diff:*) Bash(git branch:*) Bash(git add:*) Bash(git commit:*) Bash(bun run:*) Read Grep Glob Edit Write
 ---
