@@ -5,7 +5,8 @@
     ".claude/status-line-command.sh",
     ".devcontainer/devcontainer.json",
     ".devcontainer/devcontainer-lock.json",
-    "bun.lock"
+    "bun.lock",
+    "packages/db/drizzle/**"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -32,7 +33,6 @@
     "Fitts",
     "fontsource",
     "frontmatter",
-    "gamora",
     "Globex",
     "Groq",
     "healthcheck",
