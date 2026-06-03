@@ -40,6 +40,18 @@ describe("resolveLevel", () => {
     process.env.NODE_ENV = "production";
     expect(resolveLevel()).toBe("info");
   });
+
+  test("LOG_LEVEL・NODE_ENV 両方未設定なら info", () => {
+    delete process.env.LOG_LEVEL;
+    delete process.env.NODE_ENV;
+    expect(resolveLevel()).toBe("info");
+  });
+
+  test("LOG_LEVEL が空文字なら未指定扱い（NODE_ENV フォールバック）", () => {
+    process.env.LOG_LEVEL = "";
+    process.env.NODE_ENV = "test";
+    expect(resolveLevel()).toBe("silent");
+  });
 });
 
 /** 保存値が undefined なら削除、そうでなければ再設定する。 */
