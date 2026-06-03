@@ -3,19 +3,22 @@
  *
  * 出力は JSON を stdout へ。ログレベルは `LOG_LEVEL`（既定 info、テスト時 silent）で制御する。
  * request 単位の相関は app.ts で request-id を child binding して用いる。
- * 選定根拠・運用方針は ADR-0033 / docs/design/technotes/logging.md を SSoT とする。
+ * `err` キーは pino のデフォルトシリアライザ（pino-std-serializers）で
+ * `{ type, message, stack }` に展開されるため、明示的なシリアライザ設定は不要。
+ * 選定根拠・運用方針は ADR-0033 / docs/design/logging.md を SSoT とする。
  */
 
 import type { RequestIdVariables } from "hono/request-id";
-import { pino } from "pino";
+import { type LevelWithSilent, pino } from "pino";
 
 /**
  * ログレベルを解決する。明示の `LOG_LEVEL` が最優先。
  * テスト実行（`NODE_ENV=test`）ではログ出力でテスト結果を汚さないよう silent を既定にする。
  */
-function resolveLevel(): string {
+export function resolveLevel(): LevelWithSilent {
   if (process.env.LOG_LEVEL) {
-    return process.env.LOG_LEVEL;
+    // LOG_LEVEL は任意文字列のため型表明できない。無効値は pino が起動時に検知する。
+    return process.env.LOG_LEVEL as LevelWithSilent;
   }
   return process.env.NODE_ENV === "test" ? "silent" : "info";
 }
@@ -31,7 +34,9 @@ export const logger = pino({
   // 機密フィールドをログ出力から除外する。req.headers 配下の認証情報と、
   // 機密フィールド名（apiKey/api_key/token/password）をトップレベルと 1 階層下で censor する。
   // pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため、トップレベルと
-  // `*.<field>` を併記する（任意深度はカバーしない。詳細は docs/design/logging.md）。
+  // `*.<field>` を併記する。任意深度はカバーしないため、深くネストしたオブジェクト
+  // （LLM レスポンス等）はそのまま渡さず、ログ前に機密フィールドを除去すること
+  // （詳細は docs/design/logging.md）。
   redact: {
     paths: [
       "req.headers.authorization",
