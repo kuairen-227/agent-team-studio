@@ -16,8 +16,10 @@ import { type LevelWithSilent, pino } from "pino";
  * テスト実行（`NODE_ENV=test`）ではログ出力でテスト結果を汚さないよう silent を既定にする。
  */
 export function resolveLevel(): LevelWithSilent {
+  // 空文字は falsy のため未指定と同じ扱い（NODE_ENV フォールバックに落ちる）。
   if (process.env.LOG_LEVEL) {
-    // LOG_LEVEL は任意文字列のため型表明できない。無効値は pino が起動時に検知する。
+    // LOG_LEVEL は任意文字列のため型表明できない。無効値は pino の
+    // インスタンス生成時（`pino({...})` 呼び出し時）に検知される。
     return process.env.LOG_LEVEL as LevelWithSilent;
   }
   return process.env.NODE_ENV === "test" ? "silent" : "info";

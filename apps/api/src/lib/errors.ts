@@ -71,9 +71,10 @@ export const onError: ErrorHandler<AppEnv> = (err, c) => {
   }
 
   // request-scoped logger があれば使い、なければベースロガーへ退避する。
-  // 現構成では onError が requestId() middleware より前に登録されるため通常は
-  // logger が必ず set されているが、将来 onError 前で throw しうる middleware が
-  // 追加された場合にログを欠落させないための安全網として ?? を保持する。
+  // 通常フローでは requestId() と logger-bind middleware がルートハンドラより先に
+  // 実行されるため、ルート/サービス層からの throw 時には logger は set 済み。
+  // ただし logger-bind より前（requestId middleware 等）で throw した場合は未 set の
+  // ため、ログを欠落させない安全網として ?? でベースロガーへ退避する。
   (c.get("logger") ?? logger).error({ err }, "unhandled internal error");
 
   const body: ApiInternalError = {
