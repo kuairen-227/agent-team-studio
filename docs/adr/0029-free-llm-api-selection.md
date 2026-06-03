@@ -2,10 +2,12 @@
 
 ## Status
 
-accepted
+accepted（2026-06-02 再決定 — Issue #250 / [ADR-0032](./0032-llm-multi-vendor-strategy.md)。下記「## 再決定」を参照）
 
 - 作成日: 2026-05-10
-- 関連: ADR-0020（Anthropic SDK 選定）, Issue #156
+- 関連: ADR-0020（Anthropic SDK 選定）, Issue #156, Issue #250（採用 2 ルートの前提崩れと再決定）, ADR-0032（対応方式の選定）
+
+> **再決定済み（2026-06-02・Issue #250）**: 本 ADR が当初採用した 2 ルートは実機検証で前提が覆れた — OpenRouter `:free` はクレジット入金が事実上必須（#212）、Ollama ローカルは消費者 CPU 推論で速度不足（#229 / PR #246）。代替候補（Gemini / Groq 等）は全て非 Anthropic 互換と判明し（`docs/validation/dogfooding-log.md` §7-2）、対応方式は [ADR-0032](./0032-llm-multi-vendor-strategy.md)（ゲートウェイ）で選定。実機検証（§7-11）の結果、無料運用ルートを **Groq Llama 3.3 70B（LiteLLM ゲートウェイ経由）** に再決定した。詳細は本 ADR 末尾「## 再決定」。以下の Context / Considered Alternatives / Decision は当初（2026-05-10）の記録として残す。
 
 ## Context
 
@@ -146,6 +148,8 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 - **Anthropic 本家への継続依存** — 従量課金によるコスト増加のリスク
   - **緩和策**: 本 Decision により 2 つの無料代替案（OpenRouter / Ollama）を用意。将来 OpenRouter / Ollama への完全移行が必要になった場合は本 ADR を supersede する新 ADR を切る
 
+> **注**: 上記 Consequences は当初決定（OpenRouter / Ollama）のもの。現行の無料ルート（Groq・ゲートウェイ経由）のリスク（TPM 6,000 制約等）は「## 再決定 §留意」を参照。
+
 ### 中立
 
 - **ADR-0020 の Interface 抽出義務について**: ADR-0020 に「2 つ目の provider が現実化した場合は Interface 抽出 ADR を切る義務」と記述があるが、本決定では OpenRouter と Ollama が両者とも Anthropic 互換エンドポイント（`/v1/messages`）を実装するため、`llm-client.ts` の公開型（Domain Types）は変わらず、既存の Anthropic 互換抽象化で十分。したがって Interface 抽出 ADR は不要
@@ -153,6 +157,38 @@ LLM_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 ## デフォルト設定
 
-**本番デフォルト**: Anthropic 本家（既存の暫定運用を継続）。環境変数 `LLM_BASE_URL` で OpenRouter / Ollama に切り替え可能。
+**本番デフォルト**: Anthropic 本家（既存の暫定運用を継続）。環境変数 `LLM_BASE_URL` で切り替え可能。
 
-将来、OpenRouter / Ollama への完全移行が必要になった場合は、その時点で本 ADR を supersede する新 ADR を切る。
+無料運用ルートは下記「## 再決定」で OpenRouter `:free` / Ollama から Groq（ゲートウェイ経由）へ更新した。
+
+## 再決定（2026-06-02・Issue #250）
+
+### 背景
+
+当初 Decision の無料 2 ルートは実機で前提が崩れた:
+
+- **OpenRouter `:free`**: pre-flight reservation 仕様によりクレジット入金が事実上必須（#212）。「完全無料」ではない。
+- **Ollama ローカル**: 消費者向け CPU 推論では生成速度が SDK timeout（120 秒）に対し桁違いに不足（#229 / PR #246）。GPU 推論環境が事実上の前提。
+
+Issue #250 で別ルート（Gemini / Groq / Cerebras / DeepSeek / Mistral 等）を市場調査した結果、**候補は全て非 Anthropic 互換（OpenAI 互換のみ）**（`docs/validation/dogfooding-log.md` §7-2）。本アプリ（ADR-0020 で Anthropic SDK ネイティブ）から使うには変換ゲートウェイか SDK 境界拡張が必要で、その方式選定を [ADR-0032](./0032-llm-multi-vendor-strategy.md) に分離した（短期=ゲートウェイ採用）。
+
+### 実機検証の結果（§7-11）
+
+ゲートウェイ（LiteLLM・アプリ無変更）経由で実走:
+
+- **Groq Llama 3.3 70B**: 4/4 完走・JSON 安定・4 観点×3 社マトリクス充実。無料枠で §5 Anthropic に最も近い品質。
+- **Gemini 2.5 Flash**: exec は完走するが Investigation の過半が `output_parse_error` で脱落、実質出力は空（2 回再現）。加えて無料枠はプロンプトが学習利用される。
+
+### 再決定の内容
+
+1. **無料運用ルートを Groq Llama 3.3 70B（LiteLLM ゲートウェイ経由）に変更**する。方式は ADR-0032 方向1（アプリ無変更）。手順は [free-llm-setup.md](../guides/free-llm-setup.md) Option B。
+2. **OpenRouter `:free` / Ollama ローカルは推奨無料ルートから外す**。OpenRouter は BYOK（自前キー）なら引き続き利用可、Ollama は GPU 推論環境がある場合のみ。
+3. **Gemini 無料枠は非推奨**（JSON 不安定＋学習利用）。
+4. **Anthropic 本家は高品質・有料デフォルトとして継続**（変更なし）。
+5. ADR-0020 Interface 抽出義務との関係は ADR-0032 に委譲（短期はゲートウェイで公開型不変のため抽出不要、恒久方式は実測を踏まえ ADR-0032 で判断）。
+
+### 留意
+
+- Groq free tier は TPM 6,000。今回の単発実行では 429 未発生だが、入力増・連続実行では 429 リスクが残る（Dev tier / BYOK で緩和）。
+- 本再決定は「どのサービスを無料ルートにするか」を更新するもの。「どの方式で到達するか（ゲートウェイ / SDK 拡張）」は ADR-0032 が SSoT。
+- **追記方式の保守について**: 本 ADR は当初記録を残し「## 再決定」を追記する形を採っている。Status 行・本セクションの肥大化を避けるため、3 回目の再決定が発生する際は本 ADR を supersede する新 ADR に切り替える（ADR-0016 と同形式）。
