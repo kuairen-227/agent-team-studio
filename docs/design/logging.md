@@ -35,6 +35,8 @@ bun run dev | pino-pretty
 
 engine の fire-and-forget 経路（HTTP request コンテキスト外）は request-id を持たないため、`executionId` を bind する。API→engine→LLM への ID 伝搬は [Issue #239](https://github.com/kuairen-227/agent-team-studio/issues/239) の責務とする。
 
+> **エラー応答時のアクセスログ**: アクセスログ middleware は `await next()` 完了後に出力するため、ルート/サービス層が throw する経路（`onError` で整形される 400 / 404 / 500）では `"request completed"` を出力しない。500 は `onError` の error ログで追跡できるが、400 / 404 はアクセスログに残らない。全経路でのアクセスログ網羅は [Issue #256](https://github.com/kuairen-227/agent-team-studio/issues/256) で扱う。
+
 ## redact（機密フィールド除外）
 
 認証情報（`req.headers.authorization` / `cookie`）と、機密フィールド名（`apiKey` / `api_key` / `token` / `password`）を**トップレベルおよび 1 階層下**でログ出力から除外する（`[REDACTED]` に置換）。除外パスの具体定義は `apps/api/src/lib/logger.ts` の `redact.paths` を参照。
@@ -48,3 +50,4 @@ engine の fire-and-forget 経路（HTTP request コンテキスト外）は req
 - **apps/web**（ブラウザ）: フロントの可観測性は別途エラートラッキング（[Issue #237](https://github.com/kuairen-227/agent-team-studio/issues/237)）で扱う。
 - **packages/agent-core**（engine/LLM）: ライブラリのため具体ロガーに依存させない。logger 注入・ID 伝搬は [Issue #239](https://github.com/kuairen-227/agent-team-studio/issues/239) で扱う。
 - **packages/db**: CLI スクリプト（migrate / seed）は人間が直接実行する運用ツールのため、構造化ログの対象外。
+- **WebSocket ハンドラ**: `onOpen` / `onMessage` 等は Hono の request context 外で動作するため request-scoped logger の対象外（現状エラーはログに残らない）。WS の可観測性は必要になった時点で別途検討する。
