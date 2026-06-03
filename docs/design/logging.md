@@ -37,7 +37,9 @@ engine の fire-and-forget 経路（HTTP request コンテキスト外）は req
 
 ## redact（機密フィールド除外）
 
-認証情報（`authorization` / `cookie` ヘッダ）と、任意階層の `apiKey` / `api_key` / `token` / `password` をログ出力から除外する（`[REDACTED]` に置換）。除外パスの具体定義は `apps/api/src/lib/logger.ts` の `redact.paths` を参照。
+認証情報（`req.headers.authorization` / `cookie`）と、機密フィールド名（`apiKey` / `api_key` / `token` / `password`）を**トップレベルおよび 1 階層下**でログ出力から除外する（`[REDACTED]` に置換）。除外パスの具体定義は `apps/api/src/lib/logger.ts` の `redact.paths` を参照。
+
+> **深度の制約**: pino の redact パスの `*` は単一階層ワイルドカードで再帰（`**`）に非対応。そのため任意深度の機密フィールドは自動では落ちない。深くネストしたオブジェクトをログする場合は、ログ前に該当フィールドを除去するか、明示パスを追加すること。
 
 ## スコープ外
 

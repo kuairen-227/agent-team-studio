@@ -29,14 +29,20 @@ function resolveLevel(): string {
 export const logger = pino({
   level: resolveLevel(),
   // 機密フィールドをログ出力から除外する。req.headers 配下の認証情報と、
-  // 任意階層の api key / token / password を censor する。
+  // 機密フィールド名（apiKey/api_key/token/password）をトップレベルと 1 階層下で censor する。
+  // pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため、トップレベルと
+  // `*.<field>` を併記する（任意深度はカバーしない。詳細は docs/design/logging.md）。
   redact: {
     paths: [
       "req.headers.authorization",
       "req.headers.cookie",
+      "apiKey",
       "*.apiKey",
+      "api_key",
       "*.api_key",
+      "token",
       "*.token",
+      "password",
       "*.password",
     ],
     censor: "[REDACTED]",
