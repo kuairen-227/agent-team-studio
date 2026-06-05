@@ -21,6 +21,30 @@ import type {
 import { runExecution } from "./engine.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
+import type { LogFields, Logger } from "./logger-port.ts";
+
+// ---- fake logger ----
+
+type LogCall = {
+  level: "info" | "warn" | "error" | "debug";
+  fields: LogFields;
+  msg?: string;
+};
+
+/** bindings を logged fields にマージして sink に記録する fake logger。 */
+function makeFakeLogger(sink: LogCall[], bindings: LogFields = {}): Logger {
+  const record =
+    (level: LogCall["level"]) => (fields: LogFields, msg?: string) => {
+      sink.push({ level, fields: { ...bindings, ...fields }, msg });
+    };
+  return {
+    info: record("info"),
+    warn: record("warn"),
+    error: record("error"),
+    debug: record("debug"),
+    child: (b) => makeFakeLogger(sink, { ...bindings, ...b }),
+  };
+}
 
 // ---- フィクスチャ ----
 
@@ -226,6 +250,26 @@ describe("runExecution", () => {
 
     const finalPatch = deps.executionPatches[deps.executionPatches.length - 1];
     expect(finalPatch?.patch.status).toBe("completed");
+  });
+
+  test("注入 logger の trace ID が agent ごとの child logger 経由で LLM 層ログまで伝搬する", async () => {
+    const sink: LogCall[] = [];
+    const deps: EngineRunDeps = {
+      ...makeFakeDeps(),
+      logger: makeFakeLogger(sink, { requestId: "req-1" }),
+    };
+    await runExecution(baseInput, deps);
+
+    // 全ログに requestId(trace ID) が乗っていること
+    expect(sink.length).toBeGreaterThan(0);
+    expect(sink.every((l) => l.fields.requestId === "req-1")).toBe(true);
+
+    // LLM 呼び出し層のログが agent 単位の bindings（agentId）付きで出ること
+    const llmStarted = sink.filter((l) => l.msg === "llm call started");
+    expect(llmStarted.length).toBeGreaterThan(0);
+    const agentIds = new Set(llmStarted.map((l) => l.fields.agentId));
+    expect(agentIds.has("investigation:strategy")).toBe(true);
+    expect(agentIds.has("integration:matrix")).toBe(true);
   });
 
   test("DB UPDATE → execution_completed イベント発行の順序を保証する", async () => {

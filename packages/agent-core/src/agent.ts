@@ -24,6 +24,7 @@ import type {
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { LlmError } from "./llm-error.ts";
+import { type Logger, NOOP_LOGGER } from "./logger-port.ts";
 
 // ---------- 公開型 ----------
 
@@ -35,6 +36,11 @@ export type AgentDeps = {
     patch: AgentExecutionPatch,
   ) => Promise<void>;
   onEvent: (event: AgentEvent) => void;
+  /**
+   * trace ID 等を bind 済みの child logger。省略時は no-op。
+   * engine から agent 単位の bindings を載せて注入される。
+   */
+  logger?: Logger;
 };
 
 /** agent_executions テーブルへの書き込みパッチ型。 */
@@ -279,6 +285,7 @@ export async function runInvestigationAgent(
   input: InvestigationAgentRunInput,
   deps: AgentDeps,
 ): Promise<InvestigationResult> {
+  const log = deps.logger ?? NOOP_LOGGER;
   const startedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
     status: "running",
@@ -305,6 +312,7 @@ export async function runInvestigationAgent(
       max_tokens: input.llm.max_tokens_by_role.investigation,
     };
 
+    log.info({ agentId: input.agentId }, "llm call started");
     for await (const chunk of deps.stream(llmInput, input.signal)) {
       chunks.push(chunk);
       deps.onEvent({
@@ -323,6 +331,8 @@ export async function runInvestigationAgent(
   } catch {
     return handleParseFailure(input.agentExecutionId, input.agentId, deps);
   }
+
+  log.info({ agentId: input.agentId }, "llm call completed");
 
   const completedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
@@ -347,6 +357,7 @@ export async function runIntegrationAgent(
   input: IntegrationAgentRunInput,
   deps: AgentDeps,
 ): Promise<IntegrationResult> {
+  const log = deps.logger ?? NOOP_LOGGER;
   const startedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
     status: "running",
@@ -373,6 +384,7 @@ export async function runIntegrationAgent(
       max_tokens: input.llm.max_tokens_by_role.integration,
     };
 
+    log.info({ agentId: input.agentId }, "llm call started");
     for await (const chunk of deps.stream(llmInput, input.signal)) {
       chunks.push(chunk);
       deps.onEvent({
@@ -394,6 +406,8 @@ export async function runIntegrationAgent(
   } catch {
     return handleParseFailure(input.agentExecutionId, input.agentId, deps);
   }
+
+  log.info({ agentId: input.agentId }, "llm call completed");
 
   const completedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
@@ -419,6 +433,10 @@ async function handleAgentFailure(
 ): Promise<{ success: false; reason: AgentFailReason }> {
   const completedAt = new Date();
   const reason = toAgentFailReason(err);
+  (deps.logger ?? NOOP_LOGGER).error(
+    { agentId, reason, err },
+    "llm call failed",
+  );
   await deps.updateAgentExecution(agentExecutionId, {
     status: "failed",
     errorMessage: err instanceof Error ? err.message : String(err),
@@ -439,6 +457,7 @@ async function handleParseFailure(
   deps: AgentDeps,
 ): Promise<{ success: false; reason: "output_parse_error" }> {
   const completedAt = new Date();
+  (deps.logger ?? NOOP_LOGGER).warn({ agentId }, "llm output parse failed");
   await deps.updateAgentExecution(agentExecutionId, {
     status: "failed",
     errorMessage: "output_parse_error",

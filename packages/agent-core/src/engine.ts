@@ -22,6 +22,7 @@ import { runIntegrationAgent, runInvestigationAgent } from "./agent.ts";
 import { AGENT_TIMEOUT_MS, EXECUTION_TIMEOUT_MS } from "./constants.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
+import { type Logger, NOOP_LOGGER } from "./logger-port.ts";
 
 // ---------- 公開型 ----------
 
@@ -49,6 +50,11 @@ export type EngineRunDeps = {
   ) => Promise<void>;
   insertResult: (input: InsertResultInput) => Promise<string>;
   onEvent: (event: AgentEvent) => void;
+  /**
+   * trace ID 等を bind 済みの logger。省略時は no-op。
+   * runExecution が agent 単位の child logger を派生させ AgentDeps へ渡す。
+   */
+  logger?: Logger;
   /** テスト用: 注入された場合は streamAgentMessage の代わりに使う */
   _stream?: (input: LlmInput, signal?: AbortSignal) => AsyncIterable<string>;
   /** テスト用: エージェント単位タイムアウト ms（省略時は定数値を使用） */
@@ -243,6 +249,11 @@ async function _runExecution(
         stream: streamFn,
         updateAgentExecution: deps.updateAgentExecution,
         onEvent: deps.onEvent,
+        logger: (deps.logger ?? NOOP_LOGGER).child({
+          agentExecutionId: integrationAe.id,
+          agentId: integrationAe.agentId,
+          role: integrationAe.role,
+        }),
       },
     );
   } finally {
@@ -339,6 +350,11 @@ async function runInvestigationsWithTimeout(
             stream: streamFn,
             updateAgentExecution: deps.updateAgentExecution,
             onEvent: deps.onEvent,
+            logger: (deps.logger ?? NOOP_LOGGER).child({
+              agentExecutionId: ae.id,
+              agentId: ae.agentId,
+              role: ae.role,
+            }),
           },
         );
       } finally {

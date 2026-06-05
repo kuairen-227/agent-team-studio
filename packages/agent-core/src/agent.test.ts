@@ -8,6 +8,31 @@ import type {
 import { runIntegrationAgent, runInvestigationAgent } from "./agent.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
+import { LlmError } from "./llm-error.ts";
+import type { LogFields, Logger } from "./logger-port.ts";
+
+// ---- fake logger ----
+
+type LogCall = {
+  level: "info" | "warn" | "error" | "debug";
+  fields: LogFields;
+  msg?: string;
+};
+
+/** bindings を logged fields にマージして sink に記録する fake logger。 */
+function makeFakeLogger(sink: LogCall[], bindings: LogFields = {}): Logger {
+  const record =
+    (level: LogCall["level"]) => (fields: LogFields, msg?: string) => {
+      sink.push({ level, fields: { ...bindings, ...fields }, msg });
+    };
+  return {
+    info: record("info"),
+    warn: record("warn"),
+    error: record("error"),
+    debug: record("debug"),
+    child: (b) => makeFakeLogger(sink, { ...bindings, ...b }),
+  };
+}
 
 // ---- フィクスチャ ----
 
@@ -76,9 +101,11 @@ function makeDeps(
 ): AgentDeps & {
   capturedPatches: Array<{ id: string; patch: AgentExecutionPatch }>;
   capturedEvents: AgentEvent[];
+  capturedLogs: LogCall[];
 } {
   const capturedPatches: Array<{ id: string; patch: AgentExecutionPatch }> = [];
   const capturedEvents: AgentEvent[] = [];
+  const capturedLogs: LogCall[] = [];
 
   async function* fakeStream(): AsyncIterable<string> {
     for (const chunk of streamChunks) {
@@ -100,8 +127,10 @@ function makeDeps(
       ((event: AgentEvent) => {
         capturedEvents.push(event);
       }),
+    logger: overrides?.logger ?? makeFakeLogger(capturedLogs),
     capturedPatches,
     capturedEvents,
+    capturedLogs,
   };
 }
 
@@ -379,5 +408,53 @@ describe("runIntegrationAgent", () => {
 
     expect(capturedSystem).toContain("CompanyA");
     expect(capturedSystem).toContain('"perspective"');
+  });
+});
+
+// ---- ロガー（trace ID 伝搬）テスト ----
+
+describe("agent のロガー", () => {
+  test("正常系: LLM 呼び出しの開始と完了を info ログに記録する", async () => {
+    const deps = makeDeps([validInvestigationJson]);
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const infoMessages = deps.capturedLogs
+      .filter((l) => l.level === "info")
+      .map((l) => l.msg);
+    expect(infoMessages).toContain("llm call started");
+    expect(infoMessages).toContain("llm call completed");
+  });
+
+  test("LLM 失敗時は error ログを記録する", async () => {
+    // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
+    async function* errorStream(): AsyncIterable<string> {
+      throw new LlmError("llm_error", "API error");
+    }
+    const deps = makeDeps([], { stream: () => errorStream() });
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const errorMessages = deps.capturedLogs
+      .filter((l) => l.level === "error")
+      .map((l) => l.msg);
+    expect(errorMessages).toContain("llm call failed");
+  });
+
+  test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    const sink: LogCall[] = [];
+    const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
+    const deps = makeDeps([validInvestigationJson], { logger: bound });
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    expect(sink.length).toBeGreaterThan(0);
+    expect(sink.every((l) => l.fields.requestId === "req-xyz")).toBe(true);
+  });
+
+  test("logger 未注入でも動作する（no-op フォールバック）", async () => {
+    const deps = makeDeps([validInvestigationJson]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      { ...deps, logger: undefined },
+    );
+    expect(result.success).toBe(true);
   });
 });
