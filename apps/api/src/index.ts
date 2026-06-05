@@ -7,7 +7,7 @@
  * Bun の serve には `fetch` と `websocket` の双方を渡す必要がある（hono/bun の規約）。
  */
 
-import type { AgentEvent } from "@agent-team-studio/agent-core";
+import type { AgentEvent, Logger } from "@agent-team-studio/agent-core";
 import { runExecution } from "@agent-team-studio/agent-core";
 import type { AgentExecutionRow } from "@agent-team-studio/db";
 import {
@@ -26,7 +26,7 @@ import {
 import type { AgentRole } from "@agent-team-studio/shared";
 import { createApp } from "./app.ts";
 import { createEventHub } from "./lib/event-hub.ts";
-import { type Logger, logger } from "./lib/logger.ts";
+import { logger } from "./lib/logger.ts";
 import { websocket } from "./lib/ws.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
