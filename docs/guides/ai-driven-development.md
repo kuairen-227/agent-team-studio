@@ -29,11 +29,11 @@ flowchart TB
         RUL["rules/"]; PRI["principles"]; GLO["glossary"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        ARC["アーキテクチャ"]; TYP["型"]; SKL["Skills"]; AGT["SubAgents"]
+        ARC["アーキテクチャ"]; SKL["Skills"]; AGT["SubAgents"]
         MCP["MCP"]; WT["worktree"]; DRZ["Drizzle"]; TRB["Turborepo"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        HK["hooks"]; HUS["Husky"]; TST["tests"]; TC["type-check"]; LNT["Biome"]
+        HK["hooks"]; HUS["Husky"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; TYP["型"]
         CI["CI"]; PV["Plan/Verify"]; PRM["permissions"]; MDL["doc品質"]
     end
     subgraph sec["Security — 隔離・防御"]
@@ -43,6 +43,7 @@ flowchart TB
         XDD["型駆動 / TDD / ADR駆動 / Issue駆動"]; TPL["Issue/PRテンプレート"]
     end
 
+    SKL -->|"委譲"| AGT
     context -->|"注入"| AI
     enable -->|"土台提供"| AI
     AI -->|"生成"| harness
@@ -56,9 +57,9 @@ flowchart TB
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     class CL,DOC,ADR,RUL,PRI,GLO c
-    class HK,HUS,TST,TC,LNT,CI,PV,PRM,MDL h
+    class HK,HUS,TST,TC,LNT,CI,PV,PRM,MDL,TYP h
     class DC,SB,SL s
-    class ARC,TYP,SKL,AGT,MCP,WT,DRZ,TRB e
+    class ARC,SKL,AGT,MCP,WT,DRZ,TRB e
     class XDD,TPL m
 ```
 
@@ -208,6 +209,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 | [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) | ハイブリッドエージェント方式・品質保証 3 層構成の採択理由 |
 | [ADR-0011](../adr/0011-role-based-agent-architecture.md) | エージェントを「専門知識の領域」として定義する原則 |
 | [ADR-0009](../adr/0009-architecture.md) | アーキテクチャ（層分離） |
+| [ADR-0006](../adr/0006-lightweight-agile-process.md) | 軽量アジャイルプロセス（駆動法群の採択理由） |
 | [ADR-0010](../adr/0010-development-workflow.md) | 開発ワークフロー（駆動法） |
 | [ADR-0013](../adr/0013-doc-placement-policy.md) | docs/product/ と docs/design/ の配置ポリシー |
 | [ADR-0021](../adr/0021-doc-cross-reference-policy.md) | ドキュメント間参照ポリシー |
