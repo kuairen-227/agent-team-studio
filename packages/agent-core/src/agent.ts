@@ -39,6 +39,8 @@ export type AgentDeps = {
   /**
    * trace ID 等を bind 済みの child logger。省略時は no-op。
    * engine から agent 単位の bindings を載せて注入される。
+   * 失敗時に `{ err }` をそのままログするため、message へ機密が混入しうる場合は
+   * 注入側で加工する責務がある（{@link Logger} のドキュメント / logging.md §redact 参照）。
    */
   logger?: Logger;
 };
@@ -322,17 +324,26 @@ export async function runInvestigationAgent(
       });
     }
   } catch (err) {
-    return handleAgentFailure(err, input.agentExecutionId, input.agentId, deps);
+    return handleAgentFailure(
+      err,
+      input.agentExecutionId,
+      input.agentId,
+      deps,
+      log,
+    );
   }
 
   let output: InvestigationAgentOutput;
   try {
     output = parseInvestigationOutput(chunks.join(""));
   } catch {
-    return handleParseFailure(input.agentExecutionId, input.agentId, deps);
+    return handleParseFailure(input.agentExecutionId, input.agentId, deps, log);
   }
 
-  log.info({ agentId: input.agentId }, "llm call completed");
+  // パース成功まで含めた agent 完了を表す。"llm call started"（LLM 呼び出し開始）
+  // と非対称だが、ここはストリーム受信後の出力パース成功を経た終端のため、
+  // LLM 応答受信ではなく agent 完了として記録する（#264）。
+  log.info({ agentId: input.agentId }, "agent completed");
 
   const completedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
@@ -394,7 +405,13 @@ export async function runIntegrationAgent(
       });
     }
   } catch (err) {
-    return handleAgentFailure(err, input.agentExecutionId, input.agentId, deps);
+    return handleAgentFailure(
+      err,
+      input.agentExecutionId,
+      input.agentId,
+      deps,
+      log,
+    );
   }
 
   let markdown: string;
@@ -404,10 +421,11 @@ export async function runIntegrationAgent(
     markdown = parsed.markdown;
     structured = parsed.structured;
   } catch {
-    return handleParseFailure(input.agentExecutionId, input.agentId, deps);
+    return handleParseFailure(input.agentExecutionId, input.agentId, deps, log);
   }
 
-  log.info({ agentId: input.agentId }, "llm call completed");
+  // パース成功まで含めた agent 完了を表す（#264、runInvestigationAgent と同義）。
+  log.info({ agentId: input.agentId }, "agent completed");
 
   const completedAt = new Date();
   await deps.updateAgentExecution(input.agentExecutionId, {
@@ -430,13 +448,11 @@ async function handleAgentFailure(
   agentExecutionId: string,
   agentId: string,
   deps: AgentDeps,
+  log: Logger,
 ): Promise<{ success: false; reason: AgentFailReason }> {
   const completedAt = new Date();
   const reason = toAgentFailReason(err);
-  (deps.logger ?? NOOP_LOGGER).error(
-    { agentId, reason, err },
-    "llm call failed",
-  );
+  log.error({ agentId, reason, err }, "llm call failed");
   await deps.updateAgentExecution(agentExecutionId, {
     status: "failed",
     errorMessage: err instanceof Error ? err.message : String(err),
@@ -455,9 +471,10 @@ async function handleParseFailure(
   agentExecutionId: string,
   agentId: string,
   deps: AgentDeps,
+  log: Logger,
 ): Promise<{ success: false; reason: "output_parse_error" }> {
   const completedAt = new Date();
-  (deps.logger ?? NOOP_LOGGER).warn({ agentId }, "llm output parse failed");
+  log.warn({ agentId }, "llm output parse failed");
   await deps.updateAgentExecution(agentExecutionId, {
     status: "failed",
     errorMessage: "output_parse_error",

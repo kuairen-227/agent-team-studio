@@ -81,6 +81,23 @@ function findDefinition(
 }
 
 /**
+ * agent 単位の child logger を生成する。親（trace ID 等を bind 済み）に
+ * `agentExecutionId` / `agentId` / `role` を追加 bind して LLM 層へ渡す（#239）。
+ * Investigation 並列経路と Integration 経路で同一構造のため共通化し、
+ * フィールド追加・改名時の片側漏れ・typo を防ぐ。
+ */
+function agentChildLogger(
+  base: Logger | undefined,
+  ae: { id: string; agentId: string; role: AgentRole },
+): Logger {
+  return (base ?? NOOP_LOGGER).child({
+    agentExecutionId: ae.id,
+    agentId: ae.agentId,
+    role: ae.role,
+  });
+}
+
+/**
  * Promise.race 用のタイムアウト promise。
  * resolve ではなく reject することで race の勝者を明確にする。
  */
@@ -249,11 +266,7 @@ async function _runExecution(
         stream: streamFn,
         updateAgentExecution: deps.updateAgentExecution,
         onEvent: deps.onEvent,
-        logger: (deps.logger ?? NOOP_LOGGER).child({
-          agentExecutionId: integrationAe.id,
-          agentId: integrationAe.agentId,
-          role: integrationAe.role,
-        }),
+        logger: agentChildLogger(deps.logger, integrationAe),
       },
     );
   } finally {
@@ -350,11 +363,7 @@ async function runInvestigationsWithTimeout(
             stream: streamFn,
             updateAgentExecution: deps.updateAgentExecution,
             onEvent: deps.onEvent,
-            logger: (deps.logger ?? NOOP_LOGGER).child({
-              agentExecutionId: ae.id,
-              agentId: ae.agentId,
-              role: ae.role,
-            }),
+            logger: agentChildLogger(deps.logger, ae),
           },
         );
       } finally {
