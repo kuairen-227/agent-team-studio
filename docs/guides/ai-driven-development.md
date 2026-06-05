@@ -29,18 +29,18 @@ flowchart TB
         RUL["rules/"]; PRI["principles"]; GLO["glossary"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        ARC["アーキテクチャ"]; TYP["型"]; SKL["Skills"]
-        AGT["SubAgents"]; MCP["MCP"]; WT["worktree"]
+        ARC["アーキテクチャ"]; TYP["型"]; SKL["Skills"]; AGT["SubAgents"]
+        MCP["MCP"]; WT["worktree"]; DRZ["Drizzle"]; TRB["Turborepo"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        HK["hooks"]; HUS["Husky"]; TST["tests"]; TC["type-check"]
-        LNT["Biome"]; CI["CI"]; PV["Plan/Verify"]; PRM["permissions"]
+        HK["hooks"]; HUS["Husky"]; TST["tests"]; TC["type-check"]; LNT["Biome"]
+        CI["CI"]; PV["Plan/Verify"]; PRM["permissions"]; MDL["doc品質"]
     end
     subgraph sec["Security — 隔離・防御"]
         DC["DevContainer"]; SB["サンドボックス"]; SL["secretlint"]
     end
     subgraph method["Methodology — 駆動法"]
-        XDD["型駆動 / TDD / ADR駆動 / Issue駆動"]
+        XDD["型駆動 / TDD / ADR駆動 / Issue駆動"]; TPL["Issue/PRテンプレート"]
     end
 
     context -->|"注入"| AI
@@ -56,10 +56,10 @@ flowchart TB
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     class CL,DOC,ADR,RUL,PRI,GLO c
-    class HK,HUS,TST,TC,LNT,CI,PV,PRM h
+    class HK,HUS,TST,TC,LNT,CI,PV,PRM,MDL h
     class DC,SB,SL s
-    class ARC,TYP,SKL,AGT,MCP,WT e
-    class XDD m
+    class ARC,TYP,SKL,AGT,MCP,WT,DRZ,TRB e
+    class XDD,TPL m
 ```
 
 実線は AI の作業ループへの直接寄与、点線は環境・進め方の枠付けを表す。
@@ -81,15 +81,19 @@ flowchart TB
 | Plan / Verify ループ | Harness | Methodology | 計画→実行→検証の反復 | implement-feature 手順 |
 | Biome lint / format | Harness | — | 静的解析・整形 | `bun run lint` |
 | CI（Actions） | Harness | — | 統合検証（lint / type / test / spell / secret） | `.github/workflows/` |
+| ドキュメント品質ハーネス | Harness | — | markdownlint / link-check / cspell による文書検証 | `lint:md` / `lint:md-links` / `lint:spell` |
 | permissions | Harness | Security | 全 tool call の許可 / 拒否網 | `.claude/settings.json` |
 | Skills | Enablement | Harness | 定型手順の自動化・再利用 | `.claude/skills/` |
 | SubAgents | Enablement | Harness | 専門視点の分離・知識の再利用 | `.claude/agents/` |
 | MCP | Enablement | Context | 外部知識（context7）・動作確認（playwright） | `enabledMcpjsonServers` |
 | アーキテクチャ | Enablement | Context | 層分離で実装場所が予測可能 | [ADR-0009](../adr/0009-architecture.md) |
+| Drizzle（型生成） | Enablement | Harness | スキーマ→型安全なクライアント生成 | `db:generate` / `packages/db` |
+| Turborepo | Enablement | — | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
 | worktree | Enablement | — | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
 | DevContainer | Security | Enablement | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
 | サンドボックス | Security | — | tool 実行の隔離 | 実行環境 |
 | secretlint | Security | Harness | 機密情報の検出 | `bun run lint:secret` |
+| Issue/PR テンプレート | Methodology | Context | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | Methodology | — | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md) |
 
 ## 各分類の設計意図
@@ -147,7 +151,7 @@ flowchart TB
 | --- | --- | --- |
 | `post-edit-lint.sh` | Edit/Write 後に `*.ts` / `*.tsx` を検出 | ADR-0007 品質保証第 3 層 Phase 1。修正ループを AI に自動フィードバック |
 
-hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する。Stop hook・PreToolUse hook は「コスト > 効果」と判断し未導入。
+hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する（未導入のフックは「[未導入の選択](#未導入の選択)」を参照）。
 
 検証は多層で働く。型チェック・テスト・Biome がローカルと commit 前（Husky / lint-staged）で走り、CI（Actions）が統合時に再検証する。Plan / Verify ループは生成と検証を反復させ、AI 自身に修正を促す。
 
@@ -159,7 +163,34 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 ### Methodology — 駆動法
 
-進め方そのものを型として規定する。型駆動（type-first）・軽量 TDD・ADR 駆動・Issue 駆動を組み合わせ、AI との協働サイクル（企画→要件→設計→開発→試験→改善→運用）を一気通貫で回す（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。
+進め方そのものを型として規定する。型駆動（type-first）・軽量 TDD・ADR 駆動・Issue 駆動を組み合わせ、AI との協働サイクル（企画→要件→設計→開発→試験→改善→運用）を一気通貫で回す（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。Issue/PR テンプレートは、この型を入力の段階から強制する。
+
+## 設計特性：発動契機 × 効果の性質
+
+検証の背骨を「いつ発動し、効果が確率的か決定論的か」で並べる。設計思想の「指示は確率的に従われ、フックは決定論的に実行される」を具体化したもの。
+
+| 施策 | 発動契機 | 効果の性質 | 設計上の含意 |
+| --- | --- | --- | --- |
+| AI への指示（CLAUDE.md 禁止事項） | 常時（文脈） | 確率的 | 前段の防御線。従う確率を上げるが保証しない |
+| rules/ | パスマッチ編集時 | 確率的 | 文脈注入。ad-hoc 編集にも効くが enforce はしない |
+| Biome / type-check / tests | ローカル実行・commit 前 | 決定論的 | 違反を機械的に検出 |
+| hooks（post-edit-lint） | tool call 後（PostToolUse） | 決定論的 | AI の判断を経由せず自動実行 |
+| Husky / lint-staged | commit 時 | 決定論的 | commit をゲート |
+| CI（Actions） | push / PR 時 | 決定論的 | 統合時に再検証 |
+| permissions.deny | 全 tool call | 決定論的 | 最後の防御線。物理的にブロック |
+
+上に行くほど早く柔らかく（確率的・前段）、下に行くほど遅く硬い（決定論的・後段）。確率的な層で速度を、決定論的な層で安全を担保する多重防御の構造になっている。
+
+## 未導入の選択
+
+入れなかったものの記録は、入れたものと同じだけ設計を語る（principles の「節度」）。
+
+| 見送った施策 | 理由 | 再検討の契機 |
+| --- | --- | --- |
+| Stop hook / PreToolUse hook | コスト > 効果。フックは増やすほど実行コストが上がる（ADR-0007） | 「必ず実行されねば意味がない」副作用が新たに生じたとき |
+| commitlint（commit-msg hook） | conventional commits は Methodology の規約で担保。ゲートを増やさない（husky は pre-commit のみ） | 規約逸脱が頻発し機械的強制が要るとき |
+| 6 個目以降の agent | 既存 5 領域でカバー可能。「行為」ではなく「専門領域」のみ定義（ADR-0011） | 独立した専門知識の領域が新たに生じたとき |
+| MCP サーバーの追加 | 「必要が生じたら導入」方針。現在は context7 / playwright の 2 つ（ADR-0007） | 外部ツール連携の新たな必要が生じたとき |
 
 ## 追加判断の軸
 
