@@ -92,10 +92,10 @@ flowchart TB
 | Turborepo | Enablement | — | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
 | worktree | Enablement | — | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
 | DevContainer | Security | Enablement | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
-| サンドボックス | Security | — | tool 実行の隔離 | 実行環境 |
+| サンドボックス | Security | — | tool 実行の隔離 | Claude Code の tool 実行サンドボックス（DevContainer とは別レイヤ） |
 | secretlint | Security | Harness | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | Methodology | Context | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
-| 駆動法群 | Methodology | — | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md) |
+| 駆動法群 | Methodology | — | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
 
 ## 各分類の設計意図
 
@@ -136,7 +136,7 @@ flowchart TB
 | `qa` | テスト設計・品質・セキュリティ |
 | `designer` | UI/UX・ブランド |
 
-「レビュー」はエージェントとして定義しない。レビューは行為であり専門領域ではないため、`review` スキルが対象に応じてエージェントを組み合わせる（[ADR-0011](../adr/0011-role-based-agent-architecture.md)）。
+「レビュー」はエージェントとして定義しない。レビューは行為であり専門領域ではないため、`review` スキルが対象に応じてエージェントを組み合わせる（[ADR-0011](../adr/0011-role-based-agent-architecture.md)）。5 エージェントのうち `designer` は後から追加した（[ADR-0015](../adr/0015-add-designer-agent.md)）。
 
 **MCP — 外部知識へのアクセス**: 訓練データのカットオフを超えた最新ドキュメントへのアクセスと、実ブラウザでの動作確認が必要なため導入する。ライブラリ選定・API 変更への追従は `context7` が担い、UI 実装の動作確認は `playwright` が担う。MCP は「外部ツール連携の必要性が生じたら導入」する方針（[ADR-0007](../adr/0007-ai-driven-dev-architecture.md)）。
 
@@ -180,7 +180,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 | CI（Actions） | push / PR 時 | 決定論的 | 統合時に再検証 |
 | permissions.deny | 全 tool call | 決定論的 | 最後の防御線。物理的にブロック |
 
-上に行くほど早く柔らかく（確率的・前段）、下に行くほど遅く硬い（決定論的・後段）。確率的な層で速度を、決定論的な層で安全を担保する多重防御の構造になっている。
+上に行くほど早く柔らかく（確率的・前段）、下に行くほど遅く硬い（決定論的・後段）。確率的な層で速度を、決定論的な層で安全を担保する多重防御の構造になっている。これは [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) の品質保証 3 層構成（指示 → 自動修正フック → 統合検証）に対応する。
 
 ## 未導入の選択
 
@@ -208,9 +208,11 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 | --- | --- |
 | [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) | ハイブリッドエージェント方式・品質保証 3 層構成の採択理由 |
 | [ADR-0011](../adr/0011-role-based-agent-architecture.md) | エージェントを「専門知識の領域」として定義する原則 |
+| [ADR-0015](../adr/0015-add-designer-agent.md) | designer エージェントの追加（UI/UX・ブランド領域） |
 | [ADR-0009](../adr/0009-architecture.md) | アーキテクチャ（層分離） |
-| [ADR-0006](../adr/0006-lightweight-agile-process.md) | 軽量アジャイルプロセス（駆動法群の採択理由） |
-| [ADR-0010](../adr/0010-development-workflow.md) | 開発ワークフロー（駆動法） |
+| [ADR-0006](../adr/0006-lightweight-agile-process.md) | 軽量アジャイルプロセス（駆動法群の前提整備） |
+| [ADR-0010](../adr/0010-development-workflow.md) | 開発ワークフロー（駆動法の定義） |
+| [ADR-0012](../adr/0012-git-worktree-parallel-sessions.md) | Git Worktree 並行セッション（worktree の採択理由） |
 | [ADR-0013](../adr/0013-doc-placement-policy.md) | docs/product/ と docs/design/ の配置ポリシー |
 | [ADR-0021](../adr/0021-doc-cross-reference-policy.md) | ドキュメント間参照ポリシー |
 | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) | Playwright MCP 採択理由 |
