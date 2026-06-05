@@ -95,6 +95,11 @@ describe("GET /api/templates", () => {
     const traceId = body.details?.traceId;
     expect(traceId).toBeTruthy();
     expect(res.headers.get("X-Request-Id")).toBe(traceId ?? null);
+    // logging.md の trace ID 生成方針（RFC 4122 v4 UUID）に一致すること。
+    // hono/request-id の既定ジェネレータ形式が変わった場合に気づける。
+    expect(traceId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
   });
 });
 
