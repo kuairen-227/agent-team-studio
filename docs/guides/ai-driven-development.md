@@ -213,6 +213,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 | [ADR-0006](../adr/0006-lightweight-agile-process.md) | 軽量アジャイルプロセス（駆動法群の前提整備） |
 | [ADR-0010](../adr/0010-development-workflow.md) | 開発ワークフロー（駆動法の定義） |
 | [ADR-0012](../adr/0012-git-worktree-parallel-sessions.md) | Git Worktree 並行セッション（worktree の採択理由） |
+| [ADR-0016](../adr/0016-devcontainer-integration.md) | DevContainer 統合（隔離開発環境の採択理由） |
 | [ADR-0013](../adr/0013-doc-placement-policy.md) | docs/product/ と docs/design/ の配置ポリシー |
 | [ADR-0021](../adr/0021-doc-cross-reference-policy.md) | ドキュメント間参照ポリシー |
 | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) | Playwright MCP 採択理由 |
