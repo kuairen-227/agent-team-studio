@@ -422,7 +422,7 @@ describe("agent のロガー", () => {
       .filter((l) => l.level === "info")
       .map((l) => l.msg);
     expect(infoMessages).toContain("llm call started");
-    expect(infoMessages).toContain("llm call completed");
+    expect(infoMessages).toContain("agent completed");
   });
 
   test("LLM 失敗時は error ログを記録する", async () => {
@@ -433,10 +433,12 @@ describe("agent のロガー", () => {
     const deps = makeDeps([], { stream: () => errorStream() });
     await runInvestigationAgent({ ...baseInvestigationInput }, deps);
 
-    const errorMessages = deps.capturedLogs
-      .filter((l) => l.level === "error")
-      .map((l) => l.msg);
-    expect(errorMessages).toContain("llm call failed");
+    const errorLog = deps.capturedLogs.find(
+      (l) => l.level === "error" && l.msg === "llm call failed",
+    );
+    expect(errorLog).toBeDefined();
+    // err を渡し忘れても msg 一致だけでは通ってしまうため、err フィールドの伝搬も固定する。
+    expect(errorLog?.fields.err).toBeDefined();
   });
 
   test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {

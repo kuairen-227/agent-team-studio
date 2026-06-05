@@ -269,6 +269,8 @@ describe("runExecution", () => {
     expect(llmStarted.length).toBeGreaterThan(0);
     const agentIds = new Set(llmStarted.map((l) => l.fields.agentId));
     expect(agentIds.has("investigation:strategy")).toBe(true);
+    // 並列実行される全 Investigation（ae-2）にも child logger が bind されること。
+    expect(agentIds.has("investigation:product")).toBe(true);
     expect(agentIds.has("integration:matrix")).toBe(true);
   });
 
