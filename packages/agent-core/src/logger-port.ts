@@ -7,6 +7,10 @@
  *
  * trace ID は呼び出し側が `child({ requestId })` で bind した logger を注入するため、
  * agent-core は ID 値を直接知らずにログへ伝搬できる（関心の分離）。
+ *
+ * 機密の取り扱い: redact はフィールド名ベースで `err.message` 等の文字列内は除去できない
+ * （docs/design/logging.md §redact）。`{ err }` をそのまま渡す場合、message に機密が
+ * 混入しうるなら**注入側が加工してから**ログする責務を負う（境界の責務はログ実装側）。
  */
 
 /** ログに添える構造化フィールド。 */
