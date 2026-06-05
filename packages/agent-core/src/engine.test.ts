@@ -215,6 +215,8 @@ function makeFakeDeps(
     onEvent: (event) => {
       events.push(event);
     },
+    // logger は意図的に省略し NOOP_LOGGER フォールバックを使う。trace ID 伝搬を
+    // 検証するテストのみ明示的に logger を上書きする（下記「trace ID」テスト参照）。
     _stream: streamFn ?? defaultStream,
     agentTimeoutMs: opts?.agentTimeoutMs,
     executionTimeoutMs: opts?.executionTimeoutMs,

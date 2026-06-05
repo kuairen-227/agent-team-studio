@@ -460,3 +460,44 @@ describe("agent のロガー", () => {
     expect(result.success).toBe(true);
   });
 });
+
+// runIntegrationAgent も runInvestigationAgent と同一の log.info/error 経路を持つため、
+// engine 経由（engine.test.ts）の間接検証だけでなく unit レベルでも固定する。
+describe("runIntegrationAgent のロガー", () => {
+  test("正常系: LLM 呼び出しの開始と完了を info ログに記録する", async () => {
+    const deps = makeDeps([validIntegrationRaw]);
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    const infoMessages = deps.capturedLogs
+      .filter((l) => l.level === "info")
+      .map((l) => l.msg);
+    expect(infoMessages).toContain("llm call started");
+    expect(infoMessages).toContain("agent completed");
+  });
+
+  test("LLM 失敗時は error ログを記録する", async () => {
+    // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
+    async function* errorStream(): AsyncIterable<string> {
+      throw new LlmError("llm_error", "API error");
+    }
+    const deps = makeDeps([], { stream: () => errorStream() });
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    const errorLog = deps.capturedLogs.find(
+      (l) => l.level === "error" && l.msg === "llm call failed",
+    );
+    expect(errorLog).toBeDefined();
+    // err を渡し忘れても msg 一致だけでは通ってしまうため、err フィールドの伝搬も固定する。
+    expect(errorLog?.fields.err).toBeDefined();
+  });
+
+  test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    const sink: LogCall[] = [];
+    const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
+    const deps = makeDeps([validIntegrationRaw], { logger: bound });
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(sink.length).toBeGreaterThan(0);
+    expect(sink.every((l) => l.fields.requestId === "req-xyz")).toBe(true);
+  });
+});
