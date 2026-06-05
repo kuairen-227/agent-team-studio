@@ -20,36 +20,52 @@
 
 ## 全体像
 
+構造（5 分類の色分けサブグラフ）・施策間の関係（実線エッジ）・時間軸（上部の開発サイクル）を 1 枚に統合した図。色＝主分類、点線＝工程が主に駆動する分類、実線＝施策間の関係。
+
 ```mermaid
 flowchart TB
     User(["PM / エンジニア"]) -->|"指示"| AI(["Claude (AI)"])
+    AI --> P1
+
+    subgraph time["開発サイクル（時間軸・状況に応じ行き来）"]
+        direction LR
+        P1["企画"] --> P2["要件"] --> P3["設計"] --> P4["開発"] --> P5["試験"] --> P6["改善"] --> P7["運用保守"]
+        P7 -.->|"次サイクル"| P1
+    end
 
     subgraph context["Context — 判断材料"]
-        CL["CLAUDE.md"]; DOC["docs/"]; ADR["ADR"]
-        RUL["rules/"]; PRI["principles"]; GLO["glossary"]
+        CL["CLAUDE.md"]; RUL["rules/"]; DOC["docs/"]; ADR["ADR"]; PRI["principles"]; GLO["glossary"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        ARC["アーキテクチャ"]; SKL["Skills"]; AGT["SubAgents"]
-        MCP["MCP"]; WT["worktree"]; DRZ["Drizzle"]; TRB["Turborepo"]
+        SKL["Skills"]; AGT["SubAgents"]; MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        HK["hooks"]; HUS["Husky"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; TYP["型"]
-        CI["CI"]; PV["Plan/Verify"]; PRM["permissions"]; MDL["doc品質"]
+        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PV["Plan/Verify"]; PRM["permissions"]
     end
     subgraph sec["Security — 隔離・防御"]
         DC["DevContainer"]; SB["サンドボックス"]; SL["secretlint"]
     end
     subgraph method["Methodology — 駆動法"]
-        XDD["型駆動 / TDD / ADR駆動 / Issue駆動"]; TPL["Issue/PRテンプレート"]
+        XDD["駆動法群"]; TPL["Issue/PRテンプレート"]
     end
 
+    P1 -.-> method
+    P2 -.-> context
+    P3 -.-> enable
+    P4 -.-> enable
+    P5 -.-> harness
+    P6 -.-> harness
+    P7 -.-> sec
+
+    CL -->|"ベースライン"| RUL
+    RUL -.->|"重なり"| SKL
     SKL -->|"委譲"| AGT
-    context -->|"注入"| AI
-    enable -->|"土台提供"| AI
-    AI -->|"生成"| harness
-    harness -->|"フィードバック"| AI
-    method -.->|"進め方を規定"| AI
-    sec -.->|"環境を包む"| AI
+    DRZ -->|"型生成"| TYP
+    HK -->|"実行"| LNT
+    HUS -->|"実行"| LNT
+    CI -->|"統合実行"| TST
+    harness -.->|"フィードバック"| AI
+    PRM -.->|"全 tool call を制御"| AI
 
     classDef c fill:#e3f2fd,stroke:#1565c0
     classDef h fill:#fff3e0,stroke:#e65100
@@ -57,32 +73,13 @@ flowchart TB
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     class CL,DOC,ADR,RUL,PRI,GLO c
-    class HK,HUS,TST,TC,LNT,CI,PV,PRM,MDL,TYP h
+    class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PV,PRM h
     class DC,SB,SL s
-    class ARC,SKL,AGT,MCP,WT,DRZ,TRB e
+    class SKL,AGT,MCP,ARC,DRZ,TRB,WT e
     class XDD,TPL m
 ```
 
-実線は AI の作業ループへの直接寄与、点線は環境・進め方の枠付けを表す。
-
-### 時間軸：開発サイクルと駆動施策
-
-上は「何があるか」（構造）。下は「いつ・何のために使うか」（時間軸）。開発サイクルの各工程を、どの施策・スキルが駆動するかを示す。
-
-```mermaid
-flowchart LR
-    P1["企画"] --> P2["要件"] --> P3["設計"] --> P4["開発"] --> P5["試験"] --> P6["改善"] --> P7["運用保守"]
-    P7 -.->|"次サイクル"| P1
-    P1 -.- s1["manage-issue / ADR"]
-    P2 -.- s2["write-product-doc / PO"]
-    P3 -.- s3["write-design-doc / create-adr / architect"]
-    P4 -.- s4["implement-feature / 型 / hooks / lint"]
-    P5 -.- s5["testing / QA / Plan-Verify"]
-    P6 -.- s6["review / resolve-review"]
-    P7 -.- s7["CI / dependabot / manage-issue"]
-```
-
-各工程は前工程の成果を受けて進み、運用保守で得た知見が次サイクルの企画へ戻る（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。施策はこのサイクルを回すために存在する。
+工程は厳密な逐次ではなく状況に応じて行き来する（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。運用保守で得た知見が次サイクルへ還流する。施策はこのサイクルを回すために存在する。
 
 ## 施策インベントリ
 
