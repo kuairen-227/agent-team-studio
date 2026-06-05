@@ -25,7 +25,7 @@
 ```mermaid
 flowchart TB
     User(["PM / エンジニア"]) -->|"指示"| AI(["Claude (AI)"])
-    AI --> P1
+    AI -->|"参加（任意の工程）"| time
 
     subgraph time["開発サイクル（時間軸・状況に応じ行き来）"]
         direction LR
@@ -51,11 +51,11 @@ flowchart TB
 
     P1 -.-> method
     P2 -.-> context
-    P3 -.-> enable
+    P3 -.-> enable & method
     P4 -.-> enable
     P5 -.-> harness
     P6 -.-> harness
-    P7 -.-> sec
+    P7 -.-> harness
 
     CL -->|"ベースライン"| RUL
     RUL -.->|"重なり"| SKL
