@@ -47,8 +47,11 @@ export type AppDeps = {
   getResultByExecutionId: (executionId: string) => Promise<ResultRow | null>;
   /** 全 Execution 行を新しい順で取得する。 */
   listExecutions: () => Promise<ExecutionRow[]>;
-  /** 202 受理後に engine を非同期起動する（fire-and-forget）。 */
-  startExecution: (executionId: string) => void;
+  /**
+   * 202 受理後に engine を非同期起動する（fire-and-forget）。
+   * `traceId` は当該リクエストの request-id で、engine→LLM ログへ伝搬する（#239）。
+   */
+  startExecution: (executionId: string, traceId: string) => void;
   /**
    * Execution の AgentEvent を受け取るハンドラを登録し、解除関数を返す。
    * WS 切断時に解除関数を呼ぶこと。

@@ -79,6 +79,23 @@ describe("GET /api/templates", () => {
     expect(body.message).toBeTruthy();
     expect(body.message).not.toContain("DB connection failed");
   });
+
+  // #239: 内部エラー時に details.traceId を露出し、X-Request-Id と一致させる。
+  test("500 応答の details.traceId が X-Request-Id ヘッダと一致する", async () => {
+    const app = buildApp({
+      listTemplateSummaries: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    const res = await app.request("/api/templates");
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as ApiInternalError;
+    const traceId = body.details?.traceId;
+    expect(traceId).toBeTruthy();
+    expect(res.headers.get("X-Request-Id")).toBe(traceId ?? null);
+  });
 });
 
 describe("GET /api/templates/:id", () => {

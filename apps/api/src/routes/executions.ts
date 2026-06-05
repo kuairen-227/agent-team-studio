@@ -22,7 +22,7 @@ import type { ExecutionsService } from "../services/executions.ts";
 
 export function createExecutionsRoutes(deps: {
   executionsService: ExecutionsService;
-  startExecution: (executionId: string) => void;
+  startExecution: (executionId: string, traceId: string) => void;
 }) {
   const app = new Hono<AppEnv>();
 
@@ -40,7 +40,8 @@ export function createExecutionsRoutes(deps: {
       await deps.executionsService.createExecution(body);
 
     // 202 を返してから engine を非同期起動する（fire-and-forget）。
-    deps.startExecution(result.id);
+    // request-id を trace ID として engine 経路へ引き渡す（#239）。
+    deps.startExecution(result.id, c.get("requestId"));
 
     return c.json(result, 202);
   });

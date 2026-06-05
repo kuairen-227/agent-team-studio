@@ -3,7 +3,8 @@
  *
  * Service / Route 層は `NotFoundError` / `ValidationError` を throw し、`onError`
  * ハンドラで API レスポンス形 + HTTP ステータスに整形する。内部例外（DB 接続失敗等）は
- * `internal_error` (500) に集約し、詳細漏洩を避けるため `details` は返さない。
+ * `internal_error` (500) に集約し、原因情報の漏洩を避けつつ相関用の `traceId`(=request-id)
+ * のみ `details` に含める（#239）。
  */
 
 import type {
@@ -77,9 +78,13 @@ export const onError: ErrorHandler<AppEnv> = (err, c) => {
   // ため、ログを欠落させない安全網として ?? でベースロガーへ退避する。
   (c.get("logger") ?? logger).error({ err }, "unhandled internal error");
 
+  // 原因情報は漏洩防止のため返さないが、相関用の traceId(=requestId) のみ露出する。
+  // requestId middleware より前で throw した稀なケースでは未 set のため details を省く。
+  const traceId = c.get("requestId");
   const body: ApiInternalError = {
     errorCode: "internal_error",
     message: "一時的なエラーが発生しました。時間をおいて再度お試しください",
+    ...(traceId ? { details: { traceId } } : {}),
   };
   return c.json(body, 500);
 };
