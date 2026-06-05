@@ -19,10 +19,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  InvestigationFindings,
+  RawDisclosure,
+  RawPre,
+} from "./components/structured";
+import {
   ExecutionResultView,
   InvestigationOutputsView,
 } from "./ExecutionResultView";
 import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
+import { parseAgentOutput } from "./lib/parseAgentOutput";
 
 const Route = getRouteApi("/executions/$executionId");
 
@@ -103,8 +109,15 @@ export function ExecutionProgressPage() {
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行完了
         </h1>
-        <AgentList agents={agents} />
         <ExecutionResultView executionId={executionId} />
+        <div className="mt-8">
+          <h2 className="sr-only">実行トレース</h2>
+          <RawDisclosure summary="実行トレース（各エージェントの出力）を表示">
+            <div className="mt-4">
+              <AgentList agents={agents} />
+            </div>
+          </RawDisclosure>
+        </div>
       </section>
     );
   }
@@ -179,13 +192,82 @@ function AgentCard({ agent }: { agent: AgentState }) {
               失敗理由: {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
             </span>
           )}
-          {agent.output && (
-            <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
-              {agent.output}
-            </pre>
-          )}
+          <AgentCardBody agent={agent} />
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * agent の status に応じた本文を描画する。
+ *
+ * 待機中は生 JSON を主表示にせず（#227 離脱衝動の解消）、稼働シグナルを示しつつ
+ * 生出力は折りたたみに退避する。完了時は調査エージェント出力を構造化して見せ、
+ * 統合エージェントのマトリクスは下段の結果ビュー（SSoT）に委ねる。
+ */
+function AgentCardBody({ agent }: { agent: AgentState }) {
+  // summary テキストは同一ページに複数並ぶため、SR が識別できるよう agent 名で
+  // 文脈づけする（WCAG 2.4.6 Headings and Labels）。
+  const label = getAgentLabel(agent.agentId);
+
+  if (agent.status === "pending") {
+    return <p className="text-sm text-muted-foreground">待機中…</p>;
+  }
+
+  if (agent.status === "running") {
+    const receiving = agent.output.length > 0;
+    return (
+      <div>
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span
+            className="size-2 animate-pulse rounded-full bg-current"
+            aria-hidden
+          />
+          {receiving ? "応答を受信中…" : "実行中…"}
+        </p>
+        {receiving && (
+          <RawDisclosure summary={`${label}の生の出力を表示`}>
+            <RawPre text={agent.output} />
+          </RawDisclosure>
+        )}
+      </div>
+    );
+  }
+
+  if (agent.status === "completed") {
+    const parsed = parseAgentOutput(agent.agentId, agent.output);
+    if (parsed.kind === "investigation") {
+      return (
+        <div>
+          <InvestigationFindings findings={parsed.data.findings} />
+          <RawDisclosure summary={`${label}の内部データ（JSON）を表示`}>
+            <RawPre text={agent.output} />
+          </RawDisclosure>
+        </div>
+      );
+    }
+    // 統合エージェント・または構造化できなかった出力はコンパクトに。
+    // マトリクスは ExecutionResultView（Result.structured が SSoT）が描画する。
+    return (
+      <div>
+        <p className="text-sm text-muted-foreground">完了しました。</p>
+        {agent.output && (
+          <RawDisclosure summary={`${label}の内部データ（JSON）を表示`}>
+            <RawPre text={agent.output} />
+          </RawDisclosure>
+        )}
+      </div>
+    );
+  }
+
+  // failed: 失敗理由はヘッダで提示済み。原因究明用に生出力を折りたたみで残す。
+  // failReason・output 共に無いケースでも CardContent を空にしない（Nielsen #1）。
+  return agent.output ? (
+    <RawDisclosure summary={`${label}の生の出力を表示`}>
+      <RawPre text={agent.output} />
+    </RawDisclosure>
+  ) : (
+    <p className="text-sm text-muted-foreground">出力なし</p>
   );
 }
