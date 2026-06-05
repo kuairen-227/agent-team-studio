@@ -35,6 +35,9 @@ describe("parseAgentOutput", () => {
     const fenced = `\`\`\`json\n${JSON.stringify(validInvestigation)}\n\`\`\``;
     const result = parseAgentOutput("investigation_product", fenced);
     expect(result.kind).toBe("investigation");
+    if (result.kind !== "investigation") throw new Error("unreachable");
+    expect(result.data.perspective).toBe("strategy");
+    expect(result.data.findings).toHaveLength(2);
   });
 
   it("壊れた JSON は unstructured へフォールバックする", () => {
@@ -72,7 +75,7 @@ describe("parseAgentOutput", () => {
     expect(result.raw).toBe(invalid);
   });
 
-  it("notes が null の finding も構造化を維持する（null は無し扱い）", () => {
+  it("notes が null の finding は構造化を維持しつつ notes を省く（型整合）", () => {
     const withNullNotes = JSON.stringify({
       perspective: "strategy",
       findings: [
@@ -87,7 +90,8 @@ describe("parseAgentOutput", () => {
     const result = parseAgentOutput("investigation_strategy", withNullNotes);
     expect(result.kind).toBe("investigation");
     if (result.kind !== "investigation") throw new Error("unreachable");
-    expect(result.data.findings[0]?.notes).toBeNull();
+    // normalizeInvestigation で null は省かれ、共有型 notes?: string に準拠する。
+    expect(result.data.findings[0]?.notes).toBeUndefined();
   });
 
   it("findings が空配列でも構造化対象（investigation）として扱う", () => {

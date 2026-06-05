@@ -57,7 +57,7 @@ function isFinding(value: unknown): value is InvestigationFinding {
     return false;
   // notes は null も「無し」として許容する。`notes != null` で null/undefined を
   // まとめて通すことで、LLM が "notes": null を返しても finding 1 件で構造化全体を
-  // 失わず（raw フォールバックさせず）、null は FindingBlock 側で非表示になる。
+  // 失わない（raw フォールバックさせない）。null は normalizeInvestigation で省く。
   if (value.notes != null && typeof value.notes !== "string") return false;
   return true;
 }
@@ -70,6 +70,24 @@ function isInvestigationOutput(
     return false;
   if (!Array.isArray(value.findings)) return false;
   return value.findings.every(isFinding);
+}
+
+/**
+ * 検証済み出力を共有型に厳密準拠させる。`notes: null`（LLM が返しうる）は
+ * `notes?: string` に合わせて省き、返り値の runtime 値と型定義を一致させる。
+ */
+function normalizeInvestigation(
+  data: InvestigationAgentOutput,
+): InvestigationAgentOutput {
+  return {
+    perspective: data.perspective,
+    findings: data.findings.map((f) => ({
+      competitor: f.competitor,
+      points: f.points,
+      evidence_level: f.evidence_level,
+      ...(f.notes != null ? { notes: f.notes } : {}),
+    })),
+  };
 }
 
 /** ```json フェンスを除去して JSON.parse を試みる。失敗時は undefined。 */
@@ -101,7 +119,7 @@ export function parseAgentOutput(
   if (agentId.startsWith("investigation_")) {
     const parsed = tryParseJson(output);
     if (isInvestigationOutput(parsed)) {
-      return { kind: "investigation", data: parsed };
+      return { kind: "investigation", data: normalizeInvestigation(parsed) };
     }
   }
   return { kind: "unstructured", raw: output };
