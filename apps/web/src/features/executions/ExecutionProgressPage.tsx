@@ -111,6 +111,7 @@ export function ExecutionProgressPage() {
         </h1>
         <ExecutionResultView executionId={executionId} />
         <div className="mt-8">
+          <h2 className="sr-only">実行トレース</h2>
           <RawDisclosure summary="実行トレース（各エージェントの出力）を表示">
             <div className="mt-4">
               <AgentList agents={agents} />
@@ -206,6 +207,10 @@ function AgentCard({ agent }: { agent: AgentState }) {
  * 統合エージェントのマトリクスは下段の結果ビュー（SSoT）に委ねる。
  */
 function AgentCardBody({ agent }: { agent: AgentState }) {
+  // summary テキストは同一ページに複数並ぶため、SR が識別できるよう agent 名で
+  // 文脈づけする（WCAG 2.4.6 Headings and Labels）。
+  const label = getAgentLabel(agent.agentId);
+
   if (agent.status === "pending") {
     return <p className="text-sm text-muted-foreground">待機中…</p>;
   }
@@ -222,7 +227,7 @@ function AgentCardBody({ agent }: { agent: AgentState }) {
           {receiving ? "応答を受信中…" : "実行中…"}
         </p>
         {receiving && (
-          <RawDisclosure summary="生の出力を表示">
+          <RawDisclosure summary={`${label}の生の出力を表示`}>
             <RawPre text={agent.output} />
           </RawDisclosure>
         )}
@@ -236,7 +241,7 @@ function AgentCardBody({ agent }: { agent: AgentState }) {
       return (
         <div>
           <InvestigationFindings findings={parsed.data.findings} />
-          <RawDisclosure summary="内部データ（JSON）を表示">
+          <RawDisclosure summary={`${label}の内部データ（JSON）を表示`}>
             <RawPre text={agent.output} />
           </RawDisclosure>
         </div>
@@ -248,7 +253,7 @@ function AgentCardBody({ agent }: { agent: AgentState }) {
       <div>
         <p className="text-sm text-muted-foreground">完了しました。</p>
         {agent.output && (
-          <RawDisclosure summary="内部データ（JSON）を表示">
+          <RawDisclosure summary={`${label}の内部データ（JSON）を表示`}>
             <RawPre text={agent.output} />
           </RawDisclosure>
         )}
@@ -257,9 +262,12 @@ function AgentCardBody({ agent }: { agent: AgentState }) {
   }
 
   // failed: 失敗理由はヘッダで提示済み。原因究明用に生出力を折りたたみで残す。
+  // failReason・output 共に無いケースでも CardContent を空にしない（Nielsen #1）。
   return agent.output ? (
-    <RawDisclosure summary="生の出力を表示">
+    <RawDisclosure summary={`${label}の生の出力を表示`}>
       <RawPre text={agent.output} />
     </RawDisclosure>
-  ) : null;
+  ) : (
+    <p className="text-sm text-muted-foreground">出力なし</p>
+  );
 }

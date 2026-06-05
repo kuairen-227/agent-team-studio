@@ -154,7 +154,7 @@ function CompletedResultView({
       {structured.overall_insights.length > 0 && (
         <OverallInsights insights={structured.overall_insights} />
       )}
-      <RawDisclosure summary="内部データ（JSON）を表示">
+      <RawDisclosure summary="結果の内部データ（JSON）を表示">
         <RawPre text={JSON.stringify(structured, null, 2)} />
       </RawDisclosure>
       <ExportActions markdown={markdown} executionId={execution.id} />

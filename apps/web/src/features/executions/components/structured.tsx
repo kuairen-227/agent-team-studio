@@ -17,7 +17,7 @@ import type {
 } from "@agent-team-studio/shared";
 import type { ReactNode } from "react";
 
-export const ALL_PERSPECTIVES: CompetitorPerspectiveKey[] = [
+export const ALL_PERSPECTIVES: readonly CompetitorPerspectiveKey[] = [
   "strategy",
   "product",
   "investment",
@@ -47,9 +47,9 @@ export const MISSING_REASON_LABEL: Record<
 };
 
 /** 競合 1 社分の発見事項（要点リスト + 補足）。 */
-export function FindingBlock({ finding }: { finding: InvestigationFinding }) {
+function FindingBlock({ finding }: { finding: InvestigationFinding }) {
   return (
-    <div>
+    <div className="border-t pt-4 first:border-t-0 first:pt-0">
       <p className="mb-1 text-sm font-medium">{finding.competitor}</p>
       <ul className="space-y-1">
         {finding.points.map((point, i) => (
@@ -101,7 +101,7 @@ export function RawDisclosure({
 }) {
   return (
     <details open={defaultOpen} className="mt-2 text-sm">
-      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+      <summary className="cursor-pointer rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         {summary}
       </summary>
       {children}
