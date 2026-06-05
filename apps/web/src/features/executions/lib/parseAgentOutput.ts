@@ -55,8 +55,10 @@ function isFinding(value: unknown): value is InvestigationFinding {
     return false;
   if (!EVIDENCE_LEVELS.includes(value.evidence_level as EvidenceLevel))
     return false;
-  if (value.notes !== undefined && typeof value.notes !== "string")
-    return false;
+  // notes は null も「無し」として許容する。`notes != null` で null/undefined を
+  // まとめて通すことで、LLM が "notes": null を返しても finding 1 件で構造化全体を
+  // 失わず（raw フォールバックさせず）、null は FindingBlock 側で非表示になる。
+  if (value.notes != null && typeof value.notes !== "string") return false;
   return true;
 }
 
@@ -92,6 +94,10 @@ export function parseAgentOutput(
   agentId: string,
   output: string,
 ): ParsedAgentOutput {
+  // agentId の命名（investigation_* / integration）は競合調査テンプレート
+  // （docs/design/templates/competitor-analysis.md）が SSoT。命名を変える場合は
+  // ExecutionProgressPage の AGENT_LABEL と本判定を同期すること（不一致時は黙って
+  // unstructured へフォールバックし表示が静かに壊れるため）。
   if (agentId.startsWith("investigation_")) {
     const parsed = tryParseJson(output);
     if (isInvestigationOutput(parsed)) {

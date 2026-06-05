@@ -49,6 +49,8 @@ describe("parseAgentOutput", () => {
     const partial = '{"perspective": "str';
     const result = parseAgentOutput("investigation_partnership", partial);
     expect(result.kind).toBe("unstructured");
+    if (result.kind !== "unstructured") throw new Error("unreachable");
+    expect(result.raw).toBe(partial);
   });
 
   it("shape 不正（evidence_level が不正値）は unstructured へフォールバックする", () => {
@@ -58,12 +60,53 @@ describe("parseAgentOutput", () => {
     });
     const result = parseAgentOutput("investigation_strategy", invalid);
     expect(result.kind).toBe("unstructured");
+    if (result.kind !== "unstructured") throw new Error("unreachable");
+    expect(result.raw).toBe(invalid);
   });
 
   it("shape 不正（perspective が未知キー）は unstructured へフォールバックする", () => {
     const invalid = JSON.stringify({ perspective: "pricing", findings: [] });
     const result = parseAgentOutput("investigation_strategy", invalid);
     expect(result.kind).toBe("unstructured");
+    if (result.kind !== "unstructured") throw new Error("unreachable");
+    expect(result.raw).toBe(invalid);
+  });
+
+  it("notes が null の finding も構造化を維持する（null は無し扱い）", () => {
+    const withNullNotes = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "A社",
+          points: ["要点"],
+          evidence_level: "weak",
+          notes: null,
+        },
+      ],
+    });
+    const result = parseAgentOutput("investigation_strategy", withNullNotes);
+    expect(result.kind).toBe("investigation");
+    if (result.kind !== "investigation") throw new Error("unreachable");
+    expect(result.data.findings[0]?.notes).toBeNull();
+  });
+
+  it("findings が空配列でも構造化対象（investigation）として扱う", () => {
+    const empty = JSON.stringify({ perspective: "product", findings: [] });
+    const result = parseAgentOutput("investigation_product", empty);
+    expect(result.kind).toBe("investigation");
+    if (result.kind !== "investigation") throw new Error("unreachable");
+    expect(result.data.findings).toHaveLength(0);
+  });
+
+  it("points が空配列の finding も有効として通す", () => {
+    const emptyPoints = JSON.stringify({
+      perspective: "investment",
+      findings: [
+        { competitor: "A社", points: [], evidence_level: "insufficient" },
+      ],
+    });
+    const result = parseAgentOutput("investigation_investment", emptyPoints);
+    expect(result.kind).toBe("investigation");
   });
 
   it("統合エージェントは構造化対象外（マトリクスは結果画面が SSoT）", () => {
