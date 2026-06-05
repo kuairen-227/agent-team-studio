@@ -8,11 +8,8 @@
  */
 
 import type {
-  CompetitorPerspectiveKey,
-  EvidenceLevel,
   GetExecutionResponse,
   InvestigationAgentExecutionDetail,
-  InvestigationFinding,
   MissingPerspective,
   PerspectiveMatrixRow,
 } from "@agent-team-studio/shared";
@@ -24,34 +21,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson } from "@/lib/api";
-
-// --- 定数 ---
-
-const ALL_PERSPECTIVES: CompetitorPerspectiveKey[] = [
-  "strategy",
-  "product",
-  "investment",
-  "partnership",
-];
-
-const PERSPECTIVE_NAME: Record<CompetitorPerspectiveKey, string> = {
-  strategy: "戦略",
-  product: "製品",
-  investment: "投資",
-  partnership: "パートナーシップ",
-};
-
-const MISSING_REASON_LABEL: Record<MissingPerspective["reason"], string> = {
-  agent_failed: "エージェント失敗",
-  insufficient_evidence: "証拠不足",
-};
-
-const EVIDENCE_LEVEL_LABEL: Record<EvidenceLevel, string> = {
-  strong: "強",
-  moderate: "中",
-  weak: "弱",
-  insufficient: "不足",
-};
+import {
+  ALL_PERSPECTIVES,
+  EVIDENCE_LEVEL_LABEL,
+  InvestigationFindings,
+  MISSING_REASON_LABEL,
+  PERSPECTIVE_NAME,
+  RawDisclosure,
+  RawPre,
+} from "./components/structured";
 
 // --- 公開コンポーネント ---
 
@@ -176,6 +154,9 @@ function CompletedResultView({
       {structured.overall_insights.length > 0 && (
         <OverallInsights insights={structured.overall_insights} />
       )}
+      <RawDisclosure summary="内部データ（JSON）を表示">
+        <RawPre text={JSON.stringify(structured, null, 2)} />
+      </RawDisclosure>
       <ExportActions markdown={markdown} executionId={execution.id} />
     </div>
   );
@@ -433,33 +414,10 @@ function InvestigationOutputCard({
           {PERSPECTIVE_NAME[perspective] ?? perspective}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {findings.map((finding, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
-          <FindingBlock key={i} finding={finding} />
-        ))}
+      <CardContent>
+        <InvestigationFindings findings={findings} />
       </CardContent>
     </Card>
-  );
-}
-
-function FindingBlock({ finding }: { finding: InvestigationFinding }) {
-  return (
-    <div>
-      <p className="mb-1 text-sm font-medium">{finding.competitor}</p>
-      <ul className="space-y-1">
-        {finding.points.map((point, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
-          <li key={i} className="flex gap-2 text-sm">
-            <span className="mt-0.5 shrink-0 text-muted-foreground">•</span>
-            <span>{point}</span>
-          </li>
-        ))}
-      </ul>
-      {finding.notes && (
-        <p className="mt-1 text-xs text-muted-foreground">{finding.notes}</p>
-      )}
-    </div>
   );
 }
 
