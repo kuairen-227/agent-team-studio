@@ -136,7 +136,7 @@ flowchart TB
 | `qa` | テスト設計・品質・セキュリティ |
 | `designer` | UI/UX・ブランド |
 
-「レビュー」はエージェントとして定義しない。レビューは行為であり専門領域ではないため、`review` スキルが対象に応じてエージェントを組み合わせる（[ADR-0011](../adr/0011-role-based-agent-architecture.md)）。5 エージェントのうち `designer` は後から追加した（[ADR-0015](../adr/0015-add-designer-agent.md)）。
+「レビュー」はエージェントとして定義しない。レビューは行為であり専門領域ではないため、`review` スキルが対象の種別を引数から推定し、適切なエージェントへ動的に委譲する（[ADR-0011](../adr/0011-role-based-agent-architecture.md)）。5 エージェントのうち `designer` は後から追加した（[ADR-0015](../adr/0015-add-designer-agent.md)）。
 
 **MCP — 外部知識へのアクセス**: 訓練データのカットオフを超えた最新ドキュメントへのアクセスと、実ブラウザでの動作確認が必要なため導入する。ライブラリ選定・API 変更への追従は `context7` が担い、UI 実装の動作確認は `playwright` が担う。MCP は「外部ツール連携の必要性が生じたら導入」する方針（[ADR-0007](../adr/0007-ai-driven-dev-architecture.md)）。
 
