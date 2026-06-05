@@ -6,7 +6,7 @@
 
 | ガイド | 内容 |
 | --- | --- |
-| [ai-harness.md](./ai-harness.md) | AI 駆動開発ハーネス（agents × skills × rules × hooks × MCP × permissions の全体構成） |
+| [ai-driven-development.md](./ai-driven-development.md) | AI 駆動開発の全体像（Context / Enablement / Harness / Security / Methodology の 5 分類で施策を棚卸し） |
 | [github-workflow.md](./github-workflow.md) | GitHub 運用ガイド（ラベル・Issue・PR・マイルストーン） |
 | [branch-strategy.md](./branch-strategy.md) | ブランチ戦略 |
 | [testing.md](./testing.md) | テスト運用（配置・モック戦略・ひな型） |
