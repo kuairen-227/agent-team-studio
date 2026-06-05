@@ -65,37 +65,58 @@ flowchart TB
 
 実線は AI の作業ループへの直接寄与、点線は環境・進め方の枠付けを表す。
 
+### 時間軸：開発サイクルと駆動施策
+
+上は「何があるか」（構造）。下は「いつ・何のために使うか」（時間軸）。開発サイクルの各工程を、どの施策・スキルが駆動するかを示す。
+
+```mermaid
+flowchart LR
+    P1["企画"] --> P2["要件"] --> P3["設計"] --> P4["開発"] --> P5["試験"] --> P6["改善"] --> P7["運用保守"]
+    P7 -.->|"次サイクル"| P1
+    P1 -.- s1["manage-issue / ADR"]
+    P2 -.- s2["write-product-doc / PO"]
+    P3 -.- s3["write-design-doc / create-adr / architect"]
+    P4 -.- s4["implement-feature / 型 / hooks / lint"]
+    P5 -.- s5["testing / QA / Plan-Verify"]
+    P6 -.- s6["review / resolve-review"]
+    P7 -.- s7["CI / dependabot / manage-issue"]
+```
+
+各工程は前工程の成果を受けて進み、運用保守で得た知見が次サイクルの企画へ戻る（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。施策はこのサイクルを回すために存在する。
+
 ## 施策インベントリ
 
-| 施策 | 主分類 | 補助分類 | AI 駆動開発での役割 | 本リポジトリの実体・状況 |
-| --- | --- | --- | --- | --- |
-| CLAUDE.md | Context | — | 常時ロードの規約・コマンド・原則ベースライン | `CLAUDE.md` |
-| ドキュメント | Context | — | 詳細知識（guides / design / product / milestones） | `docs/` |
-| ADR | Context | Methodology | 意思決定の根拠を記録（ADR 駆動） | `docs/adr/` |
-| rules | Context | Harness | パスマッチで追加制約を自動注入 | `.claude/rules/` |
-| glossary | Context | — | 用語統一 | `docs/product/glossary.md` |
-| principles | Context | — | 横断原則の SSoT | `docs/principles/` |
-| 型（TypeScript） | Harness | Context | コンパイル検証＋意図の表現 | 全 TS / `type-check` |
-| テスト | Harness | Methodology | 振る舞いの検証（軽量 TDD） | `bun run test` |
-| hooks | Harness | — | tool call 後の決定論的 enforce | `.claude/hooks/` |
-| Husky / lint-staged | Harness | — | commit 前ゲート | `package.json` |
-| Plan / Verify ループ | Harness | Methodology | 計画→実行→検証の反復 | implement-feature 手順 |
-| Biome lint / format | Harness | — | 静的解析・整形 | `bun run lint` |
-| CI（Actions） | Harness | — | 統合検証（lint / type / test / spell / secret） | `.github/workflows/` |
-| ドキュメント品質ハーネス | Harness | — | markdownlint / link-check / cspell による文書検証 | `lint:md` / `lint:md-links` / `lint:spell` |
-| permissions | Harness | Security | 全 tool call の許可 / 拒否網 | `.claude/settings.json` |
-| Skills | Enablement | Harness | 定型手順の自動化・再利用 | `.claude/skills/` |
-| SubAgents | Enablement | Harness | 専門視点の分離・知識の再利用 | `.claude/agents/` |
-| MCP | Enablement | Context | 外部知識（context7）・動作確認（playwright） | `enabledMcpjsonServers` |
-| アーキテクチャ | Enablement | Context | 層分離で実装場所が予測可能 | [ADR-0009](../adr/0009-architecture.md) |
-| Drizzle（型生成） | Enablement | Harness | スキーマ→型安全なクライアント生成 | `db:generate` / `packages/db` |
-| Turborepo | Enablement | — | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
-| worktree | Enablement | — | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
-| DevContainer | Security | Enablement | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
-| サンドボックス | Security | — | tool 実行の隔離 | Claude Code の tool 実行サンドボックス（DevContainer とは別レイヤ） |
-| secretlint | Security | Harness | 機密情報の検出 | `bun run lint:secret` |
-| Issue/PR テンプレート | Methodology | Context | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
-| 駆動法群 | Methodology | — | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
+「発動契機」はいつ働くか、「効果の性質」はどう効くか（確率的＝示すが保証しない / 決定論的＝機械的に enforce・ブロック）を表す。
+
+| 施策 | 主分類 | 補助分類 | 発動契機 | 効果の性質 | AI 駆動開発での役割 | 本リポジトリの実体・状況 |
+| --- | --- | --- | --- | --- | --- | --- |
+| CLAUDE.md | Context | — | 常時 | 確率的 | 常時ロードの規約・コマンド・原則ベースライン | `CLAUDE.md` |
+| ドキュメント | Context | — | 参照時 | 確率的 | 詳細知識（guides / design / product / milestones） | `docs/` |
+| ADR | Context | Methodology | 参照時 | 確率的 | 意思決定の根拠を記録（ADR 駆動） | `docs/adr/` |
+| rules | Context | Harness | パスマッチ編集時 | 確率的 | パスマッチで追加制約を自動注入 | `.claude/rules/` |
+| glossary | Context | — | 参照時 | 確率的 | 用語統一 | `docs/product/glossary.md` |
+| principles | Context | — | 参照時 | 確率的 | 横断原則の SSoT | `docs/principles/` |
+| 型（TypeScript） | Harness | Context | コンパイル時 | 決定論的 | コンパイル検証＋意図の表現 | 全 TS / `type-check` |
+| テスト | Harness | Methodology | 実行時 | 決定論的 | 振る舞いの検証（軽量 TDD） | `bun run test` |
+| hooks | Harness | — | tool call 後 | 決定論的 | tool call 後の自動 enforce | `.claude/hooks/` |
+| Husky / lint-staged | Harness | — | commit 時 | 決定論的 | commit 前ゲート | `package.json` |
+| Plan / Verify ループ | Harness | Methodology | 実装中 | 確率的 | 計画→実行→検証の反復 | implement-feature 手順 |
+| Biome lint / format | Harness | — | ローカル実行・commit 前 | 決定論的 | 静的解析・整形 | `bun run lint` |
+| CI（Actions） | Harness | — | push / PR 時 | 決定論的 | 統合検証（lint / type / test / spell / secret） | `.github/workflows/` |
+| ドキュメント品質ハーネス | Harness | — | 実行・CI 時 | 決定論的 | markdownlint / link-check / cspell による文書検証 | `lint:md` / `lint:md-links` / `lint:spell` |
+| permissions | Harness | Security | 全 tool call | 決定論的 | 全 tool call の許可 / 拒否網 | `.claude/settings.json` |
+| Skills | Enablement | Harness | 明示呼び出し | 確率的 | 定型手順の自動化・再利用 | `.claude/skills/` |
+| SubAgents | Enablement | Harness | 委譲時 | 確率的 | 専門視点の分離・知識の再利用 | `.claude/agents/` |
+| MCP | Enablement | Context | 明示呼び出し | 確率的 | 外部知識（context7）・動作確認（playwright） | `enabledMcpjsonServers` |
+| アーキテクチャ | Enablement | Context | 設計・実装時 | 確率的 | 層分離で実装場所が予測可能 | [ADR-0009](../adr/0009-architecture.md) |
+| Drizzle（型生成） | Enablement | Harness | `db:generate` 時 | 決定論的 | スキーマ→型安全なクライアント生成 | `db:generate` / `packages/db` |
+| Turborepo | Enablement | — | コマンド実行時 | 決定論的 | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
+| worktree | Enablement | — | 並行作業時 | 決定論的 | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
+| DevContainer | Security | Enablement | 環境起動時 | 決定論的 | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
+| サンドボックス | Security | — | 全 tool call | 決定論的 | tool 実行の隔離 | Claude Code の tool 実行サンドボックス（DevContainer とは別レイヤ） |
+| secretlint | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
+| Issue/PR テンプレート | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
+| 駆動法群 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
 
 ## 各分類の設計意図
 
@@ -166,21 +187,14 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 進め方そのものを型として規定する。型駆動（type-first）・軽量 TDD・ADR 駆動・Issue 駆動を組み合わせ、AI との協働サイクル（企画→要件→設計→開発→試験→改善→運用）を一気通貫で回す（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。Issue/PR テンプレートは、この型を入力の段階から強制する。
 
-## 設計特性：発動契機 × 効果の性質
+## 多層防御：確率的 → 決定論的
 
-検証の背骨を「いつ発動し、効果が確率的か決定論的か」で並べる。設計思想の「指示は確率的に従われ、フックは決定論的に実行される」を具体化したもの。
+インベントリの「効果の性質」列で施策を読み替えると、防御が二層に分かれる。
 
-| 施策 | 発動契機 | 効果の性質 | 設計上の含意 |
-| --- | --- | --- | --- |
-| AI への指示（CLAUDE.md 禁止事項） | 常時（文脈） | 確率的 | 前段の防御線。従う確率を上げるが保証しない |
-| rules/ | パスマッチ編集時 | 確率的 | 文脈注入。ad-hoc 編集にも効くが enforce はしない |
-| Biome / type-check / tests | ローカル実行・commit 前 | 決定論的 | 違反を機械的に検出 |
-| hooks（post-edit-lint） | tool call 後（PostToolUse） | 決定論的 | AI の判断を経由せず自動実行 |
-| Husky / lint-staged | commit 時 | 決定論的 | commit をゲート |
-| CI（Actions） | push / PR 時 | 決定論的 | 統合時に再検証 |
-| permissions.deny | 全 tool call | 決定論的 | 最後の防御線。物理的にブロック |
+- **確率的な層（前段・速い・柔らかい）**: 指示・文脈（CLAUDE.md / rules / docs）、AI が呼び出す Skills・Agents・MCP。従う確率を上げるが保証はしない。
+- **決定論的な層（後段・遅い・硬い）**: 型・lint・test・hooks・Husky・CI、最後に permissions.deny。AI の判断を経由せず機械的に enforce・ブロックする。
 
-上に行くほど早く柔らかく（確率的・前段）、下に行くほど遅く硬い（決定論的・後段）。確率的な層で速度を、決定論的な層で安全を担保する多重防御の構造になっている。これは [ADR-0007](../adr/0007-ai-driven-dev-architecture.md) の品質保証 3 層構成（指示 → 自動修正フック → 統合検証）に対応する。
+前段で速度を、後段で安全を担保する。指示（確率的）→ 自動修正フック → 統合検証 → permissions（決定論的）という段階は、[ADR-0007](../adr/0007-ai-driven-dev-architecture.md) の品質保証 3 層構成に対応する。
 
 ## 未導入の選択
 
