@@ -29,12 +29,25 @@ bun run dev | pino-pretty
 
 `LOG_LEVEL` を明示指定した場合はそれが最優先。
 
-## request 相関（request-id）
+## request 相関 / trace ID（request-id）
 
 `hono/request-id` middleware が request ごとに request-id を払い出し（レスポンスヘッダ `X-Request-Id` にも付与）、それを bind した child logger を Hono context に格納する。アクセスログ・エラーログはこの request-scoped logger を用いるため、1 リクエストに紐づくログを request-id で横断的に追える。
 
-engine の fire-and-forget 経路（HTTP request コンテキスト外）は request-id を持たないため、`executionId` を bind する。API→engine→LLM への ID 伝搬は [Issue #239](https://github.com/kuairen-227/agent-team-studio/issues/239) の責務とする。
+`POST /api/executions` の request-id は **trace ID** として engine の fire-and-forget 経路（HTTP request コンテキスト外）へ伝搬する（[Issue #239](https://github.com/kuairen-227/agent-team-studio/issues/239)）。engine 起動時に `{ component: "engine", requestId, executionId }` を bind した child logger を生成し、agent ごとに `{ agentExecutionId, agentId, role }` を追加 bind した child を LLM 呼び出し層まで引き渡す。これにより HTTP→engine→agent→LLM のログを同一 trace ID で横断追跡できる。
 
+内部エラー（500）応答では原因情報を返さず、相関用に `details.traceId`（= request-id）のみを露出する（`packages/shared` の `ApiInternalError`）。
+
+### trace ID の生成方針
+
+| 項目 | 内容 |
+| --- | --- |
+| 生成 | `hono/request-id` の既定ジェネレータ `crypto.randomUUID()` |
+| 形式・長さ | RFC 4122 v4 UUID（36 文字、ハイフン区切り） |
+| 外部指定 | クライアントが `X-Request-Id` を送ると踏襲する。ただし 255 文字超または `\w` `-` `=` 以外を含む値は破棄して再生成（hono の既定検証） |
+| 衝突対策 | v4 は 122 bit ランダムで衝突確率は実質無視できる。短縮 ID は採用しない |
+
+> **命名の対応**: ログのフィールド名は `requestId`、API エラー応答の契約名は `details.traceId`、HTTP ヘッダは `X-Request-Id`。いずれも同一の値を指す。
+>
 > **エラー応答時のアクセスログ**: アクセスログ middleware は `await next()` 完了後に出力するため、ルート/サービス層が throw する経路（`onError` で整形される 400 / 404 / 500）では `"request completed"` を出力しない。500 は `onError` の error ログで追跡できるが、400 / 404 はアクセスログに残らない。全経路でのアクセスログ網羅は [Issue #256](https://github.com/kuairen-227/agent-team-studio/issues/256) で扱う。
 
 ## redact（機密フィールド除外）
@@ -48,6 +61,6 @@ engine の fire-and-forget 経路（HTTP request コンテキスト外）は req
 ## スコープ外
 
 - **apps/web**（ブラウザ）: フロントの可観測性は別途エラートラッキング（[Issue #237](https://github.com/kuairen-227/agent-team-studio/issues/237)）で扱う。
-- **packages/agent-core**（engine/LLM）: ライブラリのため具体ロガーに依存させない。logger 注入・ID 伝搬は [Issue #239](https://github.com/kuairen-227/agent-team-studio/issues/239) で扱う。
+- **packages/agent-core**（engine/LLM）: ライブラリのため具体ロガーに依存させない。最小 Logger ポート型（`logger-port.ts`）を定義し、apps/api が Pino logger を child binding して注入する（#239 で実装済み）。
 - **packages/db**: CLI スクリプト（migrate / seed）は人間が直接実行する運用ツールのため、構造化ログの対象外。
 - **WebSocket ハンドラ**: `onOpen` / `onMessage` 等は Hono の request context 外で動作するため request-scoped logger の対象外（現状エラーはログに残らない）。WS の可観測性は必要になった時点で別途検討する。
