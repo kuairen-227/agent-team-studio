@@ -54,7 +54,7 @@ flowchart TB
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; MDL["doc品質"]; PRM["permissions"]
+        TYP["型 / type-check"]; TST["tests"]; LNT["lint（Biome・doc品質）"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
     end
     subgraph method["Methodology — 駆動法"]
         XDD["駆動法群"]
@@ -96,7 +96,7 @@ flowchart TB
     classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
-    class TYP,TST,TC,LNT,HK,HUS,MDL,PRM h
+    class TYP,TST,LNT,HK,HUS,PRM h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
     class XDD m
