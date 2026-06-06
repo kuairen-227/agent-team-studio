@@ -83,11 +83,15 @@ const validIntegrationOutput = {
           competitor: "CompanyA",
           summary: "要約",
           source_evidence_level: "strong",
+          sources: [
+            { origin: "knowledge_base", detail: "2024 年公式発表" },
+            { origin: "reference", detail: "見出し『戦略』" },
+          ],
         },
       ],
     },
   ],
-  overall_insights: ["所見1"],
+  overall_insights: [{ text: "所見1", sources: [{ origin: "estimated" }] }],
   missing: [],
 };
 
@@ -198,6 +202,32 @@ describe("runInvestigationAgent", () => {
     if (result.success) {
       expect(result.output.perspective).toBe("strategy");
       expect(result.output.findings).toHaveLength(1);
+    }
+  });
+
+  test("正常系: finding の出典(sources)を解釈する (#226)", async () => {
+    const json = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "CompanyA",
+          points: ["点1"],
+          evidence_level: "strong",
+          sources: [{ origin: "reference", detail: "見出し『戦略』" }],
+        },
+      ],
+    });
+    const deps = makeDeps([json]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.output.findings[0]?.sources).toEqual([
+        { origin: "reference", detail: "見出し『戦略』" },
+      ]);
     }
   });
 
@@ -349,6 +379,75 @@ describe("runIntegrationAgent", () => {
       expect(result.markdown).toContain("Markdown");
       expect(result.output.matrix).toHaveLength(1);
       expect(result.output.overall_insights).toHaveLength(1);
+    }
+  });
+
+  test("セル・総合インサイトの出典(sources)を構造化出力として解釈する (#226)", async () => {
+    const deps = makeDeps([validIntegrationRaw]);
+    const result = await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const cell = result.output.matrix[0]?.cells[0];
+      expect(cell?.sources).toEqual([
+        { origin: "knowledge_base", detail: "2024 年公式発表" },
+        { origin: "reference", detail: "見出し『戦略』" },
+      ]);
+      expect(result.output.overall_insights[0]?.text).toBe("所見1");
+      expect(result.output.overall_insights[0]?.sources).toEqual([
+        { origin: "estimated" },
+      ]);
+    }
+  });
+
+  test("sources を省略した出力も解釈できる（後方互換・optional） (#226)", async () => {
+    const output = {
+      matrix: [
+        {
+          perspective: "strategy",
+          cells: [
+            { competitor: "CompanyA", summary: "要約", source_evidence_level: "strong" },
+          ],
+        },
+      ],
+      overall_insights: [{ text: "所見1" }],
+      missing: [],
+    };
+    const raw = `## Markdown\n\n${JSON.stringify(output)}`;
+    const deps = makeDeps([raw]);
+    const result = await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.output.matrix[0]?.cells[0]?.sources).toBeUndefined();
+      expect(result.output.overall_insights[0]?.sources).toBeUndefined();
+    }
+  });
+
+  test("不正な origin を含む sources は構造不正として弾く (#226)", async () => {
+    const output = {
+      ...validIntegrationOutput,
+      matrix: [
+        {
+          perspective: "strategy",
+          cells: [
+            {
+              competitor: "CompanyA",
+              summary: "要約",
+              source_evidence_level: "strong",
+              sources: [{ origin: "web_search" }],
+            },
+          ],
+        },
+      ],
+    };
+    const raw = `## Markdown\n\n${JSON.stringify(output)}`;
+    const deps = makeDeps([raw]);
+    const result = await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.reason).toBe("output_parse_error");
     }
   });
 
