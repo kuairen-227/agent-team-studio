@@ -85,7 +85,6 @@ flowchart TB
     P6 -.-> harness
     P7 -.-> harness
 
-    RUL -.->|"重なり"| SKL
     DRZ -->|"型生成"| TYP
     TC -.->|"検証"| TYP
     HK -->|"実行"| lint
