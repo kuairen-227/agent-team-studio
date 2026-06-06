@@ -20,6 +20,7 @@ import type {
   InvestigationAgentOutput,
   LlmDefaults,
   MissingPerspective,
+  SourceOrigin,
 } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
@@ -150,6 +151,32 @@ const EVIDENCE_LEVELS = [
   "insufficient",
 ] as const satisfies EvidenceLevel[];
 
+const SOURCE_ORIGINS = [
+  "knowledge_base",
+  "reference",
+  "estimated",
+  "unknown",
+] as const satisfies SourceOrigin[];
+
+/**
+ * `sources` フィールドの構造を検証する（#226）。
+ * optional のため undefined は許容するが、存在する場合は配列かつ各要素が
+ * 既知の origin を持つことを要求する（不正な origin は捏造防止のため弾く）。
+ */
+function isValidSources(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+  for (const s of value) {
+    if (typeof s !== "object" || s === null) return false;
+    const src = s as Record<string, unknown>;
+    if (!(SOURCE_ORIGINS as readonly string[]).includes(src.origin as string))
+      return false;
+    if (src.detail !== undefined && typeof src.detail !== "string")
+      return false;
+  }
+  return true;
+}
+
 function isInvestigationOutput(
   value: unknown,
 ): value is InvestigationAgentOutput {
@@ -164,6 +191,7 @@ function isInvestigationOutput(
     if (!Array.isArray(finding.points)) return false;
     if (!EVIDENCE_LEVELS.includes(finding.evidence_level as EvidenceLevel))
       return false;
+    if (!isValidSources(finding.sources)) return false;
   }
   return true;
 }
@@ -196,13 +224,17 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
       if (
         typeof i.competitor !== "string" ||
         typeof i.summary !== "string" ||
-        !EVIDENCE_LEVELS.includes(i.source_evidence_level as EvidenceLevel)
+        !EVIDENCE_LEVELS.includes(i.source_evidence_level as EvidenceLevel) ||
+        !isValidSources(i.sources)
       )
         return false;
     }
   }
   for (const insight of obj.overall_insights) {
-    if (typeof insight !== "string") return false;
+    if (typeof insight !== "object" || insight === null) return false;
+    const ins = insight as Record<string, unknown>;
+    if (typeof ins.text !== "string") return false;
+    if (!isValidSources(ins.sources)) return false;
   }
   for (const m of obj.missing) {
     if (typeof m !== "object" || m === null) return false;

@@ -14,6 +14,8 @@ import type {
   EvidenceLevel,
   InvestigationFinding,
   MissingPerspective,
+  Source,
+  SourceOrigin,
 } from "@agent-team-studio/shared";
 import type { ReactNode } from "react";
 
@@ -46,6 +48,35 @@ export const MISSING_REASON_LABEL: Record<
   insufficient_evidence: "証拠不足",
 };
 
+export const SOURCE_ORIGIN_LABEL: Record<SourceOrigin, string> = {
+  knowledge_base: "知識ベース",
+  reference: "参考情報",
+  estimated: "推定",
+  unknown: "不明",
+};
+
+/**
+ * 出典・参照元を確度ラベルと対で提示する（#226）。
+ * sources が空・未指定なら「出典: 不明」を明示し、推測情報がそのまま事実として
+ * 流通しないようにする（ブランド軸「判断を奪わない」/ acceptance-protocol 基準 3）。
+ */
+export function SourceList({ sources }: { sources?: Source[] }) {
+  if (!sources || sources.length === 0) {
+    return <p className="mt-1 text-xs text-muted-foreground">出典: 不明</p>;
+  }
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {sources.map((source, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
+        <li key={i} className="text-xs text-muted-foreground">
+          出典: {SOURCE_ORIGIN_LABEL[source.origin]}
+          {source.detail ? `（${source.detail}）` : ""}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** 競合 1 社分の発見事項（要点リスト + 補足）。 */
 function FindingBlock({ finding }: { finding: InvestigationFinding }) {
   return (
@@ -63,6 +94,7 @@ function FindingBlock({ finding }: { finding: InvestigationFinding }) {
       {finding.notes && (
         <p className="mt-1 text-xs text-muted-foreground">{finding.notes}</p>
       )}
+      <SourceList sources={finding.sources} />
     </div>
   );
 }

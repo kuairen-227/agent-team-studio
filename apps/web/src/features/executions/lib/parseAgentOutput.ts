@@ -86,6 +86,7 @@ function normalizeInvestigation(
       points: f.points,
       evidence_level: f.evidence_level,
       ...(f.notes != null ? { notes: f.notes } : {}),
+      ...(f.sources != null ? { sources: f.sources } : {}),
     })),
   };
 }

@@ -50,7 +50,7 @@ const resultRow: ResultRow = {
   markdown: "# レポート",
   structured: {
     matrix: [],
-    overall_insights: ["所見1"],
+    overall_insights: [{ text: "所見1" }],
     missing: [],
   },
   createdAt: new Date("2026-05-04T00:02:00.000Z"),

@@ -140,7 +140,7 @@ const successIntegrationOutput = {
       ],
     },
   ],
-  overall_insights: ["所見1"],
+  overall_insights: [{ text: "所見1" }],
   missing: [],
 };
 

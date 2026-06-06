@@ -406,7 +406,11 @@ describe("runIntegrationAgent", () => {
         {
           perspective: "strategy",
           cells: [
-            { competitor: "CompanyA", summary: "要約", source_evidence_level: "strong" },
+            {
+              competitor: "CompanyA",
+              summary: "要約",
+              source_evidence_level: "strong",
+            },
           ],
         },
       ],
