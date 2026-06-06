@@ -20,12 +20,21 @@
 
 ## 全体像
 
-構造（5 分類の色分けサブグラフ）・施策間の関係（実線エッジ）・時間軸（上部の開発サイクル）を 1 枚に統合した図。色＝主分類、点線＝工程が主に駆動する分類、実線＝施策間の関係。
+Claude（AI）を中心に据え、**Claude が内包する要素（Skills・SubAgents・今後の Plan/Verify ループ）を Claude ボックス内に**、その他の施策を 5 分類の色分けサブグラフに配置した統合図。図はインベントリの 5 分類と 1:1 では対応させず、アクター構造（誰が動くか）を優先する。色＝分類、点線＝工程が主に駆動する分類および今後の計画、実線＝アクター・施策間の関係。
 
 ```mermaid
 flowchart TB
-    User(["PM / エンジニア"]) -->|"指示"| AI(["Claude (AI)"])
-    AI -->|"参加（任意の工程）"| time
+    subgraph ai["Claude（AI）— メインループと内部委譲"]
+        CORE(["メインループ"])
+        SKL["Skills"]
+        AGT["SubAgents（専門ロール）"]
+        subgraph plan["Plan / Verify ループ（今後の計画）"]
+            PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+        end
+        CORE -->|"呼び出し"| SKL
+        SKL -->|"委譲"| AGT
+        CORE -.->|"将来導入"| plan
+    end
 
     subgraph time["開発サイクル（時間軸・状況に応じ行き来）"]
         direction LR
@@ -37,7 +46,7 @@ flowchart TB
         CL["CLAUDE.md"]; RUL["rules/"]; DOC["docs/"]; ADR["ADR"]; PRI["principles"]; GLO["glossary"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        SKL["Skills"]; AGT["SubAgents"]; MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
+        MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PRM["permissions"]
@@ -49,6 +58,12 @@ flowchart TB
         XDD["駆動法群"]; TPL["Issue/PRテンプレート"]
     end
 
+    User(["PM / エンジニア"]) -->|"指示"| CORE
+    CORE -->|"参加（任意の工程）"| time
+    CL -->|"ベースライン"| RUL
+    context -.->|"文脈注入"| CORE
+    CORE -->|"利用"| enable
+
     P1 -.-> method
     P2 -.-> context
     P3 -.-> enable & method
@@ -57,26 +72,29 @@ flowchart TB
     P6 -.-> harness
     P7 -.-> harness
 
-    CL -->|"ベースライン"| RUL
     RUL -.->|"重なり"| SKL
-    SKL -->|"委譲"| AGT
     DRZ -->|"型生成"| TYP
     HK -->|"実行"| LNT
     HUS -->|"実行"| LNT
     CI -->|"統合実行"| TST
-    harness -.->|"フィードバック"| AI
-    PRM -.->|"全 tool call を制御"| AI
+    harness -.->|"フィードバック"| CORE
+    PRM -.->|"全 tool call を制御"| CORE
 
     classDef c fill:#e3f2fd,stroke:#1565c0
     classDef h fill:#fff3e0,stroke:#e65100
     classDef s fill:#ffebee,stroke:#c62828
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
+    classDef a fill:#ede7f6,stroke:#4527a0
+    classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
     class CL,DOC,ADR,RUL,PRI,GLO c
     class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PRM h
     class DC,SB,SL s
-    class SKL,AGT,MCP,ARC,DRZ,TRB,WT e
+    class MCP,ARC,DRZ,TRB,WT e
     class XDD,TPL m
+    class CORE,SKL,AGT a
+    class PL,IMP,VER f
+    style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
 ```
 
 工程は厳密な逐次ではなく状況に応じて行き来する（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。運用保守で得た知見が次サイクルへ還流する。施策はこのサイクルを回すために存在する。
@@ -205,7 +223,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 ## 今後の計画：Plan / Verify エージェントループ
 
-Anthropic が長時間稼働アプリ開発向けに示した [3 エージェントハーネス](https://www.anthropic.com/engineering/harness-design-long-running-apps) を、将来的に本リポジトリの開発サイクルへ取り込むことを構想している。これは既存の役割ベースエージェント（po / pm / architect / qa / designer、[ADR-0011](../adr/0011-role-based-agent-architecture.md)）とは**別系統**で、実装そのものを自律的に駆動するループを担う。
+Anthropic が長時間稼働アプリ開発向けに示した [3 エージェントハーネス](https://www.anthropic.com/engineering/harness-design-long-running-apps) を、将来的に本リポジトリの開発サイクルへ取り込むことを構想している。これは既存の役割ベースエージェント（po / pm / architect / qa / designer、[ADR-0011](../adr/0011-role-based-agent-architecture.md)）とは**別系統**で、実装そのものを自律的に駆動するループを担う。Claude のサブインスタンスとして動くため、全体像図でも Claude ボックス内に点線クラスタとして示している。
 
 | エージェント | 役割 |
 | --- | --- |
