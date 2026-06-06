@@ -20,13 +20,13 @@
 
 ## 全体像
 
-**メインループ**を中心に据えた統合図。メインループは配下の **Agent（SubAgents＝専門ロール、今後の Plan/Verify ループ）を内包**し、共通ツール（Skills・MCP）と hooks を介して動く。Claude は **ローカル実行環境（DevContainer ⊃ worktree ⊃ サンドボックス）** に入れ子で囲まれ、`push / PR` でつながる **GitHub（リモート実行環境）** が Issue / PR / CI を担う（Claude がテンプレートで Issue/PR を起こし、Issue が開発サイクルを、CI が統合検証を回す）。開発サイクルは **駆動法** を内包する。**2 軸構成**で、位置＝アクター / 実行環境（誰がどこで動くか）、色＝施策の分類を表す（**グレー破線のノードは未実装＝今後の計画**）。インベントリの分類とは 1:1 に対応させず、また図は主要な構造に絞るため**一部の施策（Drizzle・アーキテクチャ等）はインベントリ表のみに記載**する。線は、点線＝工程が主に駆動する分類・隔離境界、実線＝アクター・施策間の関係。
+**メインループ**を中心に据えた統合図。メインループは配下の **Agent（SubAgents＝専門ロール、今後の Plan/Verify ループ）を内包**し、共通ツール（Skills・MCP）と hooks を介して動く。Claude は **ローカル実行環境（DevContainer ⊃ worktree ⊃ サンドボックス）** に入れ子で囲まれ、`push / PR` でつながる **GitHub（リモート実行環境）** が Issue / PR / CI を担う（Claude がテンプレートで Issue/PR を起こし、Issue が開発サイクルを、CI が統合検証を回す）。開発サイクルは **駆動法** を内包する。**2 軸構成**で、位置＝アクター / 実行環境（誰がどこで動くか）、色＝施策の分類を表す（**グレー破線は未稼働＝今後の計画・未設定**）。インベントリの分類とは 1:1 に対応させず、また図は主要な構造に絞るため**一部の施策（Drizzle・アーキテクチャ等）はインベントリ表のみに記載**する。線は、点線＝工程が主に駆動する分類・隔離境界、実線＝アクター・施策間の関係。
 
 ```mermaid
 flowchart TB
     subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
         subgraph wt["worktree — 並行作業の隔離ワークスペース"]
-            subgraph sb["サンドボックス — tool 実行の隔離"]
+            subgraph sb["サンドボックス — tool 実行の隔離（未設定）"]
                 subgraph ai["Claude（AI）"]
                     subgraph ML["メインループ — Agent を統括"]
                         AGT["SubAgents（専門ロール）"]
@@ -115,7 +115,7 @@ flowchart TB
     class SKL,AGT a
     class PL,IMP,VER f
     style dc fill:#ffebee,stroke:#c62828
-    style sb fill:#fce4ec,stroke:#c62828,stroke-dasharray:5 3
+    style sb fill:#eeeeee,stroke:#9e9e9e,stroke-dasharray:5 3
     style wt fill:#f1f8e9,stroke:#558b2f
     style ai fill:#ede7f6,stroke:#4527a0
     style ML fill:#d1c4e9,stroke:#4527a0
@@ -129,7 +129,7 @@ flowchart TB
 
 ## 施策インベントリ
 
-「実装」は導入済み（済）か今後の計画（計画）か。「発動契機」はいつ働くか、「効果の性質」はどう効くか（確率的＝示すが保証しない / 決定論的＝機械的に enforce・ブロック）を表す。
+「実装」は導入済み（済）・今後の計画（計画）・未設定の別。「発動契機」はいつ働くか、「効果の性質」はどう効くか（確率的＝示すが保証しない / 決定論的＝機械的に enforce・ブロック）を表す。
 
 | 施策 | 実装 | 主分類 | 補助分類 | 発動契機 | 効果の性質 | AI 駆動開発での役割 | 本リポジトリの実体・状況 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -155,7 +155,7 @@ flowchart TB
 | Turborepo | 済 | Enablement | — | コマンド実行時 | 決定論的 | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
 | worktree | 済 | Enablement | — | 並行作業時 | 決定論的 | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
 | DevContainer | 済 | Security | Enablement | 環境起動時 | 決定論的 | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
-| サンドボックス | 済 | Security | — | 全 tool call | 決定論的 | tool 実行の隔離 | Claude Code の tool 実行サンドボックス（DevContainer とは別レイヤ） |
+| サンドボックス | 未設定 | Security | — | 全 tool call | 決定論的 | tool 実行の隔離 | 明示設定なし・プラットフォーム依存（実態の隔離は DevContainer + permissions が担う） |
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
@@ -224,7 +224,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 ### Security — 隔離と防御
 
-実行環境そのものを隔離して、AI の操作が外へ漏れない・壊さないようにする層。DevContainer（[ADR-0016](../adr/0016-devcontainer-integration.md)）が再現可能な隔離環境を提供し、サンドボックスが tool 実行を隔離する。secretlint は機密情報のコミットを検出し、`permissions.deny` は危険操作を環境レベルで遮断する（Harness と重なる多重タグ）。
+実行環境そのものを隔離して、AI の操作が外へ漏れない・壊さないようにする層。DevContainer（[ADR-0016](../adr/0016-devcontainer-integration.md)）が再現可能な隔離環境を提供し、`permissions.deny` が危険操作を環境レベルで遮断する。secretlint は機密情報のコミットを検出する（Harness と重なる多重タグ）。tool 実行サンドボックスは Claude Code のプラットフォーム機能だが、本リポジトリでは未設定（実態の隔離は DevContainer + permissions が担う）。
 
 ### Methodology — 駆動法
 
