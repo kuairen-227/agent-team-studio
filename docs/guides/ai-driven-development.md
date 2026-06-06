@@ -47,6 +47,9 @@ flowchart TB
         direction LR
         P1["企画"] --> P2["要件"] --> P3["設計"] --> P4["開発"] --> P5["試験"] --> P6["改善"] --> P7["運用保守"]
         P7 -.->|"次サイクル"| P1
+        subgraph method["駆動法"]
+            TYD["型駆動"]; LTD["軽量TDD"]; ADD["ADR駆動"]; ISD["Issue駆動"]
+        end
     end
 
     subgraph context["Context — 判断材料"]
@@ -61,9 +64,6 @@ flowchart TB
             BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]
         end
     end
-    subgraph method["Methodology — 駆動法"]
-        XDD["駆動法群"]
-    end
     subgraph gh["GitHub（リモート実行環境）— 統合・検証"]
         ISS["Issue"]; PR["PR"]; CI["CI（Actions）"]; TPL["Issue/PR テンプレート"]
     end
@@ -72,16 +72,15 @@ flowchart TB
     CORE -->|"参加（任意の工程）"| time
     CORE -->|"作成"| ISS & PR
     TPL -.->|"型を提供"| ISS & PR
-    ISS -.->|"Issue 駆動"| time
+    ISS -.->|"起票"| ISD
     PR -->|"CI 起動"| CI
     CI -.->|"フィードバック"| CORE
     CL -->|"ベースライン"| RUL
     context -.->|"文脈注入"| CORE
     CORE -->|"利用"| enable
 
-    P1 -.-> method
     P2 -.-> context
-    P3 -.-> enable & method
+    P3 -.-> enable
     P4 -.-> enable
     P5 -.-> harness
     P6 -.-> harness
@@ -108,7 +107,7 @@ flowchart TB
     class BIO,MDL,MLC,CSP,TC h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
-    class XDD m
+    class TYD,LTD,ADD,ISD m
     class CI,TPL,ISS,PR g
     class CORE,SKL,AGT a
     class PL,IMP,VER f
@@ -116,6 +115,7 @@ flowchart TB
     style sb fill:#fce4ec,stroke:#c62828,stroke-dasharray:5 3
     style ai fill:#ede7f6,stroke:#4527a0
     style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
+    style method fill:#f3e5f5,stroke:#6a1b9a
     style gh fill:#eceff1,stroke:#37474f
     style lint fill:#fff8e1,stroke:#e65100
 ```
