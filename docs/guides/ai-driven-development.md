@@ -20,20 +20,25 @@
 
 ## 全体像
 
-Claude（AI）を中心に据え、**Claude が内包する要素（Skills・SubAgents・今後の Plan/Verify ループ）を Claude ボックス内に**、その他の施策を 5 分類の色分けサブグラフに配置した統合図。図はインベントリの 5 分類と 1:1 では対応させず、アクター構造（誰が動くか）を優先する。色＝分類、点線＝工程が主に駆動する分類および今後の計画、実線＝アクター・施策間の関係。
+Claude（AI）を中心に据え、**Claude が内包する要素（Skills・SubAgents・今後の Plan/Verify ループ）を Claude ボックス内に**、**その Claude を実行環境（DevContainer ⊃ サンドボックス）で入れ子に囲み**、その他の施策を分類別の色分けサブグラフに配置した統合図。図はインベントリの分類と 1:1 では対応させず、アクター構造（誰が動くか）と実行環境（どこで動くか）を優先する。色＝分類、点線＝工程が主に駆動する分類・今後の計画・隔離境界、実線＝アクター・施策間の関係。
 
 ```mermaid
 flowchart TB
-    subgraph ai["Claude（AI）— メインループと内部委譲"]
-        CORE(["メインループ"])
-        SKL["Skills"]
-        AGT["SubAgents（専門ロール）"]
-        subgraph plan["Plan / Verify ループ（今後の計画）"]
-            PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+    subgraph dc["DevContainer — 隔離された再現可能な実行環境"]
+        SL["secretlint"]
+        subgraph sb["サンドボックス — tool 実行の隔離"]
+            subgraph ai["Claude（AI）— メインループと内部委譲"]
+                CORE(["メインループ"])
+                SKL["Skills"]
+                AGT["SubAgents（専門ロール）"]
+                subgraph plan["Plan / Verify ループ（今後の計画）"]
+                    PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+                end
+                CORE -->|"呼び出し"| SKL
+                SKL -->|"委譲"| AGT
+                CORE -.->|"将来導入"| plan
+            end
         end
-        CORE -->|"呼び出し"| SKL
-        SKL -->|"委譲"| AGT
-        CORE -.->|"将来導入"| plan
     end
 
     subgraph time["開発サイクル（時間軸・状況に応じ行き来）"]
@@ -50,9 +55,6 @@ flowchart TB
     end
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PRM["permissions"]
-    end
-    subgraph sec["Security — 隔離・防御"]
-        DC["DevContainer"]; SB["サンドボックス"]; SL["secretlint"]
     end
     subgraph method["Methodology — 駆動法"]
         XDD["駆動法群"]; TPL["Issue/PRテンプレート"]
@@ -89,11 +91,14 @@ flowchart TB
     classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
     class CL,DOC,ADR,RUL,PRI,GLO c
     class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PRM h
-    class DC,SB,SL s
+    class SL s
     class MCP,ARC,DRZ,TRB,WT e
     class XDD,TPL m
     class CORE,SKL,AGT a
     class PL,IMP,VER f
+    style dc fill:#ffebee,stroke:#c62828
+    style sb fill:#fce4ec,stroke:#c62828,stroke-dasharray:5 3
+    style ai fill:#ede7f6,stroke:#4527a0
     style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
 ```
 
