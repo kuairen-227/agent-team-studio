@@ -20,7 +20,7 @@
 
 ## 全体像
 
-**メインループ**を中心に据えた統合図。メインループは配下の **Agent（SubAgents＝専門ロール、今後の Plan/Verify ループ）を内包**し、共通ツール（Skills・MCP）と hooks を介して動く。Claude は **ローカル実行環境（DevContainer ⊃ worktree ⊃ サンドボックス）** に入れ子で囲まれ、`push / PR` でつながる **GitHub（リモート実行環境）** が Issue / PR / CI を担う（Claude がテンプレートで Issue/PR を起こし、Issue が開発サイクルを、CI が統合検証を回す）。開発サイクルは **駆動法** を内包する。**2 軸構成**で、位置＝アクター / 実行環境（誰がどこで動くか）、色＝施策の分類を表す。インベントリの分類とは 1:1 に対応させず、また図は主要な構造に絞るため**一部の施策（Drizzle・アーキテクチャ等）はインベントリ表のみに記載**する。線は、点線＝工程が主に駆動する分類・今後の計画・隔離境界、実線＝アクター・施策間の関係。
+**メインループ**を中心に据えた統合図。メインループは配下の **Agent（SubAgents＝専門ロール、今後の Plan/Verify ループ）を内包**し、共通ツール（Skills・MCP）と hooks を介して動く。Claude は **ローカル実行環境（DevContainer ⊃ worktree ⊃ サンドボックス）** に入れ子で囲まれ、`push / PR` でつながる **GitHub（リモート実行環境）** が Issue / PR / CI を担う（Claude がテンプレートで Issue/PR を起こし、Issue が開発サイクルを、CI が統合検証を回す）。開発サイクルは **駆動法** を内包する。**2 軸構成**で、位置＝アクター / 実行環境（誰がどこで動くか）、色＝施策の分類を表す（**グレー破線のノードは未実装＝今後の計画**）。インベントリの分類とは 1:1 に対応させず、また図は主要な構造に絞るため**一部の施策（Drizzle・アーキテクチャ等）はインベントリ表のみに記載**する。線は、点線＝工程が主に駆動する分類・隔離境界、実線＝アクター・施策間の関係。
 
 ```mermaid
 flowchart TB
@@ -104,7 +104,7 @@ flowchart TB
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     classDef a fill:#ede7f6,stroke:#4527a0
-    classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
+    classDef f fill:#eeeeee,stroke:#9e9e9e,stroke-dasharray:4 3,color:#616161
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
     class TYP,TST,HK,HUS,PRM h
@@ -215,7 +215,7 @@ flowchart TB
 | --- | --- | --- |
 | `post-edit-lint.sh` | Edit/Write 後に `*.ts` / `*.tsx` を検出 | ADR-0007 品質保証第 3 層 Phase 1。修正ループを AI に自動フィードバック |
 
-hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する（未導入のフックは「[未導入の選択](#未導入の選択)」を参照）。
+hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する。
 
 検証は多層で働く。型チェック・テスト・Biome がローカルと commit 前（Husky / lint-staged）で走り、CI（Actions）が統合時に再検証する。
 
@@ -237,17 +237,6 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 - **決定論的な層（後段・遅い・硬い）**: 型・lint・test・hooks・Husky・CI、最後に permissions.deny。AI の判断を経由せず機械的に enforce・ブロックする。
 
 前段で速度を、後段で安全を担保する。指示（確率的）→ 自動修正フック → 統合検証 → permissions（決定論的）という段階は、[ADR-0007](../adr/0007-ai-driven-dev-architecture.md) の品質保証 3 層構成に対応する。
-
-## 未導入の選択
-
-入れなかったものの記録は、入れたものと同じだけ設計を語る（principles の「節度」）。
-
-| 見送った施策 | 理由 | 再検討の契機 |
-| --- | --- | --- |
-| Stop hook / PreToolUse hook | コスト > 効果。フックは増やすほど実行コストが上がる（ADR-0007） | 「必ず実行されねば意味がない」副作用が新たに生じたとき |
-| commitlint（commit-msg hook） | conventional commits は Methodology の規約で担保。ゲートを増やさない（husky は pre-commit のみ） | 規約逸脱が頻発し機械的強制が要るとき |
-| 6 個目以降の agent | 既存 5 領域でカバー可能。「行為」ではなく「専門領域」のみ定義（ADR-0011） | 独立した専門知識の領域が新たに生じたとき |
-| MCP サーバーの追加 | 「必要が生じたら導入」方針。現在は context7 / playwright の 2 つ（ADR-0007） | 外部ツール連携の新たな必要が生じたとき |
 
 ## 今後の計画：Plan / Verify エージェントループ
 
