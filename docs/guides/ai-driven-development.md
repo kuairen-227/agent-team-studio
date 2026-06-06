@@ -20,11 +20,11 @@
 
 ## 全体像
 
-Claude（AI）を中心に据え、**Claude が内包する要素（Skills・SubAgents・今後の Plan/Verify ループ）を Claude ボックス内に**、**その Claude を実行環境（DevContainer ⊃ サンドボックス）で入れ子に囲み**、その他の施策を分類別の色分けサブグラフに配置した統合図。図はインベントリの分類と 1:1 では対応させず、アクター構造（誰が動くか）と実行環境（どこで動くか）を優先する。色＝分類、点線＝工程が主に駆動する分類・今後の計画・隔離境界、実線＝アクター・施策間の関係。
+Claude（AI）を中心に据え、内包要素（Skills・SubAgents・今後の Plan/Verify ループ）を Claude ボックス内に置き、その Claude を **ローカル実行環境（DevContainer ⊃ サンドボックス）** で入れ子に囲む。これと `push / PR` でつながる **GitHub（リモート実行環境）** が CI で統合検証し、結果を Claude へ返す。この 2 つの実行環境を主役に、その他の施策を分類別の色分けサブグラフに配置した統合図。図はインベントリの分類と 1:1 では対応させず、アクター構造（誰が動くか）と実行環境（どこで動くか）を優先する。色＝分類、点線＝工程が主に駆動する分類・今後の計画・隔離境界、実線＝アクター・施策間の関係。
 
 ```mermaid
 flowchart TB
-    subgraph dc["DevContainer — 隔離された再現可能な実行環境"]
+    subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
         SL["secretlint"]
         subgraph sb["サンドボックス — tool 実行の隔離"]
             subgraph ai["Claude（AI）— メインループと内部委譲"]
@@ -54,14 +54,19 @@ flowchart TB
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PRM["permissions"]
+        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; MDL["doc品質"]; PRM["permissions"]
     end
     subgraph method["Methodology — 駆動法"]
-        XDD["駆動法群"]; TPL["Issue/PRテンプレート"]
+        XDD["駆動法群"]
+    end
+    subgraph gh["GitHub（リモート実行環境）— 統合・検証"]
+        CI["CI（Actions）"]; TPL["Issue / PR テンプレート"]
     end
 
     User(["PM / エンジニア"]) -->|"指示"| CORE
     CORE -->|"参加（任意の工程）"| time
+    CORE -->|"push / PR"| gh
+    gh -.->|"CI フィードバック"| CORE
     CL -->|"ベースライン"| RUL
     context -.->|"文脈注入"| CORE
     CORE -->|"利用"| enable
@@ -89,17 +94,20 @@ flowchart TB
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     classDef a fill:#ede7f6,stroke:#4527a0
     classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
+    classDef g fill:#eceff1,stroke:#37474f
     class CL,DOC,ADR,RUL,PRI,GLO c
-    class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PRM h
+    class TYP,TST,TC,LNT,HK,HUS,MDL,PRM h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
-    class XDD,TPL m
+    class XDD m
+    class CI,TPL g
     class CORE,SKL,AGT a
     class PL,IMP,VER f
     style dc fill:#ffebee,stroke:#c62828
     style sb fill:#fce4ec,stroke:#c62828,stroke-dasharray:5 3
     style ai fill:#ede7f6,stroke:#4527a0
     style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
+    style gh fill:#eceff1,stroke:#37474f
 ```
 
 工程は厳密な逐次ではなく状況に応じて行き来する（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。運用保守で得た知見が次サイクルへ還流する。施策はこのサイクルを回すために存在する。
