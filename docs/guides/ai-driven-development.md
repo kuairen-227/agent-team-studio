@@ -25,7 +25,6 @@ Claude（AI）を中心に据え、内包要素（Skills・SubAgents・今後の
 ```mermaid
 flowchart TB
     subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
-        SL["secretlint"]
         subgraph sb["サンドボックス — tool 実行の隔離"]
             subgraph ai["Claude（AI）— メインループと内部委譲"]
                 CORE(["メインループ"])
@@ -61,7 +60,7 @@ flowchart TB
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; HUS["Husky"]; PRM["permissions"]
         subgraph lint["静的解析（lint・type-check）"]
-            BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]
+            BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]; SL["secretlint"]
         end
     end
     subgraph gh["GitHub（リモート実行環境）— 統合・検証"]
@@ -104,8 +103,7 @@ flowchart TB
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
     class TYP,TST,HK,HUS,PRM h
-    class BIO,MDL,MLC,CSP,TC h
-    class SL s
+    class BIO,MDL,MLC,CSP,TC,SL h
     class MCP,ARC,DRZ,TRB,WT e
     class TYD,LTD,ADD,ISD m
     class CI,TPL,ISS,PR g
