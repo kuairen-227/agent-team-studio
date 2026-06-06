@@ -2,10 +2,12 @@
 
 ## Status
 
-accepted
+accepted（一部 superseded by [0034](./0034-llm-client-ai-sdk.md)）
 
 - 作成日: 2026-05-02
-- 関連: ADR-0008（前提・補足）, ADR-0009（前提）, Issue #85, Issue #76, ADR-0029（本 ADR の `LLM_BASE_URL` 方針で無料ルートを選定）, ADR-0032（方針4 の再評価トリガに応答・マルチベンダー対応方式を選定）
+- 関連: ADR-0008（前提・補足）, ADR-0009（前提）, Issue #85, Issue #76, ADR-0029（本 ADR の `LLM_BASE_URL` 方針で無料ルートを選定）, ADR-0032（方針4 の再評価トリガに応答・マルチベンダー対応方式を選定）, ADR-0034（恒久方式の確定。本 ADR Decision §1・§3 を supersede / 方針4 を充足）
+
+> **一部 superseded（2026-06-06・Issue #252）**: [ADR-0034](./0034-llm-client-ai-sdk.md) が LLM クライアントを `@anthropic-ai/sdk` から Vercel AI SDK Core へ移行することを決定した。本 ADR の **Decision §1（SDK 採用 = `@anthropic-ai/sdk`）** と **Decision §3 / Considered Alternatives 行C（Vercel AI SDK 却下）** は ADR-0034 に置換される。**方針4（Interface 抽出予約）は AI SDK の provider 抽象採用で充足**。一方、**方針2（公開境界のドメイン型遮断）と方針4 のリトライ方針は維持**される（公開型不変）。詳細は ADR-0034 Decision §2 の対応表を参照。
 
 ## Context
 
