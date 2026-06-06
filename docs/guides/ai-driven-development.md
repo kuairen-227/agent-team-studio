@@ -47,7 +47,9 @@ flowchart TB
         P7 -.->|"次サイクル"| P1
     end
 
-    CTX["Context — 判断材料<br/>CLAUDE.md・rules・docs・ADR・principles・glossary"]
+    subgraph context["Context — 判断材料"]
+        CL["CLAUDE.md"]; RUL["rules/"]; DOC["docs/<br/>（ADR・principles・glossary 等）"]
+    end
     subgraph enable["Enablement — 実装基盤"]
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
@@ -65,17 +67,19 @@ flowchart TB
     CORE -->|"参加（任意の工程）"| time
     CORE -->|"push / PR"| gh
     gh -.->|"CI フィードバック"| CORE
-    CTX -.->|"文脈注入"| CORE
+    CL -->|"ベースライン"| RUL
+    context -.->|"文脈注入"| CORE
     CORE -->|"利用"| enable
 
     P1 -.-> method
-    P2 -.-> CTX
+    P2 -.-> context
     P3 -.-> enable & method
     P4 -.-> enable
     P5 -.-> harness
     P6 -.-> harness
     P7 -.-> harness
 
+    RUL -.->|"重なり"| SKL
     DRZ -->|"型生成"| TYP
     HK -->|"実行"| LNT
     HUS -->|"実行"| LNT
@@ -91,7 +95,7 @@ flowchart TB
     classDef a fill:#ede7f6,stroke:#4527a0
     classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
     classDef g fill:#eceff1,stroke:#37474f
-    class CTX c
+    class CL,RUL,DOC c
     class TYP,TST,TC,LNT,HK,HUS,MDL,PRM h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
