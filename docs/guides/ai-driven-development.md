@@ -31,11 +31,13 @@ flowchart TB
                 CORE(["メインループ"])
                 SKL["Skills"]
                 AGT["SubAgents（専門ロール）"]
+                HK["hooks"]
                 subgraph plan["Plan / Verify ループ（今後の計画）"]
                     PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
                 end
                 CORE -->|"呼び出し"| SKL
                 SKL -->|"委譲"| AGT
+                CORE -.->|"編集後に発火"| HK
                 CORE -.->|"将来導入"| plan
             end
         end
@@ -54,7 +56,7 @@ flowchart TB
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型"]; TST["tests"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
+        TYP["型"]; TST["tests"]; HUS["Husky"]; PRM["permissions"]
         subgraph lint["静的解析（lint・type-check）"]
             BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]
         end
