@@ -63,13 +63,16 @@ flowchart TB
         XDD["駆動法群"]
     end
     subgraph gh["GitHub（リモート実行環境）— 統合・検証"]
-        CI["CI（Actions）"]; TPL["Issue / PR テンプレート"]
+        ISS["Issue"]; PR["PR"]; CI["CI（Actions）"]; TPL["Issue/PR テンプレート"]
     end
 
     User(["PM / エンジニア"]) -->|"指示"| CORE
     CORE -->|"参加（任意の工程）"| time
-    CORE -->|"push / PR"| gh
-    gh -.->|"CI フィードバック"| CORE
+    CORE -->|"作成"| ISS & PR
+    TPL -.->|"型を提供"| ISS & PR
+    ISS -.->|"Issue 駆動"| time
+    PR -->|"CI 起動"| CI
+    CI -.->|"フィードバック"| CORE
     CL -->|"ベースライン"| RUL
     context -.->|"文脈注入"| CORE
     CORE -->|"利用"| enable
@@ -105,7 +108,7 @@ flowchart TB
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
     class XDD m
-    class CI,TPL g
+    class CI,TPL,ISS,PR g
     class CORE,SKL,AGT a
     class PL,IMP,VER f
     style dc fill:#ffebee,stroke:#c62828
