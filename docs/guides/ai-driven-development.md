@@ -27,20 +27,19 @@ flowchart TB
     subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
         subgraph wt["worktree — 並行作業の隔離ワークスペース"]
             subgraph sb["サンドボックス — tool 実行の隔離"]
-                subgraph ai["Claude（AI）— メインループと内部委譲"]
-                    CORE(["メインループ"])
-                    SKL["Skills"]
-                    AGT["SubAgents（専門ロール）"]
-                    HK["hooks"]
-                    MCP["MCP"]
-                    subgraph plan["Plan / Verify ループ（今後の計画）"]
-                        PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+                subgraph ai["Claude（AI）"]
+                    subgraph ML["メインループ — Agent を統括"]
+                        AGT["SubAgents（専門ロール）"]
+                        subgraph plan["Plan / Verify ループ（今後の計画）"]
+                            PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+                        end
                     end
-                    CORE -->|"呼び出し"| SKL
-                    SKL -->|"委譲"| AGT
-                    CORE -->|"外部知識・動作確認"| MCP
-                    CORE -.->|"編集後に発火"| HK
-                    CORE -.->|"将来導入"| plan
+                    SKL["Skills"]
+                    MCP["MCP"]
+                    HK["hooks"]
+                    ML -->|"呼び出し"| SKL
+                    ML -->|"外部知識・動作確認"| MCP
+                    ML -.->|"編集後に発火"| HK
                 end
             end
         end
@@ -71,16 +70,16 @@ flowchart TB
         ISS["Issue"]; PR["PR"]; CI["CI（Actions）"]; TPL["Issue/PR テンプレート"]
     end
 
-    User(["PM / エンジニア"]) -->|"指示"| CORE
-    CORE -->|"参加（任意の工程）"| time
-    CORE -->|"作成"| ISS & PR
+    User(["PM / エンジニア"]) -->|"指示"| ML
+    ML -->|"参加（任意の工程）"| time
+    ML -->|"作成"| ISS & PR
     TPL -.->|"型を提供"| ISS & PR
     ISS -.->|"起票"| ISD
     PR -->|"CI 起動"| CI
-    CI -.->|"フィードバック"| CORE
+    CI -.->|"フィードバック"| ML
     CL -->|"ベースライン"| RUL
-    context -.->|"文脈注入"| CORE
-    CORE -->|"利用"| enable
+    context -.->|"文脈注入"| ML
+    ML -->|"利用"| enable
 
     P2 -.-> context
     P3 -.-> enable
@@ -94,8 +93,8 @@ flowchart TB
     HK -->|"実行"| lint
     HUS -->|"実行"| lint
     CI -->|"統合実行"| TST
-    harness -.->|"フィードバック"| CORE
-    PRM -.->|"全 tool call を制御"| CORE
+    harness -.->|"フィードバック"| ML
+    PRM -.->|"全 tool call を制御"| ML
 
     classDef c fill:#e3f2fd,stroke:#1565c0
     classDef h fill:#fff3e0,stroke:#e65100
@@ -111,12 +110,13 @@ flowchart TB
     class MCP,TRB e
     class TYD,LTD,ADD,ISD m
     class CI,TPL,ISS,PR g
-    class CORE,SKL,AGT a
+    class SKL,AGT a
     class PL,IMP,VER f
     style dc fill:#ffebee,stroke:#c62828
     style sb fill:#fce4ec,stroke:#c62828,stroke-dasharray:5 3
     style wt fill:#f1f8e9,stroke:#558b2f
     style ai fill:#ede7f6,stroke:#4527a0
+    style ML fill:#d1c4e9,stroke:#4527a0
     style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
     style method fill:#f3e5f5,stroke:#6a1b9a
     style gh fill:#eceff1,stroke:#37474f
