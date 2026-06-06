@@ -197,6 +197,8 @@ describe("POST /api/executions", () => {
     });
 
     expect(res.status).toBe(202);
+    // 未呼び出し（captured===undefined）と引数誤りを区別できるよう先に存在を固定する。
+    expect(captured).toBeDefined();
     expect(captured?.executionId).toBe("exec-1");
     // X-Request-Id（=trace ID）と同形式の v4 UUID であること（logging.md）。
     expect(res.headers.get("X-Request-Id")).toBe(captured?.traceId ?? null);

@@ -274,6 +274,12 @@ describe("runExecution", () => {
     // 並列実行される全 Investigation（ae-2）にも child logger が bind されること。
     expect(agentIds.has("investigation:product")).toBe(true);
     expect(agentIds.has("integration:matrix")).toBe(true);
+
+    // agentChildLogger が bind する agentExecutionId（並列追跡に必須）も付与されること。
+    // フィールド名が変わった場合に検出できるよう bind 契約を固定する。
+    expect(
+      llmStarted.every((l) => l.fields.agentExecutionId !== undefined),
+    ).toBe(true);
   });
 
   test("DB UPDATE → execution_completed イベント発行の順序を保証する", async () => {

@@ -340,8 +340,14 @@ export async function runInvestigationAgent(
   let output: InvestigationAgentOutput;
   try {
     output = parseInvestigationOutput(chunks.join(""));
-  } catch {
-    return handleParseFailure(input.agentExecutionId, input.agentId, deps, log);
+  } catch (err) {
+    return handleParseFailure(
+      err,
+      input.agentExecutionId,
+      input.agentId,
+      deps,
+      log,
+    );
   }
 
   // パース成功まで含めた agent 完了を表す。"llm call started"（LLM 呼び出し開始）
@@ -424,8 +430,14 @@ export async function runIntegrationAgent(
     const parsed = parseIntegrationOutput(chunks.join(""));
     markdown = parsed.markdown;
     structured = parsed.structured;
-  } catch {
-    return handleParseFailure(input.agentExecutionId, input.agentId, deps, log);
+  } catch (err) {
+    return handleParseFailure(
+      err,
+      input.agentExecutionId,
+      input.agentId,
+      deps,
+      log,
+    );
   }
 
   // パース成功まで含めた agent 完了を表す（#264、runInvestigationAgent と同義）。
@@ -472,13 +484,16 @@ async function handleAgentFailure(
 }
 
 async function handleParseFailure(
+  err: unknown,
   agentExecutionId: string,
   agentId: string,
   deps: AgentDeps,
   log: Logger,
 ): Promise<{ success: false; reason: "output_parse_error" }> {
   const completedAt = new Date();
-  log.warn({ agentId }, "llm output parse failed");
+  // err には "Invalid JSON" / "Invalid structure" 等の判別情報が入るため診断目的で残す
+  // （handleAgentFailure の error ログと対称）。
+  log.warn({ agentId, err }, "llm output parse failed");
   await deps.updateAgentExecution(agentExecutionId, {
     status: "failed",
     errorMessage: "output_parse_error",

@@ -441,7 +441,20 @@ describe("agent のロガー", () => {
     expect(errorLog?.fields.err).toBeDefined();
   });
 
+  test("出力パース失敗時は warn ログを err 付きで記録する", async () => {
+    const deps = makeDeps(["not valid json"]);
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const warnLog = deps.capturedLogs.find(
+      (l) => l.level === "warn" && l.msg === "llm output parse failed",
+    );
+    expect(warnLog).toBeDefined();
+    // "Invalid JSON" / "Invalid structure" の判別情報が握り潰されないことを固定する。
+    expect(warnLog?.fields.err).toBeDefined();
+  });
+
   test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    // logger を override したケースでは sink に集約されるため deps.capturedLogs は使わない。
     const sink: LogCall[] = [];
     const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
     const deps = makeDeps([validInvestigationJson], { logger: bound });
@@ -492,6 +505,7 @@ describe("runIntegrationAgent のロガー", () => {
   });
 
   test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    // logger を override したケースでは sink に集約されるため deps.capturedLogs は使わない。
     const sink: LogCall[] = [];
     const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
     const deps = makeDeps([validIntegrationRaw], { logger: bound });
