@@ -103,16 +103,14 @@ flowchart TB
     classDef s fill:#ffebee,stroke:#c62828
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
-    classDef a fill:#ede7f6,stroke:#4527a0
     classDef f fill:#eeeeee,stroke:#9e9e9e,stroke-dasharray:4 3,color:#616161
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
     class TYP,TST,HK,HUS,PRM h
     class BIO,MDL,MLC,CSP,TC,SL h
-    class MCP,TRB e
+    class SKL,AGT,MCP,TRB e
     class TYD,LTD,ADD,ISD m
     class CI,TPL,ISS,PR g
-    class SKL,AGT a
     class PL,IMP,VER f
     style dc fill:#ffebee,stroke:#c62828
     style sb fill:#eeeeee,stroke:#9e9e9e,stroke-dasharray:5 3
