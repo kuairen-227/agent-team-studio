@@ -84,6 +84,7 @@ flowchart TB
 
     RUL -.->|"重なり"| SKL
     DRZ -->|"型生成"| TYP
+    TC -.->|"検証"| TYP
     HK -->|"実行"| lint
     HUS -->|"実行"| lint
     CI -->|"統合実行"| TST
