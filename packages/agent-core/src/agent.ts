@@ -20,6 +20,7 @@ import type {
   InvestigationAgentOutput,
   LlmDefaults,
   MissingPerspective,
+  OverallInsight,
   SourceOrigin,
 } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
@@ -231,6 +232,8 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
     }
   }
   for (const insight of obj.overall_insights) {
+    // LLM が旧形（文字列）で返すことがあるため許容し、parse 時に {text} へ正規化する。
+    if (typeof insight === "string") continue;
     if (typeof insight !== "object" || insight === null) return false;
     const ins = insight as Record<string, unknown>;
     if (typeof ins.text !== "string") return false;
@@ -294,10 +297,25 @@ function parseIntegrationOutput(raw: string): {
     throw new Error("Invalid integration output structure");
   }
 
+  const structured: IntegrationAgentOutput = {
+    ...parsed,
+    overall_insights: normalizeOverallInsights(parsed.overall_insights),
+  };
+
   return {
     markdown: raw.slice(0, jsonStart).trim(),
-    structured: parsed,
+    structured,
   };
+}
+
+/**
+ * overall_insights を OverallInsight[] へ正規化する（#226 回帰対策）。
+ * LLM が旧形（文字列配列）を返しても統合を失敗させず、{text} に揃える。
+ */
+function normalizeOverallInsights(value: OverallInsight[]): OverallInsight[] {
+  return (value as Array<string | OverallInsight>).map((it) =>
+    typeof it === "string" ? { text: it } : it,
+  );
 }
 
 // ---------- エラー判定ヘルパー ----------

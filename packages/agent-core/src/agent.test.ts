@@ -428,6 +428,36 @@ describe("runIntegrationAgent", () => {
     }
   });
 
+  test("overall_insights が旧形（文字列配列）でも {text} へ正規化する (#226 回帰)", async () => {
+    const output = {
+      matrix: [
+        {
+          perspective: "strategy",
+          cells: [
+            {
+              competitor: "CompanyA",
+              summary: "要約",
+              source_evidence_level: "strong",
+            },
+          ],
+        },
+      ],
+      overall_insights: ["所見A", "所見B"],
+      missing: [],
+    };
+    const raw = `## Markdown\n\n${JSON.stringify(output)}`;
+    const deps = makeDeps([raw]);
+    const result = await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.output.overall_insights).toEqual([
+        { text: "所見A" },
+        { text: "所見B" },
+      ]);
+    }
+  });
+
   test("不正な origin を含む sources は構造不正として弾く (#226)", async () => {
     const output = {
       ...validIntegrationOutput,
