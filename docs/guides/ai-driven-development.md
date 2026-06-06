@@ -54,9 +54,9 @@ flowchart TB
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型 / type-check"]; TST["tests"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
-        subgraph lint["lint（静的解析）"]
-            BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]
+        TYP["型"]; TST["tests"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
+        subgraph lint["静的解析（lint・type-check）"]
+            BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]
         end
     end
     subgraph method["Methodology — 駆動法"]
@@ -100,7 +100,7 @@ flowchart TB
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
     class TYP,TST,HK,HUS,PRM h
-    class BIO,MDL,MLC,CSP h
+    class BIO,MDL,MLC,CSP,TC h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
     class XDD m
