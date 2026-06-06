@@ -41,6 +41,10 @@ export type AgentDeps = {
    * engine から agent 単位の bindings を載せて注入される。
    * 失敗時に `{ err }` をそのままログするため、message へ機密が混入しうる場合は
    * 注入側で加工する責務がある（{@link Logger} のドキュメント / logging.md §redact 参照）。
+   *
+   * 各ログ呼び出しは `{ agentId }` を明示的に添える。engine 経由では child logger 側に
+   * 既に `agentId` が bind 済みで冗長だが（Pino は後勝ちのため実害なし）、agent.ts を
+   * 単体で使う場合の追跡性を確保するために残している。
    */
   logger?: Logger;
 };

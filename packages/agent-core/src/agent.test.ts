@@ -500,4 +500,13 @@ describe("runIntegrationAgent のロガー", () => {
     expect(sink.length).toBeGreaterThan(0);
     expect(sink.every((l) => l.fields.requestId === "req-xyz")).toBe(true);
   });
+
+  test("logger 未注入でも動作する（no-op フォールバック）", async () => {
+    const deps = makeDeps([validIntegrationRaw]);
+    const result = await runIntegrationAgent(
+      { ...baseIntegrationInput },
+      { ...deps, logger: undefined },
+    );
+    expect(result.success).toBe(true);
+  });
 });

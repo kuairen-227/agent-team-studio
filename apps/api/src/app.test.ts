@@ -175,6 +175,36 @@ describe("POST /api/executions", () => {
     });
   });
 
+  // #239: API→engine 境界での trace ID 伝搬の入口を固定する。
+  // route が c.get("requestId") を startExecution に渡し忘れた場合に検出できる。
+  test("startExecution に executionId と v4 UUID 形式の traceId が渡る", async () => {
+    let captured: { executionId: string; traceId: string } | undefined;
+    const app = buildApp({
+      getTemplateById: async () => fixtureTemplate,
+      createExecution: async () => ({
+        id: "exec-1",
+        status: "pending",
+        createdAt: "2026-05-04T00:00:00.000Z",
+      }),
+      startExecution: (executionId, traceId) => {
+        captured = { executionId, traceId };
+      },
+    });
+
+    const res = await postExecutions(app, {
+      templateId: fixtureTemplate.id,
+      parameters: validParameters,
+    });
+
+    expect(res.status).toBe(202);
+    expect(captured?.executionId).toBe("exec-1");
+    // X-Request-Id（=trace ID）と同形式の v4 UUID であること（logging.md）。
+    expect(res.headers.get("X-Request-Id")).toBe(captured?.traceId ?? null);
+    expect(captured?.traceId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+  });
+
   test("Template 不在は 404 + ApiNotFoundError 形を返す", async () => {
     const app = buildApp({ getTemplateById: async () => null });
 
