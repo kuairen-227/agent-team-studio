@@ -40,7 +40,7 @@ flowchart TB
         SKL["Skills"]; AGT["SubAgents"]; MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PV["Plan/Verify"]; PRM["permissions"]
+        TYP["型"]; TST["tests"]; TC["type-check"]; LNT["Biome"]; HK["hooks"]; HUS["Husky"]; CI["CI"]; MDL["doc品質"]; PRM["permissions"]
     end
     subgraph sec["Security — 隔離・防御"]
         DC["DevContainer"]; SB["サンドボックス"]; SL["secretlint"]
@@ -73,7 +73,7 @@ flowchart TB
     classDef e fill:#e8f5e9,stroke:#2e7d32
     classDef m fill:#f3e5f5,stroke:#6a1b9a
     class CL,DOC,ADR,RUL,PRI,GLO c
-    class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PV,PRM h
+    class TYP,TST,TC,LNT,HK,HUS,CI,MDL,PRM h
     class DC,SB,SL s
     class SKL,AGT,MCP,ARC,DRZ,TRB,WT e
     class XDD,TPL m
@@ -97,7 +97,6 @@ flowchart TB
 | テスト | Harness | Methodology | 実行時 | 決定論的 | 振る舞いの検証（軽量 TDD） | `bun run test` |
 | hooks | Harness | — | tool call 後 | 決定論的 | tool call 後の自動 enforce | `.claude/hooks/` |
 | Husky / lint-staged | Harness | — | commit 時 | 決定論的 | commit 前ゲート | `package.json` |
-| Plan / Verify ループ | Harness | Methodology | 実装中 | 確率的 | 計画→実行→検証の反復 | implement-feature 手順 |
 | Biome lint / format | Harness | — | ローカル実行・commit 前 | 決定論的 | 静的解析・整形 | `bun run lint` |
 | CI（Actions） | Harness | — | push / PR 時 | 決定論的 | 統合検証（lint / type / test / spell / secret） | `.github/workflows/` |
 | ドキュメント品質ハーネス | Harness | — | 実行・CI 時 | 決定論的 | markdownlint / link-check / cspell による文書検証 | `lint:md` / `lint:md-links` / `lint:spell` |
@@ -172,7 +171,7 @@ flowchart TB
 
 hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude Code はリポジトリまたは worktree のルートから起動することが前提。`.claude/` は git 追跡されるため worktree でも動作する（未導入のフックは「[未導入の選択](#未導入の選択)」を参照）。
 
-検証は多層で働く。型チェック・テスト・Biome がローカルと commit 前（Husky / lint-staged）で走り、CI（Actions）が統合時に再検証する。Plan / Verify ループは生成と検証を反復させ、AI 自身に修正を促す。
+検証は多層で働く。型チェック・テスト・Biome がローカルと commit 前（Husky / lint-staged）で走り、CI（Actions）が統合時に再検証する。
 
 **permissions — 安全網の多重化**: AI への指示（CLAUDE.md の禁止事項）は前段の防御線、`permissions.deny` は最後の防御線。`rm -rf`・`git push --force`・`.env` 読み取りなどは、AI が判断を誤った場合でもハーネスが物理的にブロックする。「AI を信頼しないのではなく、**ミスが起きても取り返せる環境にする**」設計。
 
@@ -203,6 +202,20 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 | commitlint（commit-msg hook） | conventional commits は Methodology の規約で担保。ゲートを増やさない（husky は pre-commit のみ） | 規約逸脱が頻発し機械的強制が要るとき |
 | 6 個目以降の agent | 既存 5 領域でカバー可能。「行為」ではなく「専門領域」のみ定義（ADR-0011） | 独立した専門知識の領域が新たに生じたとき |
 | MCP サーバーの追加 | 「必要が生じたら導入」方針。現在は context7 / playwright の 2 つ（ADR-0007） | 外部ツール連携の新たな必要が生じたとき |
+
+## 今後の計画：Plan / Verify エージェントループ
+
+Anthropic が長時間稼働アプリ開発向けに示した [3 エージェントハーネス](https://www.anthropic.com/engineering/harness-design-long-running-apps) を、将来的に本リポジトリの開発サイクルへ取り込むことを構想している。これは既存の役割ベースエージェント（po / pm / architect / qa / designer、[ADR-0011](../adr/0011-role-based-agent-architecture.md)）とは**別系統**で、実装そのものを自律的に駆動するループを担う。
+
+| エージェント | 役割 |
+| --- | --- |
+| **Planner** | プロンプトや Issue を詳細な仕様へ展開する。スコープ・エッジケース・受入基準を、コード着手前に「正しい振る舞いとは何か」として構造化する（出力はコードではなく仕様） |
+| **Implementer**（Generator） | 仕様をスプリント単位に分割し、段階的に実装する |
+| **Verifier**（Evaluator） | 懐疑的な視点で稼働中のアプリを Playwright 等で実際に操作・検証し、具体的なバグレポートを返す。合格しきい値を機械的に課す |
+
+3 者は「何をもって done とするか」をコード着手前に定めるスプリント契約で協調し、**計画 → 実装 → 検証 → 修復**のループを回す。単一エージェントより信頼性が高い反面、コストも高い。
+
+現状この役割は implement-feature スキルの type-first + 軽量 TDD 手順、`review` / `resolve-review` スキル、qa エージェントが部分的・人手駆動で担っている。エージェントループとしての自律実行は MVP のスコープ外であり、長時間の自律開発が必要になった段階で ADR 化のうえ導入を検討する。
 
 ## 追加判断の軸
 
