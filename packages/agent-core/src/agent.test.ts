@@ -231,6 +231,78 @@ describe("runInvestigationAgent", () => {
     }
   });
 
+  test("不正な origin を含む sources は構造不正として弾く (#226)", async () => {
+    const json = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "CompanyA",
+          points: ["点1"],
+          evidence_level: "strong",
+          sources: [{ origin: "web_search" }],
+        },
+      ],
+    });
+    const deps = makeDeps([json]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      deps,
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.reason).toBe("output_parse_error");
+    }
+  });
+
+  test("origin フィールド欠如（sources:[{}]）は構造不正として弾く (#226)", async () => {
+    const json = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "CompanyA",
+          points: ["点1"],
+          evidence_level: "strong",
+          sources: [{}],
+        },
+      ],
+    });
+    const deps = makeDeps([json]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      deps,
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.reason).toBe("output_parse_error");
+    }
+  });
+
+  test("sources: null は構造不正として弾く（undefined のみ許容） (#226)", async () => {
+    const json = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "CompanyA",
+          points: ["点1"],
+          evidence_level: "strong",
+          sources: null,
+        },
+      ],
+    });
+    const deps = makeDeps([json]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      deps,
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.reason).toBe("output_parse_error");
+    }
+  });
+
   test("正常系: DB 更新は「running → completed」の順で行われる", async () => {
     const deps = makeDeps([validInvestigationJson]);
     await runInvestigationAgent({ ...baseInvestigationInput }, deps);
@@ -482,6 +554,33 @@ describe("runIntegrationAgent", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.reason).toBe("output_parse_error");
+    }
+  });
+
+  test("overall_insights が空配列でも正常系として受容する (#226)", async () => {
+    const output = {
+      matrix: [
+        {
+          perspective: "strategy",
+          cells: [
+            {
+              competitor: "CompanyA",
+              summary: "要約",
+              source_evidence_level: "strong",
+            },
+          ],
+        },
+      ],
+      overall_insights: [],
+      missing: [],
+    };
+    const raw = `## Markdown\n\n${JSON.stringify(output)}`;
+    const deps = makeDeps([raw]);
+    const result = await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.output.overall_insights).toEqual([]);
     }
   });
 

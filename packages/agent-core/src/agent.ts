@@ -21,8 +21,8 @@ import type {
   LlmDefaults,
   MissingPerspective,
   OverallInsight,
-  SourceOrigin,
 } from "@agent-team-studio/shared";
+import { SOURCE_ORIGINS } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { LlmError } from "./llm-error.ts";
@@ -152,17 +152,11 @@ const EVIDENCE_LEVELS = [
   "insufficient",
 ] as const satisfies EvidenceLevel[];
 
-const SOURCE_ORIGINS = [
-  "knowledge_base",
-  "reference",
-  "estimated",
-  "unknown",
-] as const satisfies SourceOrigin[];
-
 /**
  * `sources` フィールドの構造を検証する（#226）。
  * optional のため undefined は許容するが、存在する場合は配列かつ各要素が
  * 既知の origin を持つことを要求する（不正な origin は捏造防止のため弾く）。
+ * origin 値の SSoT は shared の `SOURCE_ORIGINS`（web 層の検証と共通）。
  */
 function isValidSources(value: unknown): boolean {
   if (value === undefined) return true;
@@ -170,7 +164,8 @@ function isValidSources(value: unknown): boolean {
   for (const s of value) {
     if (typeof s !== "object" || s === null) return false;
     const src = s as Record<string, unknown>;
-    if (!(SOURCE_ORIGINS as readonly string[]).includes(src.origin as string))
+    if (typeof src.origin !== "string") return false;
+    if (!(SOURCE_ORIGINS as readonly string[]).includes(src.origin))
       return false;
     if (src.detail !== undefined && typeof src.detail !== "string")
       return false;
