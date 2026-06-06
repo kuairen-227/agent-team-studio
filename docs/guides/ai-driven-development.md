@@ -59,7 +59,7 @@ flowchart TB
         CL["CLAUDE.md"]; RUL["rules/"]; DOC["docs/<br/>（ADR・principles・glossary 等）"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]
+        TRB["Turborepo"]
     end
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; HUS["Husky"]; PRM["permissions"]
@@ -89,8 +89,8 @@ flowchart TB
     P6 -.-> harness
     P7 -.-> harness
 
-    DRZ -->|"型生成"| TYP
     TC -.->|"検証"| TYP
+    TRB -->|"横断実行"| lint & TST
     HK -->|"実行"| lint
     HUS -->|"実行"| lint
     CI -->|"統合実行"| TST
@@ -108,7 +108,7 @@ flowchart TB
     class CL,RUL,DOC c
     class TYP,TST,HK,HUS,PRM h
     class BIO,MDL,MLC,CSP,TC,SL h
-    class MCP,ARC,DRZ,TRB e
+    class MCP,TRB e
     class TYD,LTD,ADD,ISD m
     class CI,TPL,ISS,PR g
     class CORE,SKL,AGT a
