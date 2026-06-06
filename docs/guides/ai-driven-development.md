@@ -54,7 +54,10 @@ flowchart TB
         MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]; WT["worktree"]
     end
     subgraph harness["Harness — 検証・矯正"]
-        TYP["型 / type-check"]; TST["tests"]; LNT["lint（Biome・doc品質）"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
+        TYP["型 / type-check"]; TST["tests"]; HK["hooks"]; HUS["Husky"]; PRM["permissions"]
+        subgraph lint["lint（静的解析）"]
+            BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]
+        end
     end
     subgraph method["Methodology — 駆動法"]
         XDD["駆動法群"]
@@ -81,8 +84,8 @@ flowchart TB
 
     RUL -.->|"重なり"| SKL
     DRZ -->|"型生成"| TYP
-    HK -->|"実行"| LNT
-    HUS -->|"実行"| LNT
+    HK -->|"実行"| lint
+    HUS -->|"実行"| lint
     CI -->|"統合実行"| TST
     harness -.->|"フィードバック"| CORE
     PRM -.->|"全 tool call を制御"| CORE
@@ -96,7 +99,8 @@ flowchart TB
     classDef f fill:#fafafa,stroke:#9e9e9e,color:#616161
     classDef g fill:#eceff1,stroke:#37474f
     class CL,RUL,DOC c
-    class TYP,TST,LNT,HK,HUS,PRM h
+    class TYP,TST,HK,HUS,PRM h
+    class BIO,MDL,MLC,CSP h
     class SL s
     class MCP,ARC,DRZ,TRB,WT e
     class XDD m
@@ -108,6 +112,7 @@ flowchart TB
     style ai fill:#ede7f6,stroke:#4527a0
     style plan fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:4 3
     style gh fill:#eceff1,stroke:#37474f
+    style lint fill:#fff8e1,stroke:#e65100
 ```
 
 工程は厳密な逐次ではなく状況に応じて行き来する（[ADR-0006](../adr/0006-lightweight-agile-process.md) / [ADR-0010](../adr/0010-development-workflow.md)）。運用保守で得た知見が次サイクルへ還流する。施策はこのサイクルを回すために存在する。
