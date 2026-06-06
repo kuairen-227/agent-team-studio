@@ -19,6 +19,7 @@ import type {
   InvestigationAgentOutput,
   InvestigationFinding,
 } from "@agent-team-studio/shared";
+import { SOURCE_ORIGINS } from "@agent-team-studio/shared";
 
 /** 待機 UI 向けに正規化した agent 出力。 */
 export type ParsedAgentOutput =
@@ -45,6 +46,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * `sources` フィールドの構造を検証する（#226）。optional のため undefined は許容するが、
+ * 存在する場合は配列かつ各要素が既知の origin を持つことを要求し、`origin: "web_search"`
+ * 等の不正値が未検証のまま待機 UI へ透過するのを防ぐ（agent-core の検証と対称）。
+ * origin 値の SSoT は shared の `SOURCE_ORIGINS`。
+ */
+function isValidSources(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+  return value.every((s) => {
+    if (!isRecord(s)) return false;
+    if (typeof s.origin !== "string") return false;
+    if (!(SOURCE_ORIGINS as readonly string[]).includes(s.origin)) return false;
+    if (s.detail !== undefined && typeof s.detail !== "string") return false;
+    return true;
+  });
+}
+
 function isFinding(value: unknown): value is InvestigationFinding {
   if (!isRecord(value)) return false;
   if (typeof value.competitor !== "string") return false;
@@ -59,6 +78,7 @@ function isFinding(value: unknown): value is InvestigationFinding {
   // まとめて通すことで、LLM が "notes": null を返しても finding 1 件で構造化全体を
   // 失わない（raw フォールバックさせない）。null は normalizeInvestigation で省く。
   if (value.notes != null && typeof value.notes !== "string") return false;
+  if (!isValidSources(value.sources)) return false;
   return true;
 }
 
