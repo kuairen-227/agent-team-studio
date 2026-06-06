@@ -63,7 +63,9 @@ flowchart TB
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; HUS["Husky"]; PRM["permissions"]
         subgraph lint["静的解析（lint・type-check）"]
+            direction TB
             BIO["Biome"]; MDL["markdownlint"]; MLC["link-check"]; CSP["cspell"]; TC["type-check"]; SL["secretlint"]
+            BIO ~~~ MDL ~~~ MLC ~~~ CSP ~~~ TC ~~~ SL
         end
     end
     subgraph gh["GitHub（リモート実行環境）— 統合・検証"]
