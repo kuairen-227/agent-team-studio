@@ -79,6 +79,28 @@ describe("GET /api/templates", () => {
     expect(body.message).toBeTruthy();
     expect(body.message).not.toContain("DB connection failed");
   });
+
+  // #239: 内部エラー時に details.traceId を露出し、X-Request-Id と一致させる。
+  test("500 応答の details.traceId が X-Request-Id ヘッダと一致する", async () => {
+    const app = buildApp({
+      listTemplateSummaries: async () => {
+        throw new Error("DB connection failed");
+      },
+    });
+
+    const res = await app.request("/api/templates");
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as ApiInternalError;
+    const traceId = body.details?.traceId;
+    expect(traceId).toBeTruthy();
+    expect(res.headers.get("X-Request-Id")).toBe(traceId ?? null);
+    // logging.md の trace ID 生成方針（RFC 4122 v4 UUID）に一致すること。
+    // hono/request-id の既定ジェネレータ形式が変わった場合に気づける。
+    expect(traceId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+  });
 });
 
 describe("GET /api/templates/:id", () => {
@@ -151,6 +173,38 @@ describe("POST /api/executions", () => {
       status: "pending",
       createdAt: "2026-05-04T00:00:00.000Z",
     });
+  });
+
+  // #239: API→engine 境界での trace ID 伝搬の入口を固定する。
+  // route が c.get("requestId") を startExecution に渡し忘れた場合に検出できる。
+  test("startExecution に executionId と v4 UUID 形式の traceId が渡る", async () => {
+    let captured: { executionId: string; traceId: string } | undefined;
+    const app = buildApp({
+      getTemplateById: async () => fixtureTemplate,
+      createExecution: async () => ({
+        id: "exec-1",
+        status: "pending",
+        createdAt: "2026-05-04T00:00:00.000Z",
+      }),
+      startExecution: (executionId, traceId) => {
+        captured = { executionId, traceId };
+      },
+    });
+
+    const res = await postExecutions(app, {
+      templateId: fixtureTemplate.id,
+      parameters: validParameters,
+    });
+
+    expect(res.status).toBe(202);
+    // 未呼び出し（captured===undefined）と引数誤りを区別できるよう先に存在を固定する。
+    expect(captured).toBeDefined();
+    expect(captured?.executionId).toBe("exec-1");
+    // X-Request-Id（=trace ID）と同形式の v4 UUID であること（logging.md）。
+    expect(res.headers.get("X-Request-Id")).toBe(captured?.traceId ?? null);
+    expect(captured?.traceId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
   });
 
   test("Template 不在は 404 + ApiNotFoundError 形を返す", async () => {

@@ -7,7 +7,7 @@
  * Bun の serve には `fetch` と `websocket` の双方を渡す必要がある（hono/bun の規約）。
  */
 
-import type { AgentEvent } from "@agent-team-studio/agent-core";
+import type { AgentEvent, Logger } from "@agent-team-studio/agent-core";
 import { runExecution } from "@agent-team-studio/agent-core";
 import type { AgentExecutionRow } from "@agent-team-studio/db";
 import {
@@ -38,16 +38,19 @@ const { db } = createDbClient(databaseUrl);
 
 const eventHub = createEventHub();
 
-// engine 経路は 202 受理後の fire-and-forget で HTTP request コンテキスト外のため、
-// request-id ではなく executionId を bind してログする（API→engine の ID 伝搬は #239）。
-const engineLogger = logger.child({ component: "engine" });
-
 /**
  * Execution を取得してエンジンを起動する。
+ *
+ * `engineLogger` は呼び出し元が trace ID(=request-id) と executionId を bind 済みの
+ * child logger。これを runExecution に注入することで API→engine→LLM のログが同一
+ * trace ID で引ける（#239）。
  * engine の `onEvent` コールバックで event hub に publish する。
  * engine が完了するまで非同期で実行される（呼び出し元は await しない）。
  */
-async function launchEngine(executionId: string): Promise<void> {
+async function launchEngine(
+  executionId: string,
+  engineLogger: Logger,
+): Promise<void> {
   const [execution, agentExecs] = await Promise.all([
     getExecution(db, executionId),
     getAgentExecutionsByExecutionId(db, executionId),
@@ -89,6 +92,7 @@ async function launchEngine(executionId: string): Promise<void> {
       updateAgentExecution: (id, patch) => updateAgentExecution(db, id, patch),
       insertResult: (input) => insertResult(db, input),
       onEvent: (event: AgentEvent) => eventHub.publish(executionId, event),
+      logger: engineLogger,
     },
   );
 }
@@ -103,9 +107,15 @@ const app = createApp({
   getResultByExecutionId: (executionId) =>
     getResultByExecutionId(db, executionId),
   listExecutions: () => listExecutions(db),
-  startExecution: (executionId) => {
-    launchEngine(executionId).catch((err) => {
-      engineLogger.error({ executionId, err }, "engine failed");
+  startExecution: (executionId, traceId) => {
+    // POST /api/executions の request-id を trace ID として engine 経路へ伝搬する。
+    const engineLogger = logger.child({
+      component: "engine",
+      requestId: traceId,
+      executionId,
+    });
+    launchEngine(executionId, engineLogger).catch((err) => {
+      engineLogger.error({ err }, "engine failed");
       eventHub.publish(executionId, {
         kind: "execution_failed",
         reason: "internal_error",

@@ -22,6 +22,7 @@ import { runIntegrationAgent, runInvestigationAgent } from "./agent.ts";
 import { AGENT_TIMEOUT_MS, EXECUTION_TIMEOUT_MS } from "./constants.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
+import { type Logger, NOOP_LOGGER } from "./logger-port.ts";
 
 // ---------- 公開型 ----------
 
@@ -49,6 +50,11 @@ export type EngineRunDeps = {
   ) => Promise<void>;
   insertResult: (input: InsertResultInput) => Promise<string>;
   onEvent: (event: AgentEvent) => void;
+  /**
+   * trace ID 等を bind 済みの logger。省略時は no-op。
+   * runExecution が agent 単位の child logger を派生させ AgentDeps へ渡す。
+   */
+  logger?: Logger;
   /** テスト用: 注入された場合は streamAgentMessage の代わりに使う */
   _stream?: (input: LlmInput, signal?: AbortSignal) => AsyncIterable<string>;
   /** テスト用: エージェント単位タイムアウト ms（省略時は定数値を使用） */
@@ -72,6 +78,23 @@ function findDefinition(
   agentId: string,
 ): InvestigationAgentDefinition | IntegrationAgentDefinition | undefined {
   return templateDefinition.agents.find((a) => a.agent_id === agentId);
+}
+
+/**
+ * agent 単位の child logger を生成する。親（trace ID 等を bind 済み）に
+ * `agentExecutionId` / `agentId` / `role` を追加 bind して LLM 層へ渡す（#239）。
+ * Investigation 並列経路と Integration 経路で同一構造のため共通化し、
+ * フィールド追加・改名時の片側漏れ・typo を防ぐ。
+ */
+function agentChildLogger(
+  base: Logger | undefined,
+  ae: { id: string; agentId: string; role: AgentRole },
+): Logger {
+  return (base ?? NOOP_LOGGER).child({
+    agentExecutionId: ae.id,
+    agentId: ae.agentId,
+    role: ae.role,
+  });
 }
 
 /**
@@ -243,6 +266,7 @@ async function _runExecution(
         stream: streamFn,
         updateAgentExecution: deps.updateAgentExecution,
         onEvent: deps.onEvent,
+        logger: agentChildLogger(deps.logger, integrationAe),
       },
     );
   } finally {
@@ -339,6 +363,7 @@ async function runInvestigationsWithTimeout(
             stream: streamFn,
             updateAgentExecution: deps.updateAgentExecution,
             onEvent: deps.onEvent,
+            logger: agentChildLogger(deps.logger, ae),
           },
         );
       } finally {

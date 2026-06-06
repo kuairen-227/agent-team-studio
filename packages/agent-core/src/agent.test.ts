@@ -8,6 +8,31 @@ import type {
 import { runIntegrationAgent, runInvestigationAgent } from "./agent.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
+import { LlmError } from "./llm-error.ts";
+import type { LogFields, Logger } from "./logger-port.ts";
+
+// ---- fake logger ----
+
+type LogCall = {
+  level: "info" | "warn" | "error" | "debug";
+  fields: LogFields;
+  msg?: string;
+};
+
+/** bindings を logged fields にマージして sink に記録する fake logger。 */
+function makeFakeLogger(sink: LogCall[], bindings: LogFields = {}): Logger {
+  const record =
+    (level: LogCall["level"]) => (fields: LogFields, msg?: string) => {
+      sink.push({ level, fields: { ...bindings, ...fields }, msg });
+    };
+  return {
+    info: record("info"),
+    warn: record("warn"),
+    error: record("error"),
+    debug: record("debug"),
+    child: (b) => makeFakeLogger(sink, { ...bindings, ...b }),
+  };
+}
 
 // ---- フィクスチャ ----
 
@@ -76,9 +101,11 @@ function makeDeps(
 ): AgentDeps & {
   capturedPatches: Array<{ id: string; patch: AgentExecutionPatch }>;
   capturedEvents: AgentEvent[];
+  capturedLogs: LogCall[];
 } {
   const capturedPatches: Array<{ id: string; patch: AgentExecutionPatch }> = [];
   const capturedEvents: AgentEvent[] = [];
+  const capturedLogs: LogCall[] = [];
 
   async function* fakeStream(): AsyncIterable<string> {
     for (const chunk of streamChunks) {
@@ -100,8 +127,10 @@ function makeDeps(
       ((event: AgentEvent) => {
         capturedEvents.push(event);
       }),
+    logger: overrides?.logger ?? makeFakeLogger(capturedLogs),
     capturedPatches,
     capturedEvents,
+    capturedLogs,
   };
 }
 
@@ -379,5 +408,119 @@ describe("runIntegrationAgent", () => {
 
     expect(capturedSystem).toContain("CompanyA");
     expect(capturedSystem).toContain('"perspective"');
+  });
+});
+
+// ---- ロガー（trace ID 伝搬）テスト ----
+
+describe("agent のロガー", () => {
+  test("正常系: LLM 呼び出しの開始と完了を info ログに記録する", async () => {
+    const deps = makeDeps([validInvestigationJson]);
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const infoMessages = deps.capturedLogs
+      .filter((l) => l.level === "info")
+      .map((l) => l.msg);
+    expect(infoMessages).toContain("llm call started");
+    expect(infoMessages).toContain("agent completed");
+  });
+
+  test("LLM 失敗時は error ログを記録する", async () => {
+    // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
+    async function* errorStream(): AsyncIterable<string> {
+      throw new LlmError("llm_error", "API error");
+    }
+    const deps = makeDeps([], { stream: () => errorStream() });
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const errorLog = deps.capturedLogs.find(
+      (l) => l.level === "error" && l.msg === "llm call failed",
+    );
+    expect(errorLog).toBeDefined();
+    // err を渡し忘れても msg 一致だけでは通ってしまうため、err フィールドの伝搬も固定する。
+    expect(errorLog?.fields.err).toBeDefined();
+  });
+
+  test("出力パース失敗時は warn ログを err 付きで記録する", async () => {
+    const deps = makeDeps(["not valid json"]);
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    const warnLog = deps.capturedLogs.find(
+      (l) => l.level === "warn" && l.msg === "llm output parse failed",
+    );
+    expect(warnLog).toBeDefined();
+    // "Invalid JSON" / "Invalid structure" の判別情報が握り潰されないことを固定する。
+    expect(warnLog?.fields.err).toBeDefined();
+  });
+
+  test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    // logger を override したケースでは sink に集約されるため deps.capturedLogs は使わない。
+    const sink: LogCall[] = [];
+    const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
+    const deps = makeDeps([validInvestigationJson], { logger: bound });
+    await runInvestigationAgent({ ...baseInvestigationInput }, deps);
+
+    expect(sink.length).toBeGreaterThan(0);
+    expect(sink.every((l) => l.fields.requestId === "req-xyz")).toBe(true);
+  });
+
+  test("logger 未注入でも動作する（no-op フォールバック）", async () => {
+    const deps = makeDeps([validInvestigationJson]);
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput },
+      { ...deps, logger: undefined },
+    );
+    expect(result.success).toBe(true);
+  });
+});
+
+// runIntegrationAgent も runInvestigationAgent と同一の log.info/error 経路を持つため、
+// engine 経由（engine.test.ts）の間接検証だけでなく unit レベルでも固定する。
+describe("runIntegrationAgent のロガー", () => {
+  test("正常系: LLM 呼び出しの開始と完了を info ログに記録する", async () => {
+    const deps = makeDeps([validIntegrationRaw]);
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    const infoMessages = deps.capturedLogs
+      .filter((l) => l.level === "info")
+      .map((l) => l.msg);
+    expect(infoMessages).toContain("llm call started");
+    expect(infoMessages).toContain("agent completed");
+  });
+
+  test("LLM 失敗時は error ログを記録する", async () => {
+    // biome-ignore lint/correctness/useYield: throw のみのストリームテスト用ジェネレーター
+    async function* errorStream(): AsyncIterable<string> {
+      throw new LlmError("llm_error", "API error");
+    }
+    const deps = makeDeps([], { stream: () => errorStream() });
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    const errorLog = deps.capturedLogs.find(
+      (l) => l.level === "error" && l.msg === "llm call failed",
+    );
+    expect(errorLog).toBeDefined();
+    // err を渡し忘れても msg 一致だけでは通ってしまうため、err フィールドの伝搬も固定する。
+    expect(errorLog?.fields.err).toBeDefined();
+  });
+
+  test("注入された logger の bindings がログに伝搬する（trace ID 相当）", async () => {
+    // logger を override したケースでは sink に集約されるため deps.capturedLogs は使わない。
+    const sink: LogCall[] = [];
+    const bound = makeFakeLogger(sink, { requestId: "req-xyz" });
+    const deps = makeDeps([validIntegrationRaw], { logger: bound });
+    await runIntegrationAgent({ ...baseIntegrationInput }, deps);
+
+    expect(sink.length).toBeGreaterThan(0);
+    expect(sink.every((l) => l.fields.requestId === "req-xyz")).toBe(true);
+  });
+
+  test("logger 未注入でも動作する（no-op フォールバック）", async () => {
+    const deps = makeDeps([validIntegrationRaw]);
+    const result = await runIntegrationAgent(
+      { ...baseIntegrationInput },
+      { ...deps, logger: undefined },
+    );
+    expect(result.success).toBe(true);
   });
 });
