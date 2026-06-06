@@ -201,16 +201,22 @@ export type EvidenceLevel = "strong" | "moderate" | "weak" | "insufficient";
 
 /**
  * 出典・参照元の由来区分（#226）。確度ラベルと対で提示し、ユーザーの独立検証を支える。
+ * 型と検証用ランタイム配列の二重保証を避けるため、SSoT を `as const` 配列に置き
+ * `SourceOrigin` を派生させる（`EXECUTION_STATUSES` 等の共通 enum と同方式）。
+ * agent-core / web のパースガードはこの配列を参照し origin を検証する。
  * - `knowledge_base`: LLM 知識ベース由来。`detail` に既知の一次情報源（URL / 文献名）。
  * - `reference`: ユーザー提供の参考テキスト由来。`detail` に該当箇所（見出し / 抜粋）。
  * - `estimated`: 推定。確証なく導いた情報である旨を明示する。
  * - `unknown`: 出典不明。
  */
-export type SourceOrigin =
-  | "knowledge_base"
-  | "reference"
-  | "estimated"
-  | "unknown";
+export const SOURCE_ORIGINS = [
+  "knowledge_base",
+  "reference",
+  "estimated",
+  "unknown",
+] as const;
+
+export type SourceOrigin = (typeof SOURCE_ORIGINS)[number];
 
 /** 調査結果セル・所見の出典・参照元（#226）。 */
 export type Source = {
