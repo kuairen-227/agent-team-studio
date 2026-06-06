@@ -32,11 +32,13 @@ flowchart TB
                     SKL["Skills"]
                     AGT["SubAgents（専門ロール）"]
                     HK["hooks"]
+                    MCP["MCP"]
                     subgraph plan["Plan / Verify ループ（今後の計画）"]
                         PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
                     end
                     CORE -->|"呼び出し"| SKL
                     SKL -->|"委譲"| AGT
+                    CORE -->|"外部知識・動作確認"| MCP
                     CORE -.->|"編集後に発火"| HK
                     CORE -.->|"将来導入"| plan
                 end
@@ -57,7 +59,7 @@ flowchart TB
         CL["CLAUDE.md"]; RUL["rules/"]; DOC["docs/<br/>（ADR・principles・glossary 等）"]
     end
     subgraph enable["Enablement — 実装基盤"]
-        MCP["MCP"]; ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]
+        ARC["アーキ"]; DRZ["Drizzle"]; TRB["Turborepo"]
     end
     subgraph harness["Harness — 検証・矯正"]
         TYP["型"]; TST["tests"]; HUS["Husky"]; PRM["permissions"]
