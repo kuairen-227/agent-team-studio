@@ -113,6 +113,44 @@ describe("parseAgentOutput", () => {
     expect(result.kind).toBe("investigation");
   });
 
+  it("finding の sources を構造化結果へ透過する (#226)", () => {
+    const withSources = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "A社",
+          points: ["要点"],
+          evidence_level: "strong",
+          sources: [{ origin: "reference", detail: "見出し『戦略』" }],
+        },
+      ],
+    });
+    const result = parseAgentOutput("investigation_strategy", withSources);
+    expect(result.kind).toBe("investigation");
+    if (result.kind !== "investigation") throw new Error("unreachable");
+    expect(result.data.findings[0]?.sources).toEqual([
+      { origin: "reference", detail: "見出し『戦略』" },
+    ]);
+  });
+
+  it("不正な origin を含む sources は unstructured へフォールバックする (#226)", () => {
+    const invalidOrigin = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "A社",
+          points: ["要点"],
+          evidence_level: "strong",
+          sources: [{ origin: "web_search" }],
+        },
+      ],
+    });
+    const result = parseAgentOutput("investigation_strategy", invalidOrigin);
+    expect(result.kind).toBe("unstructured");
+    if (result.kind !== "unstructured") throw new Error("unreachable");
+    expect(result.raw).toBe(invalidOrigin);
+  });
+
   it("統合エージェントは構造化対象外（マトリクスは結果画面が SSoT）", () => {
     const integration = JSON.stringify({
       matrix: [],

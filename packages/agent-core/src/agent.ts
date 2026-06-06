@@ -20,7 +20,9 @@ import type {
   InvestigationAgentOutput,
   LlmDefaults,
   MissingPerspective,
+  OverallInsight,
 } from "@agent-team-studio/shared";
+import { SOURCE_ORIGINS } from "@agent-team-studio/shared";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { LlmError } from "./llm-error.ts";
@@ -150,6 +152,27 @@ const EVIDENCE_LEVELS = [
   "insufficient",
 ] as const satisfies EvidenceLevel[];
 
+/**
+ * `sources` フィールドの構造を検証する（#226）。
+ * optional のため undefined は許容するが、存在する場合は配列かつ各要素が
+ * 既知の origin を持つことを要求する（不正な origin は捏造防止のため弾く）。
+ * origin 値の SSoT は shared の `SOURCE_ORIGINS`（web 層の検証と共通）。
+ */
+function isValidSources(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+  for (const s of value) {
+    if (typeof s !== "object" || s === null) return false;
+    const src = s as Record<string, unknown>;
+    if (typeof src.origin !== "string") return false;
+    if (!(SOURCE_ORIGINS as readonly string[]).includes(src.origin))
+      return false;
+    if (src.detail !== undefined && typeof src.detail !== "string")
+      return false;
+  }
+  return true;
+}
+
 function isInvestigationOutput(
   value: unknown,
 ): value is InvestigationAgentOutput {
@@ -164,6 +187,7 @@ function isInvestigationOutput(
     if (!Array.isArray(finding.points)) return false;
     if (!EVIDENCE_LEVELS.includes(finding.evidence_level as EvidenceLevel))
       return false;
+    if (!isValidSources(finding.sources)) return false;
   }
   return true;
 }
@@ -196,13 +220,19 @@ function isIntegrationOutput(value: unknown): value is IntegrationAgentOutput {
       if (
         typeof i.competitor !== "string" ||
         typeof i.summary !== "string" ||
-        !EVIDENCE_LEVELS.includes(i.source_evidence_level as EvidenceLevel)
+        !EVIDENCE_LEVELS.includes(i.source_evidence_level as EvidenceLevel) ||
+        !isValidSources(i.sources)
       )
         return false;
     }
   }
   for (const insight of obj.overall_insights) {
-    if (typeof insight !== "string") return false;
+    // LLM が旧形（文字列）で返すことがあるため許容し、parse 時に {text} へ正規化する。
+    if (typeof insight === "string") continue;
+    if (typeof insight !== "object" || insight === null) return false;
+    const ins = insight as Record<string, unknown>;
+    if (typeof ins.text !== "string") return false;
+    if (!isValidSources(ins.sources)) return false;
   }
   for (const m of obj.missing) {
     if (typeof m !== "object" || m === null) return false;
@@ -262,10 +292,25 @@ function parseIntegrationOutput(raw: string): {
     throw new Error("Invalid integration output structure");
   }
 
+  const structured: IntegrationAgentOutput = {
+    ...parsed,
+    overall_insights: normalizeOverallInsights(parsed.overall_insights),
+  };
+
   return {
     markdown: raw.slice(0, jsonStart).trim(),
-    structured: parsed,
+    structured,
   };
+}
+
+/**
+ * overall_insights を OverallInsight[] へ正規化する（#226 回帰対策）。
+ * LLM が旧形（文字列配列）を返しても統合を失敗させず、{text} に揃える。
+ */
+function normalizeOverallInsights(value: OverallInsight[]): OverallInsight[] {
+  return (value as Array<string | OverallInsight>).map((it) =>
+    typeof it === "string" ? { text: it } : it,
+  );
 }
 
 // ---------- エラー判定ヘルパー ----------

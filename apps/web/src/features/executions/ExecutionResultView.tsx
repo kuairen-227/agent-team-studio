@@ -11,6 +11,7 @@ import type {
   GetExecutionResponse,
   InvestigationAgentExecutionDetail,
   MissingPerspective,
+  OverallInsight,
   PerspectiveMatrixRow,
 } from "@agent-team-studio/shared";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import {
   PERSPECTIVE_NAME,
   RawDisclosure,
   RawPre,
+  SourceList,
 } from "./components/structured";
 
 // --- 公開コンポーネント ---
@@ -242,6 +244,7 @@ function ResultMatrix({
                             確度:{" "}
                             {EVIDENCE_LEVEL_LABEL[cell.source_evidence_level]}
                           </span>
+                          <SourceList sources={cell.sources} />
                         </td>
                       );
                     })}
@@ -256,7 +259,7 @@ function ResultMatrix({
   );
 }
 
-function OverallInsights({ insights }: { insights: string[] }) {
+function OverallInsights({ insights }: { insights: OverallInsight[] }) {
   return (
     <div>
       <h2 className="mb-3 text-base font-semibold">総合インサイト</h2>
@@ -265,7 +268,13 @@ function OverallInsights({ insights }: { insights: string[] }) {
           // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
           <li key={i} className="flex gap-2 text-sm">
             <span className="mt-0.5 shrink-0 text-muted-foreground">•</span>
-            <span>{insight}</span>
+            {/* SourceList が <p>/<ul>（ブロック要素）を返すため、インライン <span> ではなく
+                <div> で包む。<span> 直下にブロック要素を置くと HTML 仕様違反となり
+                React のハイドレーション不一致やレイアウト崩壊を招く（#226 レビュー指摘）。 */}
+            <div>
+              {insight.text}
+              <SourceList sources={insight.sources} />
+            </div>
           </li>
         ))}
       </ul>

@@ -398,7 +398,11 @@ describe("GET /api/executions/:id", () => {
     id: "result-1",
     executionId: "exec-1",
     markdown: "# レポート",
-    structured: { matrix: [], overall_insights: ["所見1"], missing: [] },
+    structured: {
+      matrix: [],
+      overall_insights: [{ text: "所見1" }],
+      missing: [],
+    },
     createdAt: new Date("2026-05-04T00:02:00.000Z"),
   };
 
@@ -420,7 +424,9 @@ describe("GET /api/executions/:id", () => {
     expect(body.agentExecutions[0]?.role).toBe("investigation");
     expect(body.result?.id).toBe("result-1");
     expect(body.result?.markdown).toBe("# レポート");
-    expect(body.result?.structured.overall_insights).toEqual(["所見1"]);
+    expect(body.result?.structured.overall_insights).toEqual([
+      { text: "所見1" },
+    ]);
     expect(body.result?.structured.matrix).toEqual([]);
     expect(body.result?.structured.missing).toEqual([]);
   });
