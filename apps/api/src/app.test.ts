@@ -48,8 +48,11 @@ const postExecutions = (app: ReturnType<typeof buildApp>, body: unknown) =>
     body: JSON.stringify(body),
   });
 
-/** アクセスログ middleware が 1 リクエストごとに出力する行（#256）。 */
-type AccessLogEntry = {
+/**
+ * アクセスログ行のうち本テストがアサーション対象とするフィールドのみの**部分型**（#256）。
+ * pino が実際に出力する `level` / `time` / `requestId` 等は含まない。
+ */
+type AccessLogFields = {
   msg: string;
   method: string;
   path: string;
@@ -63,14 +66,19 @@ type AccessLogEntry = {
  * pino のベースロガー（singleton）は stdout へ JSON を書くため、書き込みを差し替えて捕捉する。
  * テスト環境のロガーは silent 既定（logger.test.ts）なので、捕捉の間だけ level を info に上げる。
  * いずれも `finally` で必ず復元する。
+ *
+ * 注意: `process.stdout.write` をプロセスグローバルに差し替えるため、bun test の並列実行が
+ * 有効な場合は他テストの stdout 出力が混入しうる。現状は単一ファイル内の直列実行で問題ない。
  */
 async function captureAccessLog<T>(
   makeRequest: () => T | Promise<T>,
-): Promise<{ result: T; accessLog?: AccessLogEntry }> {
+): Promise<{ result: T; accessLog?: AccessLogFields }> {
   const lines: string[] = [];
   const originalWrite = process.stdout.write.bind(process.stdout);
   const savedLevel = logger.level;
   logger.level = "info";
+  // Bun + pino(sonic-boom) は write を 1 引数（chunk）でしか呼ばないため、
+  // encoding / cb 引数を省いた簡略シグネチャでパッチし、型はキャストで合わせる。
   process.stdout.write = ((chunk: string | Uint8Array) => {
     lines.push(
       typeof chunk === "string" ? chunk : Buffer.from(chunk).toString(),
@@ -89,7 +97,7 @@ async function captureAccessLog<T>(
   const accessLog = lines
     .map((line) => {
       try {
-        return JSON.parse(line) as AccessLogEntry;
+        return JSON.parse(line) as AccessLogFields;
       } catch {
         return undefined;
       }
@@ -527,10 +535,10 @@ describe("GET /api/executions/:id", () => {
   });
 });
 
-// #256: throw 経路（onError 整形の 400/404/500）でもアクセスログが出力され、
-// status が実レスポンスと一致することを固定する。Hono の compose は throw を捕捉した
-// 階層内で onError を同期実行して c.res を確定するため、middleware の `await next()` 後の
-// ログ出力時点では status が反映済みになる（docs/design/logging.md）。
+// #256: throw 経路（onError 整形の 400/404/500）と未マッチルート（onNotFound の 404）の
+// いずれでもアクセスログが出力され、status が実レスポンスと一致することを固定する。
+// Hono の compose は throw を捕捉した階層内で onError を同期実行して c.res を確定するため、
+// middleware の `await next()` 後のログ出力時点では status が反映済みになる（docs/design/logging.md）。
 // 将来 middleware を try/catch+rethrow 等へ変えてエラー経路のログを落とす退行を検知する。
 describe("アクセスログの全経路網羅", () => {
   test("400（validation）経路でアクセスログが status=400 で出力される", async () => {
@@ -558,9 +566,22 @@ describe("アクセスログの全経路網羅", () => {
     );
 
     expect(res.status).toBe(404);
+    expect(accessLog).toBeDefined();
     expect(accessLog?.status).toBe(404);
     expect(accessLog?.method).toBe("GET");
     expect(accessLog?.path).toBe("/api/templates/tpl-missing");
+  });
+
+  test("404（未マッチルート / onNotFound）経路でアクセスログが status=404 で出力される", async () => {
+    const app = buildApp();
+    const { result: res, accessLog } = await captureAccessLog(() =>
+      app.request("/no/such/route"),
+    );
+
+    expect(res.status).toBe(404);
+    expect(accessLog).toBeDefined();
+    expect(accessLog?.status).toBe(404);
+    expect(accessLog?.path).toBe("/no/such/route");
   });
 
   test("500（throw）経路でアクセスログが status=500 で出力される", async () => {
@@ -574,6 +595,7 @@ describe("アクセスログの全経路網羅", () => {
     );
 
     expect(res.status).toBe(500);
+    expect(accessLog).toBeDefined();
     expect(accessLog?.status).toBe(500);
     expect(accessLog?.path).toBe("/api/templates");
   });
