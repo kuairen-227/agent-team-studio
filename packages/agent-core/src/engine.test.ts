@@ -49,7 +49,7 @@ function makeFakeLogger(sink: LogCall[], bindings: LogFields = {}): Logger {
 // ---- フィクスチャ ----
 
 const baseLlm = {
-  model: "claude-sonnet-4-6",
+  model: "anthropic:claude-sonnet-4-6",
   temperature_by_role: { investigation: 0.3, integration: 0.2 },
   max_tokens_by_role: { investigation: 2048, integration: 4096 },
 };
