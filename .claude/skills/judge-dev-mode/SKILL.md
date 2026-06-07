@@ -3,12 +3,13 @@ name: judge-dev-mode
 description: Issue の内容から開発環境モード（solo / nested / split）を判断する。Issue 番号を引数に指定する。
 when_to_use: ユーザーが「このIssue どの環境で進める？」「dev mode 判断して」「worktree 必要？」「#XX のモード判断して」などと言ったとき
 argument-hint: "<issue-number>"
-allowed-tools: Bash(gh issue view:*) Read Grep Glob
+disable-model-invocation: true
+allowed-tools: Bash(gh issue view:*) Read
 ---
 
 # judge-dev-mode
 
-`$ARGUMENTS` で指定された Issue 番号の内容を読み取り、`docs/guides/worktree.md` のユースケース判断マトリクスに従って開発環境モードを推奨する。
+`$ARGUMENTS` で指定された Issue 番号の内容を `gh issue view` で読み取り、`docs/guides/worktree.md`（必要に応じて `devcontainer.md`）を `Read` で参照してユースケース判断マトリクスに従い開発環境モードを推奨する。
 
 判断と根拠の提示のみを行い、worktree の作成や DevContainer の起動は実行しない。
 
