@@ -43,7 +43,7 @@ error tracking SDK は **Sentry SDK が事実上の標準**であり、Sentry Sa
 | - | --- | --- | --- |
 | A | **Sentry free（SaaS）** | **採用** | ①利用運用 を業界標準 UI/workflow で学べる。実務で最も遭遇するのが Sentry。ローカル app から `sentry.io` へイベントを送るだけで本番不要。setup 軽量・運用ゼロ。外部送信ゆえ before-send での PII redact が必須となるが、これ自体が実務必須の学びどころ。将来 DSN を自前バックエンドへ差し替え可能 |
 | B | GlitchTip 自前ホスト（docker-compose） | 却下 | 主たる追加価値は ②基盤運用（監視スタックの自前運用）だが、これは本プロジェクトの学習主眼（①利用運用）とズレる。UI は Sentry 風の簡易クローンで、業界標準そのものではない。本番がないためローカルでしか動かず、WSL2 環境にコンテナ 3〜4 個・~1GB RAM の負荷だけが残る |
-| C | SDK 抽象レイヤのみ実装し送信先は保留 | 却下 | コンテナも外部依存も増えない最小案だが、受け入れ条件「未キャッチ例外/uncaught error が tracking に送信されている」を満たさず、①利用運用 を一切学べない。本 ADR の主眼（監視運用を学ぶ）に反する |
+| C | SDK 抽象レイヤのみ実装し送信先は保留 | 却下 | コンテナも外部依存も増えない最小案だが、受け入れ条件「未キャッチ例外/uncaught error が tracking に送信されている」（Issue #237 受け入れ条件）を満たさず、①利用運用 を一切学べない。本 ADR の主眼（監視運用を学ぶ）に反する |
 
 ### 補足: Sentry free tier の制約
 
@@ -57,7 +57,7 @@ error tracking SDK は **Sentry SDK が事実上の標準**であり、Sentry Sa
 
 ### 1. 採用構成
 
-- SDK は Sentry SDK を使用する。apps/api = `@sentry/bun`（Hono 対応）、apps/web = `@sentry/react`。
+- SDK は Sentry SDK を使用する。apps/web は `@sentry/react`。apps/api（Bun ランタイム + Hono）向けの具体パッケージ（`@sentry/bun` / `@sentry/node` 等）と Hono integration の有無は導入時に確認・確定する。
 - イベント送信先は Sentry SaaS（free tier）。DSN は環境変数で注入し、未設定時は送信を無効化（ローカル開発で DSN なしでも起動できる）する方針とする。
 
 ### 2. 既存 observability との関係
@@ -84,10 +84,10 @@ error tracking SDK は **Sentry SDK が事実上の標準**であり、Sentry Sa
 
 ### ネガティブ / リスク
 
-- **外部 SaaS へのデータ送信** — エラーイベントが `sentry.io` に送られる（送信前 redact は Decision §3 で扱う）。
+- **外部 SaaS へのデータ送信** — エラーイベントが `sentry.io` に送られる。
 - **②基盤運用は学べない** — 監視スタックの自前運用（取り込み基盤・スケール・アップグレード）の経験は得られない。
 - **free tier の枠** — 5K events/月・retention 約 30 日・performance 少量枠の制約がある。
-- **外部アカウント・DSN 管理** — Sentry アカウントと DSN シークレットの管理が増える（DSN 注入方式は Decision §1 で扱う）。
+- **外部アカウント・DSN 管理** — Sentry アカウントと DSN シークレットの管理が増える。
 
 ### 中立
 
