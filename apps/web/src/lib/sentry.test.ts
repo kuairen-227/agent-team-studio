@@ -33,9 +33,14 @@ describe("initSentry", () => {
     expect(initSpy).not.toHaveBeenCalled();
   });
 
-  test("DSN 指定時は初期化する", () => {
+  test("DSN 指定時は PII 抑止設定付きで初期化する", () => {
     initSentry("https://examplePublicKey@o0.ingest.sentry.io/0");
     expect(initSpy).toHaveBeenCalledTimes(1);
+    // sendDefaultPii: false / tracesSampleRate: 0 はプライバシー・枠節約上の重要設定。
+    // 誤って変更されたらテストで検知する。
+    expect(initSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ sendDefaultPii: false, tracesSampleRate: 0 }),
+    );
   });
 });
 

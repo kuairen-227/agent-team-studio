@@ -2,7 +2,7 @@
 
 apps/api の構造化ロギングの運用方針。ライブラリ選定の経緯は [ADR-0033](../adr/0033-structured-logging-library.md) を参照。
 
-設定値の SSoT はコード: ログレベル既定は `apps/api/src/lib/logger.ts`、機密フィールド定義は `apps/api/src/lib/redact.ts`。本ドキュメントは方針と根拠を記述し、具体値はコードを参照する。
+設定値の SSoT はコード: ログレベル既定は `apps/api/src/lib/logger.ts`。機密フィールド名は `packages/shared/src/redact.ts` の `DEFAULT_SENSITIVE_KEYS` を SSoT とし、apps/api の Pino redact paths・Sentry redactor（`apps/api/src/lib/redact.ts`）と apps/web の Sentry redactor が同集合から導出する。本ドキュメントは方針と根拠を記述し、具体値はコードを参照する。
 
 エラートラッキング（Sentry）はログと補完関係にある観測性の別レイヤで、選定根拠は [ADR-0035](../adr/0035-error-tracking-selection.md) を参照。本ドキュメントではログとの関係・機密 redact の共有のみ扱う。
 
@@ -56,7 +56,7 @@ bun run dev | pino-pretty
 
 認証情報（`req.headers.authorization` / `cookie`）と、機密フィールド名（`apiKey` / `api_key` / `token` / `password`）を**トップレベルおよび 1 階層下**でログ出力から除外する（`[REDACTED]` に置換）。
 
-機密フィールド名は `apps/api/src/lib/redact.ts` を SSoT とし、Pino の redact パス（`pinoRedactPaths`）と Sentry の `beforeSend` redactor（`redactEvent`）の双方をそこから導出する。両者で定義が乖離して片方だけ漏れる事故を防ぐためで、除外パスの具体定義はコードを参照する。
+機密フィールド名は `packages/shared/src/redact.ts` の `DEFAULT_SENSITIVE_KEYS` を SSoT とする。apps/api（`apps/api/src/lib/redact.ts`）は Pino の redact パス（`pinoRedactPaths`）と Sentry の `beforeSend` redactor（`redactEvent`）の双方をこの集合から導出し、apps/web の Sentry redactor も同集合を共有する。これにより定義が乖離して片方だけ漏れる事故を防ぐ。除外パスの具体定義はコードを参照する。
 
 > **深度の制約**: pino の redact パスの `*` は単一階層ワイルドカードで再帰（`**`）に非対応。そのため任意深度の機密フィールドは自動では落ちない。深くネストしたオブジェクトをログする場合は、ログ前に該当フィールドを除去するか、明示パスを追加すること。
 >
