@@ -3,7 +3,7 @@ name: cleanup-merged-branch
 description: PR マージ後の post-merge クリーンアップ。現在のブランチを記録 → main へ戻り → 最新を pull → マージ済みのローカルブランチを安全削除する軽量スキル。
 when_to_use: ユーザーが「マージしました」「マージ完了」「マージしたよ」「PR マージしたよ」「マージ後の整理」「マージ済みブランチ削除」「クリーンアップして」「後片付けして」「ブランチ整理して」などと言ったとき
 model: haiku
-allowed-tools: Bash(git branch:*) Bash(git switch:*) Bash(git pull:*) Bash(git status:*) Bash(git log:*) Bash(git worktree list:*)
+allowed-tools: Bash(git branch:*) Bash(git switch:*) Bash(git pull:*) Bash(git status:*) Bash(git log:*)
 ---
 
 # cleanup-merged-branch

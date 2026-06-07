@@ -44,7 +44,7 @@ YAML frontmatter は `---` で囲み、以下のフィールドを**グループ
 
 | スキル | 引数 | 起動 | 主な権限の軸 |
 | --- | --- | --- | --- |
-| cleanup-merged-branch | なし | auto（`model: haiku`） | git 操作（`git worktree list` 含む） |
+| cleanup-merged-branch | なし | auto（`model: haiku`） | git 操作 |
 | create-adr | `[title-or-topic]` | auto | gh issue 参照 + ファイル編集 |
 | create-issue | `[type] [title]` | auto | gh issue/label 作成 |
 | create-pr | `[issue-number]` | auto | git push + gh pr 作成 |
