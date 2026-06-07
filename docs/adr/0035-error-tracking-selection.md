@@ -48,7 +48,7 @@ error tracking SDK は **Sentry SDK が事実上の標準**であり、Sentry Sa
 ### 補足: Sentry free tier の制約
 
 - エラーイベント 5K/月、データ retention 約 30 日、performance イベントは少量枠。学習用途では十分。
-- アカウント登録が必要。DSN は環境変数で注入する（`.env` 部品変数方式・ADR-0028 と整合）。
+- アカウント登録が必要。DSN は環境変数で注入する（`.env` 部品変数方式・ADR-0028 と整合）。なお apps/api の DSN はサーバ側シークレットだが、apps/web の DSN は Vite の build-time でバンドルに埋め込まれ公開前提となる（性質差を導入時 #237 で確認する）。
 - イベントが外部 SaaS に送信されるため、**送信前の PII/機密 redact が必須**（既存 Pino redact 対象 = `authorization` / `cookie` / `apiKey` / `token` / `password` と整合させる）。
 
 ## Decision
@@ -84,7 +84,7 @@ error tracking SDK は **Sentry SDK が事実上の標準**であり、Sentry Sa
 
 ### ネガティブ / リスク
 
-- **外部 SaaS へのデータ送信** — エラーイベントが `sentry.io` に送られる。
+- **外部 SaaS へのデータ送信** — エラーイベント（スタックトレース・リクエスト情報等）が `sentry.io` に送られる。社内シナリオ（ADR-0002）では外部送信がセキュリティレビューの対象になりうる。
 - **②基盤運用は学べない** — 監視スタックの自前運用（取り込み基盤・スケール・アップグレード）の経験は得られない。
 - **free tier の枠** — 5K events/月・retention 約 30 日・performance 少量枠の制約がある。
 - **外部アカウント・DSN 管理** — Sentry アカウントと DSN シークレットの管理が増える。
