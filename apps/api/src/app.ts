@@ -21,6 +21,7 @@ import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 import { onError } from "./lib/errors.ts";
 import { type AppEnv, logger } from "./lib/logger.ts";
+import { setupSentry, tagRequestId } from "./lib/sentry.ts";
 // API モジュール全体で Zod のロケールを日本語に統一する副作用 import。
 // 個別 service ではなく app.ts で一括設定し、新しい service が追加されても
 // import 順に依存しないようにする。
@@ -65,13 +66,22 @@ export type AppDeps = {
 export function createApp(deps: AppDeps) {
   const app = new Hono<AppEnv>();
 
+  // Sentry ミドルウェアはルート登録より前に適用する必要がある（applyPatches の制約）。
+  // DSN 未設定時は no-op。500（内部例外）のみ捕捉し、PII は beforeSend で除去する（ADR-0035）。
+  // 有効/無効を起動ログに残し、DSN 設定漏れを検知できるようにする。
+  const sentryEnabled = setupSentry(app);
+  logger.info({ sentryEnabled }, "error tracking initialized");
+
   app.onError(onError);
 
   // request-id を払い出し（レスポンスヘッダ X-Request-Id にも付与）、
   // それを bind した request-scoped child logger を context に格納する。
   app.use("*", requestId());
   app.use("*", async (c, next) => {
-    c.set("logger", logger.child({ requestId: c.get("requestId") }));
+    const reqId = c.get("requestId");
+    c.set("logger", logger.child({ requestId: reqId }));
+    // ログ↔Sentry エラーを同一 trace ID で突き合わせる（#239 / ADR-0035）。
+    tagRequestId(reqId);
     const start = performance.now();
     await next();
     c.get("logger").info(

@@ -14,6 +14,8 @@
     "@agent-team-studio/agent-core": "workspace:*",
     "@agent-team-studio/db": "workspace:*",
     "@agent-team-studio/shared": "workspace:*",
+    "@sentry/bun": "10.56.0",
+    "@sentry/hono": "10.56.0",
     "hono": "^4.12.21",
     "pino": "^10.3.1",
     "zod": "^4.3.6"
