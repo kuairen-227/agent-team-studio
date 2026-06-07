@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/react";
+import { ErrorBoundary } from "@sentry/react";
 import {
   createRootRoute,
   createRoute,
@@ -14,7 +14,7 @@ import { TemplateListPage } from "@/features/templates/TemplateListPage";
 import { TemplateNewPage } from "@/features/templates/TemplateNewPage";
 
 /**
- * 描画中の未捕捉エラーのフォールバック UI。`Sentry.ErrorBoundary` がここを表示し、
+ * 描画中の未捕捉エラーのフォールバック UI。Sentry の `ErrorBoundary` がここを表示し、
  * 同時に Sentry へ例外を送信する（uncaught error の捕捉 / ADR-0035）。
  */
 function AppErrorFallback() {
@@ -41,9 +41,9 @@ const rootRoute = createRootRoute({
     <div className="min-h-screen bg-background text-foreground">
       <AppHeader />
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <Sentry.ErrorBoundary fallback={<AppErrorFallback />}>
+        <ErrorBoundary fallback={<AppErrorFallback />}>
           <Outlet />
-        </Sentry.ErrorBoundary>
+        </ErrorBoundary>
       </main>
     </div>
   ),

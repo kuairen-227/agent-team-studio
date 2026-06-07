@@ -20,14 +20,16 @@ import * as Sentry from "@sentry/react";
 import { isExpectedClientError } from "./api";
 
 /**
- * Sentry を初期化する。`VITE_SENTRY_DSN` 未設定時は何もしない。
+ * Sentry を初期化する。DSN 未設定（空・undefined）時は何もしない。
  *
  * アプリ描画より前（main.tsx の最上部）で呼ぶこと。error tracking が主眼のため
  * performance トレースは送らない（free tier 枠の節約）。機密キー集合は shared の
  * `DEFAULT_SENSITIVE_KEYS` を apps/api と共有する。
+ *
+ * `dsn` は既定で `import.meta.env.VITE_SENTRY_DSN` を読むが、テストで DSN ゲートを
+ * 検証できるよう注入可能にしている（api 側 `setupSentry` と対称）。
  */
-export function initSentry(): void {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
+export function initSentry(dsn = import.meta.env.VITE_SENTRY_DSN): void {
   if (!dsn) return;
 
   Sentry.init({

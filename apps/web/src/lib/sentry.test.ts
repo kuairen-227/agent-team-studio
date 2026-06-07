@@ -15,7 +15,29 @@ import {
   test,
 } from "bun:test";
 import * as Sentry from "@sentry/react";
-import { reportQueryError } from "./sentry";
+import { initSentry, reportQueryError } from "./sentry";
+
+describe("initSentry", () => {
+  let initSpy: Mock<typeof Sentry.init>;
+
+  beforeEach(() => {
+    initSpy = spyOn(Sentry, "init").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    initSpy.mockRestore();
+  });
+
+  test("DSN 未設定（空文字）なら初期化しない", () => {
+    initSentry("");
+    expect(initSpy).not.toHaveBeenCalled();
+  });
+
+  test("DSN 指定時は初期化する", () => {
+    initSentry("https://examplePublicKey@o0.ingest.sentry.io/0");
+    expect(initSpy).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("reportQueryError", () => {
   let captureSpy: Mock<typeof Sentry.captureException>;
