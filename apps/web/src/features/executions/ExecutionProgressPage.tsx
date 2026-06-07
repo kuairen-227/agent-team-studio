@@ -9,11 +9,7 @@
  * - error: WS エラー Alert + 履歴一覧への導線
  */
 
-import type {
-  AgentFailReason,
-  ExecutionFailReason,
-} from "@agent-team-studio/shared";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +24,10 @@ import {
   InvestigationOutputsView,
 } from "./ExecutionResultView";
 import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
+import {
+  describeAgentFailure,
+  describeExecutionFailure,
+} from "./lib/failureMessages";
 import { parseAgentOutput } from "./lib/parseAgentOutput";
 
 const Route = getRouteApi("/executions/$executionId");
@@ -38,20 +38,6 @@ const AGENT_LABEL: Record<string, string> = {
   investigation_investment: "投資調査",
   investigation_partnership: "提携調査",
   integration: "統合",
-};
-
-const AGENT_FAIL_REASON_MESSAGES: Record<AgentFailReason, string> = {
-  llm_error: "LLM エラー",
-  output_parse_error: "出力解析エラー",
-  timeout: "タイムアウト",
-  internal_error: "内部エラー",
-};
-
-const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
-  all_investigations_failed: "すべての調査エージェントが失敗しました。",
-  integration_failed: "統合エージェントが失敗しました。",
-  timeout: "実行がタイムアウトしました。",
-  internal_error: "内部エラーが発生しました。",
 };
 
 function getAgentLabel(agentId: string): string {
@@ -123,13 +109,20 @@ export function ExecutionProgressPage() {
   }
 
   if (wsState.phase === "failed") {
+    const { label, guidance } = describeExecutionFailure(wsState.reason);
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行失敗
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>{REASON_MESSAGES[wsState.reason]}</AlertTitle>
+          <AlertTitle>{label}</AlertTitle>
+          <AlertDescription>
+            <p>{guidance}</p>
+            <p>
+              <Link to="/">テンプレート一覧から新しい調査を実行する</Link>
+            </p>
+          </AlertDescription>
         </Alert>
         <AgentList agents={agents} />
         {wsState.reason === "integration_failed" && (
@@ -180,7 +173,7 @@ function AgentCard({ agent }: { agent: AgentState }) {
         <Badge variant={agent.status} />
         {agent.failReason && (
           <span className="text-xs text-destructive">
-            {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
+            {describeAgentFailure(agent.failReason).label}
           </span>
         )}
       </CardHeader>
@@ -189,7 +182,7 @@ function AgentCard({ agent }: { agent: AgentState }) {
         <div aria-live="polite">
           {agent.failReason && (
             <span className="sr-only">
-              失敗理由: {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
+              失敗理由: {describeAgentFailure(agent.failReason).label}
             </span>
           )}
           <AgentCardBody agent={agent} />
