@@ -4,6 +4,7 @@
  */
 
 import type {
+  AgentDefinition,
   ApiError,
   ApiValidationError,
   CompetitorAnalysisParameters,
@@ -24,11 +25,19 @@ import {
 } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchJson } from "@/lib/api";
+import { extractPerspectives } from "./lib/extractPerspectives";
 
 const MAX_COMPETITORS = 5;
 const MIN_COMPETITORS = 1;
@@ -227,6 +236,8 @@ export function TemplateNewPage() {
             {templateData.name} ・ {templateData.description}
           </p>
 
+          <PerspectivesPanel agents={templateData.definition.agents} />
+
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium leading-none">
@@ -406,6 +417,42 @@ function mapValidationErrors(
     }
   }
   return mappedCount > 0 ? result : null;
+}
+
+/**
+ * 実行前に「何が調査されるか」を提示する観点パネル（#228 V4）。
+ * 観点はテンプレート定義から抽出するため、選択中テンプレートに追随する。
+ * 観点が無いテンプレートでは何も表示しない（入力体験を阻害しないため）。
+ */
+function PerspectivesPanel({ agents }: { agents: AgentDefinition[] }) {
+  const perspectives = extractPerspectives(agents);
+  if (perspectives.length === 0) return null;
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-base">
+          調査される観点（{perspectives.length} 観点）
+        </CardTitle>
+        <CardDescription>
+          実行すると、以下の観点で競合企業を並行して調査します。
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2 text-sm">
+          {perspectives.map((perspective) => (
+            <li key={perspective.key} className="leading-tight">
+              <span className="font-medium">{perspective.name}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                — {perspective.description}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
 }
 
 function FormSkeleton() {
