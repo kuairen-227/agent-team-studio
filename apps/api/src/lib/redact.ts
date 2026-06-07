@@ -7,7 +7,7 @@
  * 双方をここから導出する。再帰 redaction 本体は `@agent-team-studio/shared` の
  * `redactSensitive` を共有する（apps/web と同一ロジック）。
  *
- * 対象: authorization / cookie / apiKey / token / password（詳細は docs/design/logging.md）。
+ * 対象キーは shared の `DEFAULT_SENSITIVE_KEYS` を SSoT とする（詳細は docs/design/logging.md）。
  */
 
 import {

@@ -1,9 +1,10 @@
 /**
- * `setupSentry` / `tagRequestId` の単体テスト。
+ * `setupSentry` / `tagRequestId` / `shouldHandleError` の単体テスト。
  *
  * `SENTRY_DSN` 未設定時は Sentry を有効化せず（送信無効）false を返すこと、
- * 設定時は true を返すこと、未初期化でも `tagRequestId` が例外を投げないことを固定する
- * （ADR-0035: DSN 未設定で送信無効化・DSN なしで起動可能）。
+ * 設定時は true を返すこと、未初期化でも `tagRequestId` が例外を投げないこと、
+ * `shouldHandleError` が業務エラー（NotFoundError/ValidationError）を送らず内部例外のみ
+ * 送ることを固定する（ADR-0035: DSN 未設定で送信無効化・DSN なしで起動可能・業務エラー非送信）。
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";

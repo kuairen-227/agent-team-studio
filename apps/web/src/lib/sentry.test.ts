@@ -50,7 +50,8 @@ describe("reportQueryError", () => {
     captureSpy.mockRestore();
   });
 
-  test("4xx（status=404）は送信しない", () => {
+  test("4xx（status=400 / 404）は送信しない", () => {
+    reportQueryError(new Error("status=400"));
     reportQueryError(new Error("status=404"));
     expect(captureSpy).not.toHaveBeenCalled();
   });

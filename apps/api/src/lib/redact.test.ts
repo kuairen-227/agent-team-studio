@@ -33,7 +33,7 @@ describe("redactEvent", () => {
       message: "boom",
       request: {
         url: "/api/templates",
-        headers: { authorization: "Bearer secret" },
+        headers: { authorization: "Bearer secret", cookie: "sid=abc" },
       },
       extra: { nested: { apiKey: "sk-xxx" }, executionId: "exec-1" },
     };
@@ -41,6 +41,7 @@ describe("redactEvent", () => {
     const result = redactEvent(event) as typeof event;
 
     expect(result.request.headers.authorization).toBe("[REDACTED]");
+    expect(result.request.headers.cookie).toBe("[REDACTED]");
     expect(result.extra.nested.apiKey).toBe("[REDACTED]");
     expect(result.message).toBe("boom");
     expect(result.request.url).toBe("/api/templates");
