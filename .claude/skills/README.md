@@ -12,9 +12,9 @@ YAML frontmatter は `---` で囲み、以下のフィールドを**グループ
 | --- | --- | --- | --- |
 | Identity | `name` | 必須 | スキルの表示名。ディレクトリ名と一致させる |
 | | `description` | 必須 | 何をするスキルか。Claude が起動要否を判断する主材料 |
-| | `when_to_use` | 必須 | 起動トリガー（ユーザーの言い回し例）。`description` に追記され合算 1,536 文字で切られるため要点を先頭に |
+| | `when_to_use` | 必須 | 起動トリガー（ユーザーの言い回し例）。`description` に追記され合算 1,536 文字（2026-06 確認）で切られるため要点を先頭に |
 | Invocation | `argument-hint` | 引数ありのみ | `"<issue-number>"` / `"[new\|update] [対象]"` 形式。引数を取らないスキルでは省略 |
-| | `disable-model-invocation` | 任意 | `true` で手動起動（`/skill`）のみに限定し、Claude の自動起動を抑止。description も常時コンテキストから外れる。破壊的操作・タイミングを人が握るべきスキルに付与 |
+| | `disable-model-invocation` | 任意 | `true` で手動起動（`/skill`）のみに限定し、Claude の自動起動を抑止。description も常時コンテキストから外れる。付与基準は2軸 — ①破壊的操作・副作用がありタイミングを人が握るべきスキル、②引数必須の単発判断スキルで自動起動が意味をなさないもの（例: `judge-dev-mode`） |
 | | `user-invocable` | 任意 | `false` で `/` メニューから隠す（Claude 専用知識スキル）。デフォルト `true` |
 | Execution | `model` | 任意 | デフォルト以外のモデルを使う場合のみ（例: `haiku`） |
 | | `effort` | 任意 | `low`/`medium`/`high`/`xhigh`/`max`。セッション設定を上書きする場合のみ |
