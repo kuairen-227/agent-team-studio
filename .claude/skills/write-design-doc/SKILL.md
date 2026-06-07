@@ -3,7 +3,7 @@ name: write-design-doc
 description: docs/design/ 配下のドキュメントを作成・更新する。配置ガイドラインを遵守し、プロダクト要素の混入を防ぐ。
 when_to_use: ユーザーが「設計ドキュメント書いて」「design doc 書いて」「スキーマ書いて」「I/Oスキーマ書いて」「API設計書いて」「技術仕様書いて」「設計仕様更新して」などと言ったとき
 argument-hint: "[new|update] [対象ファイル名 or トピック]"
-allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
+allowed-tools: Read Grep Glob Edit Write
 ---
 
 # write-design-doc
