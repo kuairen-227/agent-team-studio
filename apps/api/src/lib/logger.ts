@@ -10,6 +10,7 @@
 
 import type { RequestIdVariables } from "hono/request-id";
 import { type LevelWithSilent, pino } from "pino";
+import { pinoRedactPaths } from "./redact.ts";
 
 /**
  * ログレベルを解決する。明示の `LOG_LEVEL` が最優先。
@@ -33,25 +34,14 @@ export function resolveLevel(): LevelWithSilent {
  */
 export const logger = pino({
   level: resolveLevel(),
-  // 機密フィールドをログ出力から除外する。req.headers 配下の認証情報と、
-  // 機密フィールド名（apiKey/api_key/token/password）をトップレベルと 1 階層下で censor する。
+  // 機密フィールドをログ出力から除外する。機密フィールド名の SSoT は redact.ts に集約し、
+  // Sentry の beforeSend redactor（ADR-0035）と同一集合から導出する。
   // pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため、トップレベルと
   // `*.<field>` を併記する。任意深度はカバーしないため、深くネストしたオブジェクト
   // （LLM レスポンス等）はそのまま渡さず、ログ前に機密フィールドを除去すること
   // （詳細は docs/design/logging.md）。
   redact: {
-    paths: [
-      "req.headers.authorization",
-      "req.headers.cookie",
-      "apiKey",
-      "*.apiKey",
-      "api_key",
-      "*.api_key",
-      "token",
-      "*.token",
-      "password",
-      "*.password",
-    ],
+    paths: pinoRedactPaths,
     censor: "[REDACTED]",
   },
 });

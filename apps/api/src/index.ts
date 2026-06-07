@@ -27,6 +27,7 @@ import type { AgentRole } from "@agent-team-studio/shared";
 import { createApp } from "./app.ts";
 import { createEventHub } from "./lib/event-hub.ts";
 import { logger } from "./lib/logger.ts";
+import { captureException } from "./lib/sentry.ts";
 import { websocket } from "./lib/ws.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -116,6 +117,9 @@ const app = createApp({
     });
     launchEngine(executionId, engineLogger).catch((err) => {
       engineLogger.error({ err }, "engine failed");
+      // fire-and-forget 経路は HTTP リクエストの外側で実行されるため Sentry の
+      // Hono ミドルウェアでは捕捉されない。未キャッチ例外を明示的に送信する（ADR-0035）。
+      captureException(err, { tags: { requestId: traceId, executionId } });
       eventHub.publish(executionId, {
         kind: "execution_failed",
         reason: "internal_error",
