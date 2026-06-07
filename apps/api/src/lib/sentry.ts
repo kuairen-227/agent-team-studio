@@ -18,6 +18,7 @@ import { NotFoundError, ValidationError } from "./errors.ts";
 import type { AppEnv } from "./logger.ts";
 import { redactEvent } from "./redact.ts";
 
+// fire-and-forget 経路（index.ts）から例外送信に使う。Sentry 未初期化時（DSN 未設定）は no-op。
 export { captureException };
 
 /**
@@ -49,7 +50,9 @@ export function setupSentry(app: Hono<AppEnv>): boolean {
 /**
  * 現在のリクエストスコープに trace ID(=request-id) を tag 付与する。
  *
- * Sentry 未初期化時は no-op（DSN 未設定でも安全に呼べる）。
+ * Sentry Hono ミドルウェアが確立した per-request の isolation scope 内から呼ぶこと
+ * （= `app.use` のリクエストコールバック内）。scope 外から呼ぶと別リクエストの scope に
+ * 書き込まれうる。Sentry 未初期化時（DSN 未設定）は no-op で安全に呼べる。
  */
 export function tagRequestId(requestId: string): void {
   setTag("requestId", requestId);

@@ -26,6 +26,7 @@ describe("setupSentry", () => {
       process.env.SENTRY_DSN = savedDsn;
     }
     // init 済みクライアントのグローバル状態を解除し、後続テストへ副作用を残さない。
+    // init 有無にかかわらず安全に呼べる（未 init 時は no-op）。
     await close(0);
   });
 
@@ -42,7 +43,29 @@ describe("setupSentry", () => {
 });
 
 describe("tagRequestId", () => {
+  let savedDsn: string | undefined;
+
+  beforeEach(() => {
+    savedDsn = process.env.SENTRY_DSN;
+  });
+
+  afterEach(async () => {
+    if (savedDsn === undefined) {
+      delete process.env.SENTRY_DSN;
+    } else {
+      process.env.SENTRY_DSN = savedDsn;
+    }
+    await close(0);
+  });
+
   test("Sentry 未初期化でも例外を投げない（no-op）", () => {
+    delete process.env.SENTRY_DSN;
     expect(() => tagRequestId("req-123")).not.toThrow();
+  });
+
+  test("Sentry 初期化済みでも例外を投げない", () => {
+    process.env.SENTRY_DSN = "https://examplePublicKey@o0.ingest.sentry.io/0";
+    setupSentry(new Hono<AppEnv>());
+    expect(() => tagRequestId("req-456")).not.toThrow();
   });
 });

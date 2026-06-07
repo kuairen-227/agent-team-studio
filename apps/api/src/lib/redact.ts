@@ -15,26 +15,23 @@ import {
   redactSensitive,
 } from "@agent-team-studio/shared";
 
-// 以下 2 つは Pino の redact path 構文（`req.headers.<name>` とトップレベル）を組むための
-// カテゴリ分けで、その和は shared の DEFAULT_SENSITIVE_KEYS と一致させること。
-// （Sentry beforeSend は DEFAULT_SENSITIVE_KEYS を直接使うため、ここは Pino 専用。）
-
-/** リクエストヘッダ上の機密キー（Pino では `req.headers.<name>` として redact）。 */
-const SENSITIVE_HEADERS = ["authorization", "cookie"] as const;
-
-/** ボディ・任意オブジェクト上の機密フィールド名。 */
-const SENSITIVE_FIELDS = ["apiKey", "api_key", "token", "password"] as const;
+// ヘッダとして扱う機密キー（Pino では `req.headers.<name>` 配下のみ redact する）。
+// これ以外の DEFAULT_SENSITIVE_KEYS はボディ・任意オブジェクトのフィールドとして扱う。
+const HEADER_KEYS: readonly string[] = ["authorization", "cookie"];
 
 /**
- * Pino の redact paths。
+ * Pino の redact paths。`DEFAULT_SENSITIVE_KEYS` から直接導出することで、機密キーを
+ * 追加した際に Pino 側だけ redact 漏れが生じることを防ぐ（Sentry の `redactEvent` も
+ * 同じ集合を使うため両者が乖離しない）。
  *
- * pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため、トップレベルと
- * `*.<field>` を併記する（任意深度は非対応。詳細は docs/design/logging.md）。
+ * ヘッダ系キーは `req.headers.<name>`、それ以外はトップレベルと `*.<field>` を併記する。
+ * pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため（任意深度は非対応。
+ * 詳細は docs/design/logging.md）。
  */
-export const pinoRedactPaths: string[] = [
-  ...SENSITIVE_HEADERS.map((h) => `req.headers.${h}`),
-  ...SENSITIVE_FIELDS.flatMap((f) => [f, `*.${f}`]),
-];
+export const pinoRedactPaths: string[] = DEFAULT_SENSITIVE_KEYS.flatMap(
+  (key) =>
+    HEADER_KEYS.includes(key) ? [`req.headers.${key}`] : [key, `*.${key}`],
+);
 
 /**
  * Sentry の `beforeSend` 用 redactor。イベント内の機密フィールドを伏せて返す。

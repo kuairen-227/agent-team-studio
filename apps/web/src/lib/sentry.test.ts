@@ -5,17 +5,27 @@
  * 送る、という契約を固定する（observability ノイズと free tier 枠の節約 / ADR-0035）。
  */
 
-import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type Mock,
+  spyOn,
+  test,
+} from "bun:test";
 import * as Sentry from "@sentry/react";
 import { reportQueryError } from "./sentry";
 
 describe("reportQueryError", () => {
-  const captureSpy = spyOn(Sentry, "captureException").mockImplementation(
-    () => "",
-  );
+  let captureSpy: Mock<typeof Sentry.captureException>;
+
+  beforeEach(() => {
+    captureSpy = spyOn(Sentry, "captureException").mockImplementation(() => "");
+  });
 
   afterEach(() => {
-    captureSpy.mockClear();
+    captureSpy.mockRestore();
   });
 
   test("4xx（status=404）は送信しない", () => {
@@ -32,6 +42,11 @@ describe("reportQueryError", () => {
 
   test("ネットワークエラー（TypeError）は送信する", () => {
     reportQueryError(new TypeError("Failed to fetch"));
+    expect(captureSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("不正 JSON（SyntaxError）は送信する", () => {
+    reportQueryError(new SyntaxError("Unexpected token"));
     expect(captureSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -70,4 +70,11 @@ describe("redactSensitive", () => {
     expect(obj.token).toBe("[REDACTED]");
     expect(obj.nested.password).toBe("[REDACTED]");
   });
+
+  test("値が undefined の機密キーも censor する（キー名で判定する仕様）", () => {
+    const obj: Record<string, unknown> = { token: undefined, safe: undefined };
+    const result = redactSensitive(obj, KEYS);
+    expect(result.token).toBe("[REDACTED]");
+    expect(result.safe).toBeUndefined();
+  });
 });
