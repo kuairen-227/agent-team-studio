@@ -4,6 +4,7 @@
  */
 
 import type {
+  AgentDefinition,
   ApiError,
   ApiValidationError,
   CompetitorAnalysisParameters,
@@ -24,11 +25,18 @@ import {
 } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchJson } from "@/lib/api";
+import { extractPerspectives } from "./lib/extractPerspectives";
 
 const MAX_COMPETITORS = 5;
 const MIN_COMPETITORS = 1;
@@ -227,6 +235,8 @@ export function TemplateNewPage() {
             {templateData.name} ・ {templateData.description}
           </p>
 
+          <PerspectivesPanel agents={templateData.definition.agents} />
+
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium leading-none">
@@ -406,6 +416,48 @@ function mapValidationErrors(
     }
   }
   return mappedCount > 0 ? result : null;
+}
+
+/**
+ * 実行前に「何が調査されるか」を提示する観点パネル（#228 V4）。
+ * 観点はテンプレート定義から抽出するため、選択中テンプレートに追随する。
+ * 観点が無いテンプレートでは何も表示しない（入力体験を阻害しないため）。
+ */
+function PerspectivesPanel({ agents }: { agents: AgentDefinition[] }) {
+  const perspectives = extractPerspectives(agents);
+  if (perspectives.length === 0) return null;
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        {/* CardTitle は div を出力し asChild 非対応のため、見出し階層（h1 配下の
+            セクション見出し）を保つよう CardTitle 相当のスタイルで h2 を直接描画する
+            （WCAG 1.3.1）。 */}
+        {/* 視覚表示は全角括弧で既存 UI（参考情報（任意）等）に揃える。SR は括弧を
+            逐字読みするため aria-label で括弧を除いた文字列を明示する（WCAG 1.3.1）。 */}
+        <h2
+          className="font-heading text-base font-medium leading-snug"
+          aria-label={`調査される観点 ${perspectives.length} 観点`}
+        >
+          調査される観点（{perspectives.length} 観点）
+        </h2>
+        <CardDescription>以下の観点で競合企業を調査します。</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2 text-sm">
+          {perspectives.map((perspective) => (
+            <li key={perspective.key} className="leading-normal">
+              <span className="font-medium">{perspective.name}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                — {perspective.description}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
 }
 
 function FormSkeleton() {
