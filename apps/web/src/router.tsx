@@ -1,4 +1,3 @@
-import { ErrorBoundary } from "@sentry/react";
 import {
   createRootRoute,
   createRoute,
@@ -12,6 +11,7 @@ import { ExecutionProgressPage } from "@/features/executions/ExecutionProgressPa
 import { HistoryListPage } from "@/features/history/HistoryListPage";
 import { TemplateListPage } from "@/features/templates/TemplateListPage";
 import { TemplateNewPage } from "@/features/templates/TemplateNewPage";
+import { ErrorBoundary } from "@/lib/sentry";
 
 /**
  * 描画中の未捕捉エラーのフォールバック UI。Sentry の `ErrorBoundary` がここを表示し、

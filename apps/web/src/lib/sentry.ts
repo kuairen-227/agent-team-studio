@@ -16,8 +16,15 @@ import {
   DEFAULT_SENSITIVE_KEYS,
   redactSensitive,
 } from "@agent-team-studio/shared";
+// namespace import は意図的。テストが `spyOn(Sentry, "init")` でモジュールオブジェクトの
+// プロパティを差し替えるため、named import に変えると本番コードの束縛がスパイされず
+// DSN ゲートのテストが機能しなくなる。
 import * as Sentry from "@sentry/react";
 import { isExpectedClientError } from "./api";
+
+// Sentry への依存をこのモジュールに集約する。UI から使う ErrorBoundary も
+// ここ経由で参照させ、SDK 差し替え時の変更箇所を一点に保つ（router.tsx で使用）。
+export { ErrorBoundary } from "@sentry/react";
 
 /**
  * Sentry を初期化する。DSN 未設定（空・undefined）時は何もしない。

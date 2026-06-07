@@ -22,6 +22,18 @@ import { redactEvent } from "./redact.ts";
 export { captureException };
 
 /**
+ * Sentry に送るべきエラーかを判定する（`sentry()` ミドルウェアの `shouldHandleError`）。
+ *
+ * 業務エラー（NotFoundError / ValidationError = 400/404）は想定内のため送らず、それ以外
+ * （内部例外 = 500）のみ送る。onError のログ方針・ADR-0035「業務エラーは送信しない」と一致。
+ * SDK 既定の `defaultShouldHandleError` は `error.status` を見るが、本プロジェクトの業務エラーは
+ * status を持たないため、明示的に instanceof で判定する。
+ */
+export function shouldHandleError(error: unknown): boolean {
+  return !(error instanceof NotFoundError || error instanceof ValidationError);
+}
+
+/**
  * Hono app に Sentry ミドルウェアを組み込む。`SENTRY_DSN` 未設定時は何もせず false を返す。
  *
  * `applyPatches` の制約上、ルート登録（`app.route`）より前に呼ぶこと。
@@ -40,9 +52,7 @@ export function setupSentry(app: Hono<AppEnv>): boolean {
     // IP・cookie 等のデフォルト PII を送らない。加えて beforeSend で機密フィールドを除去する。
     sendDefaultPii: false,
     beforeSend: (event) => redactEvent(event),
-    // 業務エラーは送信対象外。それ以外（内部例外）のみ送信する。
-    shouldHandleError: (error) =>
-      !(error instanceof NotFoundError || error instanceof ValidationError),
+    shouldHandleError,
   });
   return true;
 }

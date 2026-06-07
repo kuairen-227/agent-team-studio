@@ -9,8 +9,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { close } from "@sentry/hono/bun";
 import { Hono } from "hono";
+import { NotFoundError, ValidationError } from "./errors.ts";
 import type { AppEnv } from "./logger.ts";
-import { setupSentry, tagRequestId } from "./sentry.ts";
+import { setupSentry, shouldHandleError, tagRequestId } from "./sentry.ts";
 
 const VALID_DSN = "https://examplePublicKey@o0.ingest.sentry.io/0";
 
@@ -57,5 +58,22 @@ describe("sentry", () => {
       setupSentry(new Hono<AppEnv>());
       expect(() => tagRequestId("req-456")).not.toThrow();
     });
+  });
+});
+
+describe("shouldHandleError", () => {
+  test("業務エラー（NotFoundError / ValidationError）は送らない", () => {
+    expect(shouldHandleError(new NotFoundError("template", "t-1"))).toBe(false);
+    expect(
+      shouldHandleError(
+        new ValidationError([{ field: "name", reason: "required" }]),
+      ),
+    ).toBe(false);
+  });
+
+  test("内部例外（その他の Error・非 Error）は送る", () => {
+    expect(shouldHandleError(new Error("boom"))).toBe(true);
+    expect(shouldHandleError(new TypeError("bad"))).toBe(true);
+    expect(shouldHandleError("unexpected")).toBe(true);
   });
 });
