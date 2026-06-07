@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { fetchJson } from "./api";
+import { fetchJson, isExpectedClientError } from "./api";
 
 describe("fetchJson", () => {
   let originalFetch: typeof global.fetch;
@@ -55,5 +55,21 @@ describe("fetchJson", () => {
     ) as unknown as typeof fetch;
 
     await expect(fetchJson("/api/test")).rejects.toThrow(TypeError);
+  });
+});
+
+describe("isExpectedClientError", () => {
+  test("status=4xx は想定内クライアントエラー", () => {
+    expect(isExpectedClientError(new Error("status=400"))).toBe(true);
+    expect(isExpectedClientError(new Error("status=404"))).toBe(true);
+    expect(isExpectedClientError(new Error("status=499"))).toBe(true);
+  });
+
+  test("status=5xx・ネットワークエラー・非 Error は想定外", () => {
+    expect(isExpectedClientError(new Error("status=500"))).toBe(false);
+    expect(isExpectedClientError(new TypeError("Failed to fetch"))).toBe(false);
+    expect(isExpectedClientError(new SyntaxError("bad json"))).toBe(false);
+    expect(isExpectedClientError("status=404")).toBe(false);
+    expect(isExpectedClientError(null)).toBe(false);
   });
 });
