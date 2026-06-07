@@ -13,6 +13,22 @@
 const CENSOR = "[REDACTED]";
 
 /**
+ * redact 対象の機密フィールド名の既定集合（SSoT）。
+ *
+ * apps/api / apps/web の Sentry `beforeSend` はこの集合を共有し、片方だけ更新されて
+ * PII が漏れる事故を防ぐ。apps/api の Pino redact paths もこの集合と整合させる
+ * （`apps/api/src/lib/redact.ts`）。基準・運用方針は docs/design/logging.md を参照。
+ */
+export const DEFAULT_SENSITIVE_KEYS = [
+  "authorization",
+  "cookie",
+  "apiKey",
+  "api_key",
+  "token",
+  "password",
+] as const;
+
+/**
  * `value` を再帰的に走査し、`sensitiveKeys` に一致するキーの値を `[REDACTED]` に
  * 置換して返す（in-place で書き換え、同じ参照を返す）。
  *

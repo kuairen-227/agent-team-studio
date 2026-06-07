@@ -68,7 +68,9 @@ export function createApp(deps: AppDeps) {
 
   // Sentry ミドルウェアはルート登録より前に適用する必要がある（applyPatches の制約）。
   // DSN 未設定時は no-op。500（内部例外）のみ捕捉し、PII は beforeSend で除去する（ADR-0035）。
-  setupSentry(app);
+  // 有効/無効を起動ログに残し、DSN 設定漏れを検知できるようにする。
+  const sentryEnabled = setupSentry(app);
+  logger.info({ sentryEnabled }, "error tracking initialized");
 
   app.onError(onError);
 

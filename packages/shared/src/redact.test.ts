@@ -63,4 +63,11 @@ describe("redactSensitive", () => {
     expect(redactSensitive("x", KEYS)).toBe("x");
     expect(redactSensitive(42, KEYS)).toBe(42);
   });
+
+  test("元オブジェクトを in-place で書き換える（戻り値を介さず反映）", () => {
+    const obj = { token: "t", nested: { password: "p" } };
+    redactSensitive(obj, KEYS);
+    expect(obj.token).toBe("[REDACTED]");
+    expect(obj.nested.password).toBe("[REDACTED]");
+  });
 });

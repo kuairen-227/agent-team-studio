@@ -10,7 +10,14 @@
  * 対象: authorization / cookie / apiKey / token / password（詳細は docs/design/logging.md）。
  */
 
-import { redactSensitive } from "@agent-team-studio/shared";
+import {
+  DEFAULT_SENSITIVE_KEYS,
+  redactSensitive,
+} from "@agent-team-studio/shared";
+
+// 以下 2 つは Pino の redact path 構文（`req.headers.<name>` とトップレベル）を組むための
+// カテゴリ分けで、その和は shared の DEFAULT_SENSITIVE_KEYS と一致させること。
+// （Sentry beforeSend は DEFAULT_SENSITIVE_KEYS を直接使うため、ここは Pino 専用。）
 
 /** リクエストヘッダ上の機密キー（Pino では `req.headers.<name>` として redact）。 */
 const SENSITIVE_HEADERS = ["authorization", "cookie"] as const;
@@ -29,15 +36,13 @@ export const pinoRedactPaths: string[] = [
   ...SENSITIVE_FIELDS.flatMap((f) => [f, `*.${f}`]),
 ];
 
-/** Sentry の beforeSend で走査する機密キー集合（ヘッダ・フィールドの和）。 */
-const SENTRY_SENSITIVE_KEYS = [...SENSITIVE_HEADERS, ...SENSITIVE_FIELDS];
-
 /**
  * Sentry の `beforeSend` 用 redactor。イベント内の機密フィールドを伏せて返す。
  *
  * 外部 SaaS（sentry.io）へ送信される前に PII/機密を除去する目的（ADR-0035）。
+ * 機密キー集合は shared の `DEFAULT_SENSITIVE_KEYS` を apps/web と共有する。
  * pino の単一階層 redact と異なり任意深度を走査する。
  */
 export function redactEvent<T>(event: T): T {
-  return redactSensitive(event, SENTRY_SENSITIVE_KEYS);
+  return redactSensitive(event, DEFAULT_SENSITIVE_KEYS);
 }

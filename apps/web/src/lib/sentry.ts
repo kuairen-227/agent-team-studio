@@ -12,25 +12,19 @@
  *   apps/api と同一の redaction ロジックを共有する。
  */
 
-import { redactSensitive } from "@agent-team-studio/shared";
+import {
+  DEFAULT_SENSITIVE_KEYS,
+  redactSensitive,
+} from "@agent-team-studio/shared";
 import * as Sentry from "@sentry/react";
 import { isExpectedClientError } from "./api";
-
-/** beforeSend で走査する機密キー集合（apps/api の SENTRY_SENSITIVE_KEYS と整合）。 */
-const SENSITIVE_KEYS = [
-  "authorization",
-  "cookie",
-  "apiKey",
-  "api_key",
-  "token",
-  "password",
-];
 
 /**
  * Sentry を初期化する。`VITE_SENTRY_DSN` 未設定時は何もしない。
  *
  * アプリ描画より前（main.tsx の最上部）で呼ぶこと。error tracking が主眼のため
- * performance トレースは送らない（free tier 枠の節約）。
+ * performance トレースは送らない（free tier 枠の節約）。機密キー集合は shared の
+ * `DEFAULT_SENSITIVE_KEYS` を apps/api と共有する。
  */
 export function initSentry(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
@@ -39,8 +33,10 @@ export function initSentry(): void {
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,
+    // performance トレースは送らない（free tier 枠の節約・apps/api と一貫）。
+    tracesSampleRate: 0,
     sendDefaultPii: false,
-    beforeSend: (event) => redactSensitive(event, SENSITIVE_KEYS),
+    beforeSend: (event) => redactSensitive(event, DEFAULT_SENSITIVE_KEYS),
   });
 }
 
