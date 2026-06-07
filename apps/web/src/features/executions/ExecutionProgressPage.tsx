@@ -110,6 +110,10 @@ export function ExecutionProgressPage() {
 
   if (wsState.phase === "failed") {
     const { label, guidance } = describeExecutionFailure(wsState.reason);
+    // guidance がエージェントの確認を促す reason のみ、下の一覧へのページ内ジャンプを出す。
+    const referencesAgents =
+      wsState.reason === "all_investigations_failed" ||
+      wsState.reason === "integration_failed";
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
@@ -119,6 +123,11 @@ export function ExecutionProgressPage() {
           <AlertTitle>{label}</AlertTitle>
           <AlertDescription>
             <p>{guidance}</p>
+            {referencesAgents && (
+              <p>
+                <a href="#agent-list">各エージェントの状態を確認する</a>
+              </p>
+            )}
             <p>
               <Link to="/">テンプレート一覧から新しい調査を実行する</Link>
             </p>
@@ -153,7 +162,7 @@ function AgentList({ agents }: { agents: AgentState[] }) {
   }
 
   return (
-    <ul className="space-y-4" aria-label="エージェント一覧">
+    <ul id="agent-list" className="space-y-4" aria-label="エージェント一覧">
       {agents.map((agent) => (
         <li key={agent.agentId}>
           <AgentCard agent={agent} />
