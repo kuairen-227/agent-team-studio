@@ -9,11 +9,7 @@
  * - error: WS エラー Alert + 履歴一覧への導線
  */
 
-import type {
-  AgentFailReason,
-  ExecutionFailReason,
-} from "@agent-team-studio/shared";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +24,10 @@ import {
   InvestigationOutputsView,
 } from "./ExecutionResultView";
 import { type AgentState, useExecutionWs } from "./hooks/useExecutionWs";
+import {
+  describeAgentFailure,
+  describeExecutionFailure,
+} from "./lib/failureMessages";
 import { parseAgentOutput } from "./lib/parseAgentOutput";
 
 const Route = getRouteApi("/executions/$executionId");
@@ -38,20 +38,6 @@ const AGENT_LABEL: Record<string, string> = {
   investigation_investment: "投資調査",
   investigation_partnership: "提携調査",
   integration: "統合",
-};
-
-const AGENT_FAIL_REASON_MESSAGES: Record<AgentFailReason, string> = {
-  llm_error: "LLM エラー",
-  output_parse_error: "出力解析エラー",
-  timeout: "タイムアウト",
-  internal_error: "内部エラー",
-};
-
-const REASON_MESSAGES: Record<ExecutionFailReason, string> = {
-  all_investigations_failed: "すべての調査エージェントが失敗しました。",
-  integration_failed: "統合エージェントが失敗しました。",
-  timeout: "実行がタイムアウトしました。",
-  internal_error: "内部エラーが発生しました。",
 };
 
 function getAgentLabel(agentId: string): string {
@@ -123,13 +109,29 @@ export function ExecutionProgressPage() {
   }
 
   if (wsState.phase === "failed") {
+    const { label, guidance } = describeExecutionFailure(wsState.reason);
+    // guidance がエージェントの確認を促す reason のみ、下の一覧へのページ内ジャンプを出す。
+    const referencesAgents =
+      wsState.reason === "all_investigations_failed" ||
+      wsState.reason === "integration_failed";
     return (
       <section>
         <h1 ref={h1Ref} tabIndex={-1} className="mb-4 text-xl font-semibold">
           実行失敗
         </h1>
         <Alert variant="destructive">
-          <AlertTitle>{REASON_MESSAGES[wsState.reason]}</AlertTitle>
+          <AlertTitle>{label}</AlertTitle>
+          <AlertDescription>
+            <p>{guidance}</p>
+            {referencesAgents && (
+              <p>
+                <a href="#agent-list">各エージェントの状態を確認する</a>
+              </p>
+            )}
+            <p>
+              <Link to="/">テンプレート一覧から新しい調査を実行する</Link>
+            </p>
+          </AlertDescription>
         </Alert>
         <AgentList agents={agents} />
         {wsState.reason === "integration_failed" && (
@@ -160,7 +162,7 @@ function AgentList({ agents }: { agents: AgentState[] }) {
   }
 
   return (
-    <ul className="space-y-4" aria-label="エージェント一覧">
+    <ul id="agent-list" className="space-y-4" aria-label="エージェント一覧">
       {agents.map((agent) => (
         <li key={agent.agentId}>
           <AgentCard agent={agent} />
@@ -171,6 +173,9 @@ function AgentList({ agents }: { agents: AgentState[] }) {
 }
 
 function AgentCard({ agent }: { agent: AgentState }) {
+  const failLabel = agent.failReason
+    ? describeAgentFailure(agent.failReason).label
+    : null;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3">
@@ -178,20 +183,17 @@ function AgentCard({ agent }: { agent: AgentState }) {
           {getAgentLabel(agent.agentId)}
         </CardTitle>
         <Badge variant={agent.status} />
-        {agent.failReason && (
-          <span className="text-xs text-destructive">
-            {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
+        {/* 可視ラベルは aria-hidden とし、読み上げは下の sr-only に一本化（重複読み上げ回避）。 */}
+        {failLabel && (
+          <span className="text-xs text-destructive" aria-hidden="true">
+            {failLabel}
           </span>
         )}
       </CardHeader>
       <CardContent>
         {/* aria-live は DOM に常時存在させることで ARIA 仕様を満たす。 */}
         <div aria-live="polite">
-          {agent.failReason && (
-            <span className="sr-only">
-              失敗理由: {AGENT_FAIL_REASON_MESSAGES[agent.failReason]}
-            </span>
-          )}
+          {failLabel && <span className="sr-only">失敗理由: {failLabel}</span>}
           <AgentCardBody agent={agent} />
         </div>
       </CardContent>
