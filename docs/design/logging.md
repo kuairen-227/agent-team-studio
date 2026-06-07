@@ -48,7 +48,7 @@ bun run dev | pino-pretty
 
 > **命名の対応**: ログのフィールド名は `requestId`、API エラー応答の契約名は `details.traceId`、HTTP ヘッダは `X-Request-Id`。いずれも同一の値を指す。
 >
-> **エラー応答時のアクセスログ**: アクセスログ middleware は `await next()` 完了後に出力するため、ルート/サービス層が throw する経路（`onError` で整形される 400 / 404 / 500）では `"request completed"` を出力しない。500 は `onError` の error ログで追跡できるが、400 / 404 はアクセスログに残らない。全経路でのアクセスログ網羅は [Issue #256](https://github.com/kuairen-227/agent-team-studio/issues/256) で扱う。
+> **エラー応答時のアクセスログ**: throw 経路（`onError` で整形される 400 / 404 / 500、および未マッチルートの `onNotFound`）でもアクセスログ（`"request completed"`）を 1 リクエスト 1 行で出力し、`status` は実レスポンスと一致する。Hono の `compose` は throw を捕捉した階層内で `onError` を同期実行して `c.res` を確定するため、アクセスログ middleware の `await next()` 完了後の出力時点で status は反映済みになる（[Issue #256](https://github.com/kuairen-227/agent-team-studio/issues/256)）。500 はこれに加え `onError` の error ログでも追跡できる。退行検知は `apps/api/src/app.test.ts` のアクセスログ全経路テストで担保する。
 
 ## redact（機密フィールド除外）
 
