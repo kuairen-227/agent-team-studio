@@ -44,16 +44,21 @@ export function setupSentry(app: Hono<AppEnv>): boolean {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) return false;
 
-  sentry(app, {
-    dsn,
-    environment: process.env.NODE_ENV ?? "development",
-    // error tracking が主眼のため performance トレースは送らない（free tier 枠の節約）。
-    tracesSampleRate: 0,
-    // IP・cookie 等のデフォルト PII を送らない。加えて beforeSend で機密フィールドを除去する。
-    sendDefaultPii: false,
-    beforeSend: (event) => redactEvent(event),
-    shouldHandleError,
-  });
+  // sentry() は init/patch を行ったうえで「リクエスト毎のエラー捕捉ミドルウェア」を返す。
+  // この戻り値を app.use で登録しないと responseHandler（captureException）が走らず、
+  // HTTP 500 が送信されない（init は走るため sentryEnabled は true のまま）。公式 README に従う。
+  app.use(
+    sentry(app, {
+      dsn,
+      environment: process.env.NODE_ENV ?? "development",
+      // error tracking が主眼のため performance トレースは送らない（free tier 枠の節約）。
+      tracesSampleRate: 0,
+      // IP・cookie 等のデフォルト PII を送らない。加えて beforeSend で機密フィールドを除去する。
+      sendDefaultPii: false,
+      beforeSend: (event) => redactEvent(event),
+      shouldHandleError,
+    }),
+  );
   return true;
 }
 

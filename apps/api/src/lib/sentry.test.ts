@@ -7,10 +7,10 @@
  * 送ることを固定する（ADR-0035: DSN 未設定で送信無効化・DSN なしで起動可能・業務エラー非送信）。
  */
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { close } from "@sentry/hono/bun";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { close, getClient } from "@sentry/hono/bun";
 import { Hono } from "hono";
-import { NotFoundError, ValidationError } from "./errors.ts";
+import { NotFoundError, onError, ValidationError } from "./errors.ts";
 import type { AppEnv } from "./logger.ts";
 import { setupSentry, shouldHandleError, tagRequestId } from "./sentry.ts";
 
@@ -45,6 +45,58 @@ describe("sentry", () => {
       // 実送信はしない形式上の DSN。init は同期で成功し true を返す。
       process.env.SENTRY_DSN = VALID_DSN;
       expect(setupSentry(new Hono<AppEnv>())).toBe(true);
+    });
+  });
+
+  // sentry() の戻り値ミドルウェアを app.use で登録し損ねると、init は成功し
+  // setupSentry は true を返すのに HTTP リクエストの例外が一切捕捉されない。
+  // 「内部例外は captureException される / 業務エラーはされない」を実リクエストで固定し、
+  // ミドルウェア未登録・shouldHandleError の退化を回帰検知する。
+  describe("error capture (middleware registration)", () => {
+    // setupSentry 後の Sentry client の captureException を spy する。
+    // この spy が呼ばれる＝戻り値ミドルウェアが app.use 経由で実行されている証跡。
+    function buildAppAndSpy() {
+      process.env.SENTRY_DSN = VALID_DSN;
+      const app = new Hono<AppEnv>();
+      setupSentry(app);
+      app.onError(onError);
+      app.get("/boom", () => {
+        throw new Error("internal boom");
+      });
+      app.get("/missing", () => {
+        throw new NotFoundError("template", "x");
+      });
+      app.post("/invalid", () => {
+        throw new ValidationError([{ field: "name", reason: "required" }]);
+      });
+
+      const client = getClient();
+      if (!client) throw new Error("Sentry client が初期化されていない");
+      const spy = spyOn(client, "captureException").mockImplementation(
+        () => "event-id",
+      );
+      return { app, spy };
+    }
+
+    test("内部例外(500)は captureException される", async () => {
+      const { app, spy } = buildAppAndSpy();
+
+      const res = await app.request("/boom");
+
+      expect(res.status).toBe(500);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    });
+
+    test("業務エラー(404/400)は captureException されない", async () => {
+      const { app, spy } = buildAppAndSpy();
+
+      const notFound = await app.request("/missing");
+      const invalid = await app.request("/invalid", { method: "POST" });
+
+      expect(notFound.status).toBe(404);
+      expect(invalid.status).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 
