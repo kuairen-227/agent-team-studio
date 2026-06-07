@@ -433,7 +433,12 @@ function PerspectivesPanel({ agents }: { agents: AgentDefinition[] }) {
         {/* CardTitle は div を出力し asChild 非対応のため、見出し階層（h1 配下の
             セクション見出し）を保つよう CardTitle 相当のスタイルで h2 を直接描画する
             （WCAG 1.3.1）。 */}
-        <h2 className="font-heading text-base font-medium leading-snug">
+        {/* 視覚表示は全角括弧で既存 UI（参考情報（任意）等）に揃える。SR は括弧を
+            逐字読みするため aria-label で括弧を除いた文字列を明示する（WCAG 1.3.1）。 */}
+        <h2
+          className="font-heading text-base font-medium leading-snug"
+          aria-label={`調査される観点 ${perspectives.length} 観点`}
+        >
           調査される観点（{perspectives.length} 観点）
         </h2>
         <CardDescription>
