@@ -2,7 +2,9 @@
 
 apps/api の構造化ロギングの運用方針。ライブラリ選定の経緯は [ADR-0033](../adr/0033-structured-logging-library.md) を参照。
 
-設定値（ログレベル既定・redact パス）の SSoT は `apps/api/src/lib/logger.ts`。本ドキュメントは方針と根拠を記述し、具体値はコードを参照する。
+設定値の SSoT はコード: ログレベル既定は `apps/api/src/lib/logger.ts`、機密フィールド定義は `apps/api/src/lib/redact.ts`。本ドキュメントは方針と根拠を記述し、具体値はコードを参照する。
+
+エラートラッキング（Sentry）はログと補完関係にある観測性の別レイヤで、選定根拠は [ADR-0035](../adr/0035-error-tracking-selection.md) を参照。本ドキュメントではログとの関係・機密 redact の共有のみ扱う。
 
 ## ライブラリ
 
@@ -52,15 +54,31 @@ bun run dev | pino-pretty
 
 ## redact（機密フィールド除外）
 
-認証情報（`req.headers.authorization` / `cookie`）と、機密フィールド名（`apiKey` / `api_key` / `token` / `password`）を**トップレベルおよび 1 階層下**でログ出力から除外する（`[REDACTED]` に置換）。除外パスの具体定義は `apps/api/src/lib/logger.ts` の `redact.paths` を参照。
+認証情報（`req.headers.authorization` / `cookie`）と、機密フィールド名（`apiKey` / `api_key` / `token` / `password`）を**トップレベルおよび 1 階層下**でログ出力から除外する（`[REDACTED]` に置換）。
+
+機密フィールド名は `apps/api/src/lib/redact.ts` を SSoT とし、Pino の redact パス（`pinoRedactPaths`）と Sentry の `beforeSend` redactor（`redactEvent`）の双方をそこから導出する。両者で定義が乖離して片方だけ漏れる事故を防ぐためで、除外パスの具体定義はコードを参照する。
 
 > **深度の制約**: pino の redact パスの `*` は単一階層ワイルドカードで再帰（`**`）に非対応。そのため任意深度の機密フィールドは自動では落ちない。深くネストしたオブジェクトをログする場合は、ログ前に該当フィールドを除去するか、明示パスを追加すること。
 >
 > **メッセージ本文の制約**: redact はフィールド名（キー）ベースのため、`err.message` 等の文字列内に混入した機密は除去できない。DB ドライバが接続文字列をエラーメッセージに含める等、エラーメッセージに機密が混入しうる場合は、`{ err }` でそのまま渡さず message を加工してからログすること。
 
+## エラートラッキング（Sentry）との関係
+
+構造化ログ（本ドキュメント）と error tracking（ADR-0035）は重複せず補完する。ログはハンドルされた例外・実行フロー・アクセスログを stdout に残し、Sentry は未キャッチ例外・ブラウザエラーを集約・通知・トリアージする。
+
+| 観点 | apps/api | apps/web |
+| --- | --- | --- |
+| SDK | `@sentry/hono`（Bun ランタイム） | `@sentry/react` |
+| 送信対象 | 内部例外（500）と fire-and-forget 経路の未キャッチ例外。業務エラー（400/404）は送信しない | uncaught error / unhandled rejection（既定 integration）、React 描画エラー（`Sentry.ErrorBoundary`）、想定外のクエリエラー（5xx・ネットワーク） |
+| DSN | `SENTRY_DSN`（サーバ側シークレット） | `VITE_SENTRY_DSN`（build-time でバンドルに埋め込み・公開前提） |
+| 無効化 | DSN 未設定時は送信しない（DSN なしで起動可能） | 同左 |
+
+- **trace ID 相関**: apps/api は request-id を Sentry の tag（`requestId`）に乗せ、ログとエラーを同一 trace ID で突き合わせられる。fire-and-forget 経路の `captureException` にも tag を付与する。
+- **PII/機密 redact**: 外部 SaaS（sentry.io）への送信前に機密フィールドを除去する。redactor は `@agent-team-studio/shared` の `redactSensitive` を apps/api / apps/web で共有し、ログの redact と同一の機密フィールド集合に揃える。`sendDefaultPii: false` で IP・cookie 等のデフォルト PII も送らない。
+
 ## スコープ外
 
-- **apps/web**（ブラウザ）: フロントの可観測性は別途エラートラッキング（[Issue #237](https://github.com/kuairen-227/agent-team-studio/issues/237)）で扱う。
+- **apps/web**（ブラウザログ）: ブラウザのエラーは Sentry（ADR-0035）で集約する。構造化ログ（stdout）は apps/api のサーバ側に限る。
 - **packages/agent-core**（engine/LLM）: ライブラリのため具体ロガーに依存させない。最小 Logger ポート型（`logger-port.ts`）を定義し、apps/api が Pino logger を child binding して注入する（#239 で実装済み）。
 - **packages/db**: CLI スクリプト（migrate / seed）は人間が直接実行する運用ツールのため、構造化ログの対象外。
 - **WebSocket ハンドラ**: `onOpen` / `onMessage` 等は Hono の request context 外で動作するため request-scoped logger の対象外（現状エラーはログに残らない）。WS の可観測性は必要になった時点で別途検討する。
