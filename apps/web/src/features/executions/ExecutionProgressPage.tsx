@@ -164,6 +164,9 @@ function AgentList({ agents }: { agents: AgentState[] }) {
 }
 
 function AgentCard({ agent }: { agent: AgentState }) {
+  const failLabel = agent.failReason
+    ? describeAgentFailure(agent.failReason).label
+    : null;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3">
@@ -171,20 +174,17 @@ function AgentCard({ agent }: { agent: AgentState }) {
           {getAgentLabel(agent.agentId)}
         </CardTitle>
         <Badge variant={agent.status} />
-        {agent.failReason && (
-          <span className="text-xs text-destructive">
-            {describeAgentFailure(agent.failReason).label}
+        {/* 可視ラベルは aria-hidden とし、読み上げは下の sr-only に一本化（重複読み上げ回避）。 */}
+        {failLabel && (
+          <span className="text-xs text-destructive" aria-hidden="true">
+            {failLabel}
           </span>
         )}
       </CardHeader>
       <CardContent>
         {/* aria-live は DOM に常時存在させることで ARIA 仕様を満たす。 */}
         <div aria-live="polite">
-          {agent.failReason && (
-            <span className="sr-only">
-              失敗理由: {describeAgentFailure(agent.failReason).label}
-            </span>
-          )}
+          {failLabel && <span className="sr-only">失敗理由: {failLabel}</span>}
           <AgentCardBody agent={agent} />
         </div>
       </CardContent>

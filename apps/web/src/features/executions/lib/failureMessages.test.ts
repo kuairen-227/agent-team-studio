@@ -45,4 +45,14 @@ describe("describeExecutionFailure", () => {
     const { guidance } = describeExecutionFailure("all_investigations_failed");
     expect(guidance).toContain("再");
   });
+
+  it("integration_failed は統合の失敗と分かるラベルを返す", () => {
+    expect(describeExecutionFailure("integration_failed").label).toContain(
+      "統合",
+    );
+  });
+
+  it("timeout はタイムアウトと分かるラベルを返す", () => {
+    expect(describeExecutionFailure("timeout").label).toContain("タイムアウト");
+  });
 });
