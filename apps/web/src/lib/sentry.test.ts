@@ -49,4 +49,10 @@ describe("reportQueryError", () => {
     reportQueryError(new SyntaxError("Unexpected token"));
     expect(captureSpy).toHaveBeenCalledTimes(1);
   });
+
+  test("非 Error 値（null・文字列）も想定外として送信する", () => {
+    reportQueryError(null);
+    reportQueryError("boom");
+    expect(captureSpy).toHaveBeenCalledTimes(2);
+  });
 });

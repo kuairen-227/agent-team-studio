@@ -72,4 +72,11 @@ describe("isExpectedClientError", () => {
     expect(isExpectedClientError("status=404")).toBe(false);
     expect(isExpectedClientError(null)).toBe(false);
   });
+
+  test("regex の境界（^ と $）が有効で部分一致しない", () => {
+    // ^status=4\d\d$ の完全一致。退化（例: ^status=4）すると以下が誤って true になる。
+    expect(isExpectedClientError(new Error("status=4"))).toBe(false);
+    expect(isExpectedClientError(new Error("status=400extra"))).toBe(false);
+    expect(isExpectedClientError(new Error("prefix status=400"))).toBe(false);
+  });
 });

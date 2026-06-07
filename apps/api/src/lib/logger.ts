@@ -41,7 +41,8 @@ export const logger = pino({
   // （LLM レスポンス等）はそのまま渡さず、ログ前に機密フィールドを除去すること
   // （詳細は docs/design/logging.md）。
   redact: {
-    paths: pinoRedactPaths,
+    // pino は mutable な string[] を要求するためコピーを渡す（readonly 配列をそのまま渡せない）。
+    paths: [...pinoRedactPaths],
     censor: "[REDACTED]",
   },
 });

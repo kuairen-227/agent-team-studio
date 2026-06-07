@@ -13,6 +13,8 @@ export async function fetchJson<T>(url: string): Promise<T> {
  *
  * `fetchJson` が投げる `"status=4NN"` 形式のメッセージを対象とする。retry しない判定と、
  * Sentry へ報告しない判定（想定内のため observability ノイズを避ける）の双方で共有する。
+ * 401（認証切れ）・429（レート制限）等も 4xx のため「想定内」に含め、送信・retry しない。
+ * 5xx・ネットワークエラー（TypeError）・JSON パース失敗（SyntaxError）は想定外として扱う。
  */
 export function isExpectedClientError(error: unknown): boolean {
   return error instanceof Error && /^status=4\d\d$/.test(error.message);

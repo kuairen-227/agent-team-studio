@@ -25,6 +25,11 @@ updates:
       include:
         - "*"
     groups:
+      # @sentry/* は相互に厳密同一バージョンが必要（@sentry/hono が @sentry/bun を
+      # peer 依存）。常に同一 PR でまとめて更新し、バージョンの非対称化を防ぐ。
+      sentry:
+        patterns:
+          - "@sentry/*"
       production-patch:
         dependency-type: "production"
         update-types:

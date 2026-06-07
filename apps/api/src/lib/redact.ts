@@ -28,10 +28,10 @@ const HEADER_KEYS: readonly string[] = ["authorization", "cookie"];
  * pino の `*` は単一階層ワイルドカードで再帰 `**` は非対応のため（任意深度は非対応。
  * 詳細は docs/design/logging.md）。
  */
-export const pinoRedactPaths: string[] = DEFAULT_SENSITIVE_KEYS.flatMap(
-  (key) =>
+export const pinoRedactPaths: readonly string[] =
+  DEFAULT_SENSITIVE_KEYS.flatMap((key) =>
     HEADER_KEYS.includes(key) ? [`req.headers.${key}`] : [key, `*.${key}`],
-);
+  );
 
 /**
  * Sentry の `beforeSend` 用 redactor。イベント内の機密フィールドを伏せて返す。
