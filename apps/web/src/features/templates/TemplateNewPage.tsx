@@ -30,7 +30,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -431,17 +430,20 @@ function PerspectivesPanel({ agents }: { agents: AgentDefinition[] }) {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="text-base">
+        {/* CardTitle は div を出力し asChild 非対応のため、見出し階層（h1 配下の
+            セクション見出し）を保つよう CardTitle 相当のスタイルで h2 を直接描画する
+            （WCAG 1.3.1）。 */}
+        <h2 className="font-heading text-base font-medium leading-snug">
           調査される観点（{perspectives.length} 観点）
-        </CardTitle>
+        </h2>
         <CardDescription>
-          実行すると、以下の観点で競合企業を並行して調査します。
+          実行すると、以下の観点で競合企業を調査します。
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2 text-sm">
           {perspectives.map((perspective) => (
-            <li key={perspective.key} className="leading-tight">
+            <li key={perspective.key} className="leading-normal">
               <span className="font-medium">{perspective.name}</span>
               <span className="text-muted-foreground">
                 {" "}

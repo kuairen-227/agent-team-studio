@@ -9,7 +9,9 @@ function investigationAgent(
 ): AgentDefinition {
   return {
     role: "investigation",
-    agent_id: `investigation_${key}`,
+    // agent_id は抽出対象外。perspective_key と取り違える実装ミスを検出できるよう、
+    // 意図的に key と無関係な固定値にする（key 由来だとすり抜ける）。
+    agent_id: "agent-unrelated-id",
     specialization: {
       perspective_key: key,
       perspective_name_ja: nameJa,
