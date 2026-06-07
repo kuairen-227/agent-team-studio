@@ -3,6 +3,7 @@ name: judge-dev-mode
 description: Issue の内容から開発環境モード（solo / nested / split）を判断する。Issue 番号を引数に指定する。
 when_to_use: ユーザーが「このIssue どの環境で進める？」「dev mode 判断して」「worktree 必要？」「#XX のモード判断して」などと言ったとき
 argument-hint: "<issue-number>"
+disable-model-invocation: true
 allowed-tools: Bash(gh issue view:*) Read Grep Glob
 ---
 

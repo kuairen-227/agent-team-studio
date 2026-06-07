@@ -3,7 +3,7 @@ name: write-product-doc
 description: docs/product/ 配下のドキュメントを作成・更新する。配置ガイドラインを遵守し、技術要素の混入を防ぐ。
 when_to_use: ユーザーが「プロダクトドキュメント書いて」「ユーザーストーリー書いて」「画面フロー書いて」「テンプレート仕様書いて」「product doc 書いて」「プロダクト仕様更新して」などと言ったとき
 argument-hint: "[new|update] [対象ファイル名 or トピック]"
-allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*)
+allowed-tools: Read Grep Glob Edit Write Bash(git diff:*) Bash(git log:*) Bash(cat:*)
 ---
 
 # write-product-doc
