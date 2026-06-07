@@ -43,6 +43,20 @@ describe("extractPerspectives", () => {
     ]);
   });
 
+  test("investigation のみを渡すと全件を観点として返す", () => {
+    const agents: AgentDefinition[] = [
+      investigationAgent("strategy", "戦略", "事業ミッション"),
+      investigationAgent("product", "製品", "主力プロダクト"),
+    ];
+
+    const result = extractPerspectives(agents);
+
+    expect(result).toEqual([
+      { key: "strategy", name: "戦略", description: "事業ミッション" },
+      { key: "product", name: "製品", description: "主力プロダクト" },
+    ]);
+  });
+
   test("agents の並び順を保持する", () => {
     const agents: AgentDefinition[] = [
       investigationAgent("c", "C", "c-desc"),
@@ -55,8 +69,11 @@ describe("extractPerspectives", () => {
     expect(result.map((p) => p.key)).toEqual(["c", "a", "b"]);
   });
 
-  test("investigation が無い場合は空配列を返す", () => {
+  test("integration のみの場合は空配列を返す", () => {
     expect(extractPerspectives([integrationAgent])).toEqual([]);
+  });
+
+  test("空配列を渡すと空配列を返す", () => {
     expect(extractPerspectives([])).toEqual([]);
   });
 });

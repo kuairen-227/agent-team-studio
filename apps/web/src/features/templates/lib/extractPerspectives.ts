@@ -9,7 +9,13 @@
 
 import type { AgentDefinition } from "@agent-team-studio/shared";
 
-/** 表示用に整形した調査観点。`key` は React の key 兼観点識別子。 */
+/**
+ * 表示用に整形した調査観点。`key` は React の key 兼観点識別子。
+ *
+ * `key` は実体としては `CompetitorPerspectiveKey` だが、テンプレート駆動の
+ * 汎用表示型として将来別テンプレートの観点も受けられるよう、特定テンプレートの
+ * union に縛らず `string` のままとする（#228 AC3）。
+ */
 export type Perspective = {
   key: string;
   name: string;

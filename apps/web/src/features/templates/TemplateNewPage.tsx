@@ -441,9 +441,7 @@ function PerspectivesPanel({ agents }: { agents: AgentDefinition[] }) {
         >
           調査される観点（{perspectives.length} 観点）
         </h2>
-        <CardDescription>
-          実行すると、以下の観点で競合企業を調査します。
-        </CardDescription>
+        <CardDescription>以下の観点で競合企業を調査します。</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2 text-sm">
