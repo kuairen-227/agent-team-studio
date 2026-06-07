@@ -35,6 +35,7 @@
       "Bash(bun run:*)",
       "Bash(bun test:*)",
       "Bash(bun -v)",
+      "Bash(bun --version)",
       "Bash(bunx shadcn:*)",
       "Bash(cat:*)",
       "Bash(ls:*)",
