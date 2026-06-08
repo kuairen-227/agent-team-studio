@@ -45,7 +45,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 2. **ネットワークの安全網は DevContainer の egress allowlist firewall で導入する。**
    - `.devcontainer/init-firewall.sh`: iptables + ipset で **default-deny**（OUTPUT は許可ドメインのみ）。`postStartCommand` から sudo 実行し、毎起動時に再構成する。
    - `docker-compose.yml` の `app` サービスに `cap_add: [NET_ADMIN, NET_RAW]` を付与（`--privileged` は使わない）。`db` サービスには付与しない（コンテナ内通信のみで外向き egress 制御が不要なため）。
-   - 許可ドメイン allowlist: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic（API・statsig）/ Groq / Sentry / Statsig / context7 / VS Code marketplace。DNS・SSH・loopback・Docker ネットワーク subnet（app ↔ db）を許可。
+   - 許可ドメイン allowlist: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic API / Groq / Sentry / context7 / VS Code marketplace。DNS・SSH・loopback・Docker ネットワーク subnet（app ↔ db）を許可。allowlist は最小限とし、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。
 
 3. **役割分担**（多重防御の分担を明確化）:
 
@@ -70,6 +70,6 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 - firewall は許可リスト取得のため、冒頭で policy を一旦 ACCEPT に戻してから default-deny を組み立てる。この「取得〜DROP 設定」の間は outbound が一時的に開放される窓が存在する（allowlist を外部から取得する設計上、不可避）。
 - `postStartCommand` が失敗した場合の VS Code の挙動は実装依存で、firewall 無しのまま DevContainer が稼働し得る。実機検証で失敗時挙動を確認し、必要なら起動ヘルスチェックの追加を検討する。
 - firewall スクリプトは image に COPY せず、`postStartCommand` が bind mount 上の実ファイル（`.devcontainer/init-firewall.sh`）を直接実行する。当初は `/usr/local/bin` への image COPY 方式を採ったが、`.dockerignore` の再包含・ビルドキャッシュ・パス所有権の影響で **image に焼かれた実体が想定と異なるスクリプトに差し替わる事故**が実機検証（#287）で発生したため、ワークスペースの実ファイルを直接走らせる方式に変更した。allowlist 編集が Rebuild 不要で即反映される副次的利点もある。
-- 実機検証はローカル DevContainer（WSL2）で完了（#287）。default-deny の許可外拒否（`example.com` が REJECT）・許可先到達（`api.github.com`）・Docker subnet 許可（app ↔ db）・allowlist 69 件登録を確認。`statsig.anthropic.com` は A レコードを返さず WARN スキップとなるが機能影響はない。
+- 実機検証はローカル DevContainer（WSL2）で完了（#287）。default-deny の許可外拒否（`example.com` が REJECT）・許可先到達（`api.github.com`）・Docker subnet 許可（app ↔ db）・allowlist 登録を確認。個別ドメインの解決失敗は WARN スキップ（致命にしない）で、解決できたドメインで firewall を起動する。
 - Claude Code on the web（リモート実行環境）では別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ。
 - `docs/guides/ai-driven-development.md` の施策インベントリ「サンドボックス＝未設定」を本決定に合わせて更新する。

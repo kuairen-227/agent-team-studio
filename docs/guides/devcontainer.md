@@ -231,7 +231,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | 依存 | `iptables` / `ipset` / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
 | 既定 | OUTPUT は DROP。許可ドメイン・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す |
 
-許可ドメイン: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic（API・statsig）/ Groq / context7 / Sentry / Statsig / VS Code marketplace。
+許可ドメイン: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic API / Groq / context7 / Sentry / VS Code marketplace。allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。
 
 ### allowlist の更新
 
@@ -251,7 +251,7 @@ sudo iptables -P OUTPUT ACCEPT
 
 > ✅ **検証状況**: ローカル DevContainer（WSL2）で動作確認済み（#287）。default-deny の **許可外拒否**（`example.com` が REJECT）・**許可先到達**（`api.github.com`）・**Docker subnet 許可**（app ↔ db）・allowlist 登録（69 件）を確認。起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。
 >
-> なお `statsig.anthropic.com` は A レコードを返さない環境があり、その場合は WARN を出してスキップする（Claude Code のテレメトリ用途で機能影響なし）。
+> 解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
 
 ## トラブルシューティング
 

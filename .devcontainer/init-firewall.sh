@@ -74,7 +74,6 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 #   api.groq.com       : 無料 LLM ルート（ADR-0029 / ADR-0034）
 #   context7.com       : context7 MCP の実行時 API
 #   sentry.io          : エラートラッキング（ADR-0035）
-#   statsig.*          : Claude Code のテレメトリ
 #   *.visualstudio.com : VS Code marketplace（拡張のダウンロード）
 #   vscode.blob.core.windows.net : 拡張バイナリの blob ストレージ（windows.net 系・別系統）
 #   update.code.visualstudio.com : VS Code 本体の更新
@@ -84,8 +83,6 @@ for domain in \
     "api.groq.com" \
     "context7.com" \
     "sentry.io" \
-    "statsig.anthropic.com" \
-    "statsig.com" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
