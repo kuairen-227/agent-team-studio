@@ -6,4 +6,10 @@ FROM mcr.microsoft.com/devcontainers/javascript-node:24
 # （ディレクトリが存在しない場合は volume が root:root で作られ、node ユーザーから書き込めない）
 USER root
 RUN mkdir -p /home/node/.claude && chown node:node /home/node/.claude
+
+# egress allowlist firewall（ADR-0036 / .devcontainer/init-firewall.sh）が使うツール群。
+# iptables / ipset = ルール本体, dnsutils = dig（ドメイン解決）, aggregate = CIDR 集約, jq = GitHub meta 解析。
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iptables ipset dnsutils aggregate jq \
+    && rm -rf /var/lib/apt/lists/*
 USER node

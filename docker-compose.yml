@@ -7,6 +7,11 @@ services:
     build: .
     command: sleep infinity
     init: true
+    # egress allowlist firewall（ADR-0036）が iptables / ipset を操作するための限定 capability。
+    # --privileged は使わず、ネットワーク制御に必要な 2 つだけを付与する。
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     volumes:
       - .:/workspaces/agent-team-studio:cached
       - claude-home:/home/node/.claude
