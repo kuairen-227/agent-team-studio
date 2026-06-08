@@ -70,7 +70,7 @@ Web 層（`apps/web`、React + TanStack Router/Query）は **Testing Trophy**[^t
 | 層 | 配分 | 備考 |
 | --- | --- | --- |
 | static | 前提 | TypeScript strict + Biome で担保（テストとして別途書かない） |
-| unit | 中程度 | 純粋ロジック・reducer に限定（`parseAgentOutput` 等、現状 `bun:test`） |
+| unit | 中程度 | 純粋ロジック・reducer・外部 I/O 境界の薄いラッパー（`parseAgentOutput` / `api.ts` / `sentry.ts` 等、現状 `bun:test`） |
 | integration | 厚い | コンポーネント + フックをユーザー視点で結合検証（導入はトリガ成立時、[guides/testing.md](../guides/testing.md)） |
 | e2e | MVP では見送り | ADR-0010 を維持。開発時 UI 確認は Playwright MCP（[ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md)） |
 

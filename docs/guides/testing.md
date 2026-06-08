@@ -55,7 +55,7 @@ app の構築を `createApp(deps)` 関数で関数化し、テストでは fake 
 
 ### ツール（導入時）
 
-vitest + React Testing Library + MSW + jsdom（or happy-dom）。MSW でネットワーク境界をモックし、`fetch` や `lib/api.ts` 自体はモックしない（[principles §3 過剰モック](../principles/testing.md) 回避）。純粋ロジックの `bun:test` は維持し、コンポーネント・結合のみ vitest に載せる。
+vitest + React Testing Library + MSW + jsdom（or happy-dom）。MSW でネットワーク境界をモックし、`fetch` や `lib/api.ts` 自体はモックしない（[principles §3 過剰モック](../principles/testing.md) 回避）。これは**コンポーネント・結合テストの指針**であり、`lib/api.ts` / `lib/sentry.ts` *自体*のユニットテストが `fetch`・SDK を外部 I/O 境界として stub するのは別レイヤーとして可（現状の `api.test.ts` / `sentry.test.ts` がこれ）。純粋ロジック・ユニットの `bun:test` は維持し、コンポーネント・結合のみ vitest に載せる。
 
 ### TanStack Query の推奨パターン
 
