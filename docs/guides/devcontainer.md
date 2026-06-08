@@ -221,7 +221,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 
 ## egress allowlist firewall
 
-自律実行時のネットワーク安全網として、DevContainer の outbound を **許可ドメインのみ**に絞る default-deny の firewall を導入している（[ADR-0036](../adr/0036-ai-execution-sandbox-policy.md)）。Claude Code の Bash サンドボックスは非特権コンテナでは弱体化必須のため見送り、未充足だったネットワーク egress 制御だけをこの firewall で担う。
+自律実行時のネットワーク安全網として、DevContainer の outbound を **許可ドメインのみ**に絞る default-deny の firewall を導入している（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。Claude Code の Bash サンドボックスは非特権コンテナでは弱体化必須のため見送り、未充足だったネットワーク egress 制御だけをこの firewall で担う。
 
 | 項目 | 内容 |
 | --- | --- |

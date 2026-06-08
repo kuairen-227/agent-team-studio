@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevContainer egress allowlist firewall（ADR-0036 / Issue #271）
+# DevContainer egress allowlist firewall（ADR-0037 / Issue #271）
 #
 # default-deny で許可ドメインのみへの outbound を通す、自律実行時のネットワーク安全網。
 # devcontainer.json の postStartCommand から sudo で実行する（毎起動時に再構成）。

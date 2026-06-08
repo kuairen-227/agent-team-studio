@@ -33,7 +33,7 @@ Thumbs.db
 
 # DevContainer 設定（コンテナ内に焼き込む必要なし）
 .devcontainer
-# ただし firewall スクリプトは image に COPY するため build context に残す（ADR-0036）。
+# ただし firewall スクリプトは image に COPY するため build context に残す（ADR-0037）。
 !.devcontainer/init-firewall.sh
 
 # Docs / CI（ランタイムには不要）

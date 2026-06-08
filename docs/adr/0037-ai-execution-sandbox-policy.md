@@ -1,4 +1,4 @@
-# 0036. AI 実行のサンドボックス方針（Bash サンドボックス見送り・DevContainer egress allowlist 採用）
+# 0037. AI 実行のサンドボックス方針（Bash サンドボックス見送り・DevContainer egress allowlist 採用）
 
 ## Status
 

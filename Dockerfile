@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/devcontainers/javascript-node:24
 USER root
 RUN mkdir -p /home/node/.claude && chown node:node /home/node/.claude
 
-# egress allowlist firewall（ADR-0036 / .devcontainer/init-firewall.sh）が使うツール群。
+# egress allowlist firewall（ADR-0037 / .devcontainer/init-firewall.sh）が使うツール群。
 # iptables / ipset = ルール本体, dnsutils = dig（ドメイン解決）, aggregate = CIDR 集約, jq = GitHub meta 解析。
 RUN apt-get update \
     && apt-get install -y --no-install-recommends iptables ipset dnsutils aggregate jq \

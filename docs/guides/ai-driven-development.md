@@ -26,7 +26,7 @@
 flowchart TB
     subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
         subgraph wt["worktree — 並行作業の隔離ワークスペース"]
-            subgraph sb["egress allowlist firewall — ネットワーク許可制（ADR-0036・検証中）"]
+            subgraph sb["egress allowlist firewall — ネットワーク許可制（ADR-0037・検証中）"]
                 subgraph ai["Claude（AI）"]
                     subgraph ML["メインループ — Agent を統括"]
                         AGT["SubAgents（専門ロール）"]
@@ -153,8 +153,8 @@ flowchart TB
 | Turborepo | 済 | Enablement | — | コマンド実行時 | 決定論的 | 全ワークスペース横断コマンドの予測可能な実行 | `turbo.json` |
 | worktree | 済 | Enablement | — | 並行作業時 | 決定論的 | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
 | DevContainer | 済 | Security | Enablement | 環境起動時 | 決定論的 | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
-| サンドボックス（Claude Code Bash） | 見送り | Security | — | — | — | Bash tool 実行の OS 隔離 | 非特権コンテナでは弱体化必須のため見送り（[ADR-0036](../adr/0036-ai-execution-sandbox-policy.md)）。ネットワーク安全網は egress firewall が担う |
-| egress allowlist firewall | 導入（検証中） | Security | — | コンテナ起動時 | 決定論的 | ネットワーク egress をドメイン許可制で制限（自律実行の安全網） | `.devcontainer/init-firewall.sh`（[ADR-0036](../adr/0036-ai-execution-sandbox-policy.md)） |
+| サンドボックス（Claude Code Bash） | 見送り | Security | — | — | — | Bash tool 実行の OS 隔離 | 非特権コンテナでは弱体化必須のため見送り（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。ネットワーク安全網は egress firewall が担う |
+| egress allowlist firewall | 導入（検証中） | Security | — | コンテナ起動時 | 決定論的 | ネットワーク egress をドメイン許可制で制限（自律実行の安全網） | `.devcontainer/init-firewall.sh`（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)） |
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
@@ -225,7 +225,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 実行環境そのものを隔離して、AI の操作が外へ漏れない・壊さないようにする層。DevContainer（[ADR-0016](../adr/0016-devcontainer-integration.md)）が再現可能な隔離環境を提供し、`permissions.deny` が危険操作を環境レベルで遮断する。secretlint は機密情報のコミットを検出する（Harness と重なる多重タグ）。
 
-Claude Code の **Bash サンドボックス**（bubblewrap / Seatbelt）は、非特権 DevContainer 内では `enableWeakerNestedSandbox` で弱体化させない限り動かず、`--privileged` 化は外側の隔離境界を壊す本末転倒になるため **見送る**（[ADR-0036](../adr/0036-ai-execution-sandbox-policy.md)）。代わりに、サンドボックスのうち本環境で未充足だった **ネットワーク egress 制御** を、限定 capability（`NET_ADMIN` / `NET_RAW`）で動く **DevContainer の egress allowlist firewall**（`.devcontainer/init-firewall.sh`、iptables + ipset の default-deny）で担う。これは Plan/Verify 自律ループ（[ADR-0036](../adr/0036-ai-execution-sandbox-policy.md) 後続 #270）を無人実行する際の安全網として、暴走時のデータ持ち出しを防ぐ。FS 隔離・危険コマンド遮断は引き続き DevContainer + `permissions.deny` が担い、役割を分担する。
+Claude Code の **Bash サンドボックス**（bubblewrap / Seatbelt）は、非特権 DevContainer 内では `enableWeakerNestedSandbox` で弱体化させない限り動かず、`--privileged` 化は外側の隔離境界を壊す本末転倒になるため **見送る**（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。代わりに、サンドボックスのうち本環境で未充足だった **ネットワーク egress 制御** を、限定 capability（`NET_ADMIN` / `NET_RAW`）で動く **DevContainer の egress allowlist firewall**（`.devcontainer/init-firewall.sh`、iptables + ipset の default-deny）で担う。これは Plan/Verify 自律ループ（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md) 後続 #270）を無人実行する際の安全網として、暴走時のデータ持ち出しを防ぐ。FS 隔離・危険コマンド遮断は引き続き DevContainer + `permissions.deny` が担い、役割を分担する。
 
 ### Methodology — 駆動法
 
