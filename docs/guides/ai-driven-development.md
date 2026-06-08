@@ -158,7 +158,7 @@ flowchart TB
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
-| Plan / Verify ループ | 計画 | Enablement | Methodology | 自律実行時 | 確率的 | Planner / Implementer / Verifier の自律ループ（計画→実装→検証→修復） | 今後の計画（本文「今後の計画」節） |
+| Plan / Verify ループ | 計画 | Enablement | Methodology | 自律実行時 | 確率的 | Planner / Implementer / Verifier の自律ループ（計画→実装→検証→修復） | Verifier 先行の段階導入を方針化（[ADR-0038](../adr/0038-plan-verify-autonomous-loop.md) proposed / 本文「今後の計画」節） |
 
 ## 各分類の設計意図
 
@@ -253,6 +253,8 @@ Anthropic が長時間稼働アプリ開発向けに示した [3 エージェン
 3 者は「何をもって done とするか」をコード着手前に定めるスプリント契約で協調し、**計画 → 実装 → 検証 → 修復**のループを回す。単一エージェントより信頼性が高い反面、コストも高い。
 
 現状この役割は implement-feature スキルの type-first + 軽量 TDD 手順、`review` / `resolve-review` スキル、qa エージェントが部分的・人手駆動で担っている。エージェントループとしての自律実行は MVP のスコープ外であり、長時間の自律開発が必要になった段階で ADR 化のうえ導入を検討する。
+
+調査の結果、公式リファレンス実装（[anthropics/cwc-long-running-agents](https://github.com/anthropics/cwc-long-running-agents)）のプリミティブは本リポジトリの既存資産（hooks / agents / Playwright MCP / permissions / egress firewall）にほぼ 1:1 で写像でき、多くは新規構築ではなく「人手駆動手順の自律ループ化」と判明した。安全網（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）は先行整備済みのため、**Verifier 先行**を起点とする段階導入を方針とする（採否と段階の枠: [ADR-0038](../adr/0038-plan-verify-autonomous-loop.md)（proposed）。調査の詳細: [plan-verify-loop-spike.md](../design/technotes/plan-verify-loop-spike.md)）。
 
 ## 追加判断の軸
 
