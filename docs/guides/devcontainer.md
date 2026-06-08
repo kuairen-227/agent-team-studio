@@ -251,7 +251,13 @@ sudo bash .devcontainer/init-firewall.sh
 sudo iptables -P OUTPUT ACCEPT
 ```
 
-> ⚠️ **検証状況**: 本 firewall の実機検証（allowlist の過不足調整・DB 接続維持の確認）はローカル DevContainer 再ビルドで行う段階にある。allowlist に漏れがあると `bun install` / `gh` / Claude Code / LLM API が遮断されるため、起動ログ（`Firewall verification passed/failed ...`）で到達性を確認する。
+> ⚠️ **検証状況**: 本 firewall の実機検証はローカル DevContainer 再ビルドで行う段階にある。最低限、以下を確認する:
+>
+> - **許可先に到達できる**: `bun install` / `gh` / Claude Code / LLM API が動く（allowlist 漏れがあると遮断される）。
+> - **許可外が拒否される**（default-deny が効いている）: allowlist 外への outbound が REJECT される。`curl --connect-timeout 5 https://example.com` が失敗すれば OK（起動時の自動検証も同じ判定をログ出力する）。
+> - **DB 接続が維持される**: app → `db:5432` が通る。
+>
+> 起動ログの `Firewall verification passed/failed ...` で到達性・遮断の両方を確認できる。
 
 ## トラブルシューティング
 
