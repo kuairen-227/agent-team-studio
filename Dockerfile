@@ -9,14 +9,10 @@ RUN mkdir -p /home/node/.claude && chown node:node /home/node/.claude
 
 # egress allowlist firewall（ADR-0037 / .devcontainer/init-firewall.sh）が使うツール群。
 # iptables / ipset = ルール本体, dnsutils = dig（ドメイン解決）, aggregate = CIDR 集約, jq = GitHub meta 解析。
+# スクリプト自体は image に焼き込まず、postStartCommand がワークスペースの実体を直接実行する
+# （image COPY 方式は .dockerignore の再包含・ビルドキャッシュ・パス所有権の問題で実体が差し替わる
+#  事故が起きたため見送り。bind mount された実ファイルを走らせる方が確実。詳細は ADR-0037）。
 RUN apt-get update \
     && apt-get install -y --no-install-recommends iptables ipset dnsutils aggregate jq \
     && rm -rf /var/lib/apt/lists/*
-
-# firewall スクリプトを /usr/local/bin に設置し、node が NOPASSWD で実行できるよう sudoers 登録する。
-# 実行自体は毎起動時の postStartCommand（devcontainer.json）が行う（ビルド時は実行しない）。
-COPY .devcontainer/init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chmod +x /usr/local/bin/init-firewall.sh \
-    && echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/init-firewall \
-    && chmod 0440 /etc/sudoers.d/init-firewall
 USER node

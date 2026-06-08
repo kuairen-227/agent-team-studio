@@ -69,6 +69,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 - firewall は起動時に一度だけ `dig` で IP を解決するため、起動後に CDN 等が IP をローテートすると許可先への接続が REJECT され得る（長時間起動・自律ループ #270 で顕在化しやすい）。緩和: `sudo bash .devcontainer/init-firewall.sh` での再適用、または Rebuild Container。
 - firewall は許可リスト取得のため、冒頭で policy を一旦 ACCEPT に戻してから default-deny を組み立てる。この「取得〜DROP 設定」の間は outbound が一時的に開放される窓が存在する（allowlist を外部から取得する設計上、不可避）。
 - `postStartCommand` が失敗した場合の VS Code の挙動は実装依存で、firewall 無しのまま DevContainer が稼働し得る。実機検証で失敗時挙動を確認し、必要なら起動ヘルスチェックの追加を検討する。
+- firewall スクリプトは image に COPY せず、`postStartCommand` が bind mount 上の実ファイル（`.devcontainer/init-firewall.sh`）を直接実行する。当初は `/usr/local/bin` への image COPY 方式を採ったが、`.dockerignore` の再包含・ビルドキャッシュ・パス所有権の影響で **image に焼かれた実体が想定と異なるスクリプトに差し替わる事故**が実機検証（#287）で発生したため、ワークスペースの実ファイルを直接走らせる方式に変更した。allowlist 編集が Rebuild 不要で即反映される副次的利点もある。
 - **実機検証は本決定の実装 PR では未完**（リモート Web 実行環境では iptables 実行・コンテナ再ビルドができない）。ローカル DevContainer 再ビルドでの動作検証（allowlist の過不足調整・DB 接続維持の確認）は後続で行い、PR コメントで追跡する。
 - Claude Code on the web（リモート実行環境）では別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ。
 - `docs/guides/ai-driven-development.md` の施策インベントリ「サンドボックス＝未設定」を本決定に合わせて更新する。

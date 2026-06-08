@@ -225,8 +225,8 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 
 | 項目 | 内容 |
 | --- | --- |
-| 実体 | `.devcontainer/init-firewall.sh`（iptables + ipset）。`Dockerfile` で `/usr/local/bin/init-firewall.sh` に COPY + 専用 sudoers 登録（ビルド時は設置のみ・実行しない） |
-| 発動 | `devcontainer.json` の `postStartCommand`（`sudo /usr/local/bin/init-firewall.sh`）で **毎起動時** に実行・再構成 |
+| 実体 | `.devcontainer/init-firewall.sh`（iptables + ipset）。ワークスペースの実ファイルを直接実行する（image には焼き込まない） |
+| 発動 | `devcontainer.json` の `postStartCommand`（`sudo bash .devcontainer/init-firewall.sh`）で **毎起動時** に実行・再構成 |
 | 権限 | `docker-compose.yml` の `app.cap_add` に `NET_ADMIN` / `NET_RAW`（`--privileged` は不使用） |
 | 依存 | `iptables` / `ipset` / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
 | 既定 | OUTPUT は DROP。許可ドメイン・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す |
@@ -235,9 +235,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 
 ### allowlist の更新
 
-新しい外部ホストへの outbound が必要になったら（新 LLM プロバイダの追加・新 MCP サーバ等）、`.devcontainer/init-firewall.sh` の `for domain in` ループにドメインを追記する。毎起動時に実行されるのは image に焼き込まれた `/usr/local/bin/init-firewall.sh` のため、**編集を反映するには Rebuild Container** する（次回起動から有効）。
-
-リビルドせず即時に反映したい場合は、編集中のワークスペース版を直接実行する。
+新しい外部ホストへの outbound が必要になったら（新 LLM プロバイダの追加・新 MCP サーバ等）、`.devcontainer/init-firewall.sh` の `for domain in` ループにドメインを追記する。実行されるのは bind mount されたワークスペースの実ファイルなので、**編集はコンテナ再起動（または下記の手動再適用）で即反映**される（Rebuild は不要）。
 
 ```bash
 sudo bash .devcontainer/init-firewall.sh
