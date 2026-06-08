@@ -44,7 +44,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 
 2. **ネットワークの安全網は DevContainer の egress allowlist firewall で導入する。**
    - `.devcontainer/init-firewall.sh`: iptables + ipset で **default-deny**（OUTPUT は許可ドメインのみ）。`postStartCommand` から sudo 実行し、毎起動時に再構成する。
-   - `docker-compose.yml` の `app` サービスに `cap_add: [NET_ADMIN, NET_RAW]` を付与（`--privileged` は使わない）。
+   - `docker-compose.yml` の `app` サービスに `cap_add: [NET_ADMIN, NET_RAW]` を付与（`--privileged` は使わない）。`db` サービスには付与しない（コンテナ内通信のみで外向き egress 制御が不要なため）。
    - 許可ドメイン allowlist: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic（API・statsig）/ Groq / Sentry / Statsig / context7 / VS Code marketplace。DNS・SSH・loopback・Docker ネットワーク subnet（app ↔ db）を許可。
 
 3. **役割分担**（多重防御の分担を明確化）:
@@ -66,6 +66,9 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 - firewall は `postStartCommand` で毎起動時に再構成される。GitHub の IP レンジは起動時に `api.github.com/meta` から再取得するため、レンジ変動に追従する反面、起動時に GitHub への到達が必要になる。
 - `app` コンテナに `NET_ADMIN` / `NET_RAW` を付与する。`--privileged` より遥かに限定的だが、capability 追加自体は攻撃面をわずかに広げる。
 - 組み込みプロキシは TLS を検査せず hostname ベースで許可するため、広域ドメイン許可は domain fronting 等で回避され得る（公式サンドボックスと同じ制約）。allowlist は最小限に保つ。
+- firewall は起動時に一度だけ `dig` で IP を解決するため、起動後に CDN 等が IP をローテートすると許可先への接続が REJECT され得る（長時間起動・自律ループ #270 で顕在化しやすい）。緩和: `sudo bash .devcontainer/init-firewall.sh` での再適用、または Rebuild Container。
+- firewall は許可リスト取得のため、冒頭で policy を一旦 ACCEPT に戻してから default-deny を組み立てる。この「取得〜DROP 設定」の間は outbound が一時的に開放される窓が存在する（allowlist を外部から取得する設計上、不可避）。
+- `postStartCommand` が失敗した場合の VS Code の挙動は実装依存で、firewall 無しのまま DevContainer が稼働し得る。実機検証で失敗時挙動を確認し、必要なら起動ヘルスチェックの追加を検討する。
 - **実機検証は本決定の実装 PR では未完**（リモート Web 実行環境では iptables 実行・コンテナ再ビルドができない）。ローカル DevContainer 再ビルドでの動作検証（allowlist の過不足調整・DB 接続維持の確認）は後続で行い、PR コメントで追跡する。
 - Claude Code on the web（リモート実行環境）では別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ。
 - `docs/guides/ai-driven-development.md` の施策インベントリ「サンドボックス＝未設定」を本決定に合わせて更新する。
