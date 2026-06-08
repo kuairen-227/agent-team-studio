@@ -219,11 +219,46 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 
 詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
 
+## egress allowlist firewall
+
+自律実行時のネットワーク安全網として、DevContainer の outbound を **許可ドメインのみ**に絞る default-deny の firewall を導入している（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。Claude Code の Bash サンドボックスは非特権コンテナでは弱体化必須のため見送り、未充足だったネットワーク egress 制御だけをこの firewall で担う。
+
+| 項目 | 内容 |
+| --- | --- |
+| 実体 | `.devcontainer/init-firewall.sh`（iptables + ipset）。ワークスペースの実ファイルを直接実行する（image には焼き込まない） |
+| 発動 | `devcontainer.json` の `postStartCommand`（`sudo bash .devcontainer/init-firewall.sh`）で **毎起動時** に実行・再構成 |
+| 権限 | `docker-compose.yml` の `app.cap_add` に `NET_ADMIN` / `NET_RAW`（`--privileged` は不使用） |
+| 依存 | `iptables` / `ipset` / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
+| 既定 | OUTPUT は DROP。許可ドメイン・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す |
+
+許可ドメイン: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic API / Groq / context7 / Sentry / VS Code marketplace。allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。
+
+### allowlist の更新
+
+新しい外部ホストへの outbound が必要になったら（新 LLM プロバイダの追加・新 MCP サーバ等）、`.devcontainer/init-firewall.sh` の `for domain in` ループにドメインを追記する。実行されるのは bind mount されたワークスペースの実ファイルなので、**編集はコンテナ再起動（または下記の手動再適用）で即反映**される（Rebuild は不要）。
+
+```bash
+sudo bash .devcontainer/init-firewall.sh
+```
+
+### 一時的に firewall を外す
+
+ブラウザバイナリの再取得など、allowlist 外への一時的なアクセスが必要なときは OUTPUT を開放する（次回起動時に再び default-deny へ戻る）。
+
+```bash
+sudo iptables -P OUTPUT ACCEPT
+```
+
+> ✅ **検証状況**: ローカル DevContainer（WSL2）で動作確認済み（#287）。default-deny の **許可外拒否**（`example.com` が REJECT）・**許可先到達**（`api.github.com`）・**Docker subnet 許可**（app ↔ db）・allowlist 登録（69 件）を確認。起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。
+>
+> 解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
+
 ## トラブルシューティング
 
 | 症状 | 対処 |
 | --- | --- |
 | ポートが衝突する | ルート `.env` の `APP_PORT` / `DB_PORT` をオフセットする |
+| 外部サイトに繋がらない / `bun install` が失敗する | egress firewall の allowlist 漏れの可能性。`init-firewall.sh` にドメインを追記して再適用、または一時的に `sudo iptables -P OUTPUT ACCEPT` |
 | DB に接続できない | `docker compose ps` で `db` の healthcheck 状態を確認 |
 | 認証が切れた | `claude logout && claude login` で `agent-team-studio-claude-home` volume を更新 |
 | DB を初期化したい | `docker volume rm <DB_VOLUME>` してから DevContainer を再起動 |
