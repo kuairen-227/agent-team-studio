@@ -23,7 +23,7 @@ tools: Read, Grep, Glob, Bash(bun run test:*), Bash(git diff:*), Bash(git log:*)
 
 - 開発フロー: 型駆動 + 軽量 TDD（ADR-0010）
 - テスト戦略: Service/API 層は Test Pyramid（Service 層必須）、Web 層は Testing Trophy（integration 主層、ADR-0036）。BDD 的記述・co-location 配置は共通
-- テストランナー: Bun test（純粋ロジック・Service）。Web のコンポーネント/結合テストは trigger 成立時に vitest + RTL + MSW を導入（[guides/testing.md](../../docs/guides/testing.md)）
+- テストランナー: Bun test（純粋ロジック・Service）。Web のコンポーネント/結合テストはトリガ成立時に vitest + RTL + MSW を導入（[guides/testing.md](../../docs/guides/testing.md)）
 - E2E テスト: MVP では見送り（手動確認 / Playwright MCP）
 
 ## コードレビュー時の追加観点
