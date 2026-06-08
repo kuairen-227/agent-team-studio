@@ -52,7 +52,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
    | レイヤ | 担当 |
    | --- | --- |
    | 実行環境隔離（FS・プロセス） | DevContainer（ephemeral）/ リモート Web 実行環境 |
-   | 危険コマンドの遮断 | `permissions.deny`（`rm -rf` / `force push` / `curl` / `wget` / `.env` 読取 等） |
+   | 危険コマンド・直接 egress の遮断 | `permissions.deny`（`rm -rf` / `force push` / `.env` 読取 等）。`curl` / `wget` も deny し、Claude tool レベルでの直接 egress を遮断 → OS レベルの firewall と多重防御を形成（[ADR-0007](./0007-ai-driven-dev-architecture.md) 品質保証層の Security 版） |
    | 機密情報の検出 | secretlint |
    | **ネットワーク egress** | **本 firewall（allowlist）** |
 
@@ -68,7 +68,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
 - 組み込みプロキシは TLS を検査せず hostname ベースで許可するため、広域ドメイン許可は domain fronting 等で回避され得る（公式サンドボックスと同じ制約）。allowlist は最小限に保つ。
 - firewall は起動時に一度だけ `dig` で IP を解決するため、起動後に CDN 等が IP をローテートすると許可先への接続が REJECT され得る（長時間起動・自律ループ #270 で顕在化しやすい）。緩和: `sudo bash .devcontainer/init-firewall.sh` での再適用、または Rebuild Container。
 - firewall は許可リスト取得のため、冒頭で policy を一旦 ACCEPT に戻してから default-deny を組み立てる。この「取得〜DROP 設定」の間は outbound が一時的に開放される窓が存在する（allowlist を外部から取得する設計上、不可避）。
-- `postStartCommand` が失敗した場合の VS Code の挙動は実装依存で、firewall 無しのまま DevContainer が稼働し得る。実機検証で失敗時挙動を確認し、必要なら起動ヘルスチェックの追加を検討する。
+- `postStartCommand` が失敗した場合、実機（#287）で VS Code は **コンテナを継続起動する**ことを確認した（"Skipping any further user-provided commands" と表示しつつコンテナは稼働し、ターミナル接続も可能）。つまり firewall 構成に失敗すると **firewall 無しで起動し得る**。フェイルクローズ（適用失敗時にコンテナ停止）や起動ヘルスチェックの追加要否は #270（自律ループ＝無人実行）の設計時に再評価する。
 - firewall スクリプトは image に COPY せず、`postStartCommand` が bind mount 上の実ファイル（`.devcontainer/init-firewall.sh`）を直接実行する。当初は `/usr/local/bin` への image COPY 方式を採ったが、`.dockerignore` の再包含・ビルドキャッシュ・パス所有権の影響で **image に焼かれた実体が想定と異なるスクリプトに差し替わる事故**が実機検証（#287）で発生したため、ワークスペースの実ファイルを直接走らせる方式に変更した。allowlist 編集が Rebuild 不要で即反映される副次的利点もある。
 - 実機検証はローカル DevContainer（WSL2）で完了（#287）。default-deny の許可外拒否（`example.com` が REJECT）・許可先到達（`api.github.com`）・Docker subnet 許可（app ↔ db）・allowlist 登録を確認。個別ドメインの解決失敗は WARN スキップ（致命にしない）で、解決できたドメインで firewall を起動する。
 - allowlist から除外した Claude Code のテレメトリ／フィーチャーフラグ（statsig）は、ブロックされても Statsig がデフォルト値へフォールバックするため graceful に degrade する。本環境で機能ごとの個別検証は行っていないが、コア機能・LLM 実行・git/PR 操作はテレメトリに依存しないため機能影響なしと判断した。自律ループ（#270）設計時に必要性を再評価する。
