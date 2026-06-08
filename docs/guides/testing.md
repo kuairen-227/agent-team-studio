@@ -38,6 +38,71 @@ app の構築を `createApp(deps)` 関数で関数化し、テストでは fake 
 | Route 統合テスト | `apps/api/src/app.test.ts` |
 | パッケージ共有 fixture | `apps/api/src/_test-fixtures.ts` |
 
+## Web 層テスト（Testing Trophy）
+
+判定軸は [principles/testing.md](../principles/testing.md)、比率モデルは Testing Trophy（[ADR-0036](../adr/0036-web-layer-testing-trophy.md)）。`apps/web` の現状は純粋ロジック・reducer の `bun:test` ユニットのみで、コンポーネント・結合テストは下記トリガ成立時に導入する（実装は本 doc 整備時点ではスコープ外）。
+
+### do / don't
+
+| テストする (do) | テストしない (don't) |
+| --- | --- |
+| ユーザー操作 → 表示の結合（フォーム送信 → 結果表示、取得 → 一覧描画） | className・DOM 構造・個別スタイル |
+| 分岐を持つフック（取得状態・エラー・空表示の出し分け） | TanStack Query/Router 自体の挙動（ライブラリを信頼する） |
+| 取得失敗・空・ローディングの 3 状態 | コンポーネント内部 state・実装詳細（リファクタで壊れる） |
+| 純粋ロジック・reducer（現状どおり `bun:test` を維持） | スナップショット（経路独立性違反、principles「採用しない概念」） |
+
+要素はロール・テキストから観測する（`screen.getByRole` 等）。DOM 構造ではなく画面の振る舞いを assert する。
+
+### ツール（導入時）
+
+vitest + React Testing Library + MSW + jsdom（or happy-dom）。MSW でネットワーク境界をモックし、`fetch` や `lib/api.ts` 自体はモックしない（[principles §3 過剰モック](../principles/testing.md) 回避）。純粋ロジックの `bun:test` は維持し、コンポーネント・結合のみ vitest に載せる。
+
+### TanStack Query の推奨パターン
+
+- テストごとに新しい `QueryClient` を生成し `retry: false` にする（失敗時のリトライ待ちでテストが遅延・タイムアウトするのを防ぐ）
+- `QueryClientProvider`（必要なら `RouterProvider`）でラップする共有ヘルパを用意する
+- 非同期表示は `findBy*` / `waitFor` で待つ
+
+```tsx
+// _test-utils.tsx（テスト専用ヘルパ）
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+}
+
+export function renderWithClient(ui: ReactElement) {
+  const client = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+  );
+}
+```
+
+フック単体は `renderHook` を同じ wrapper で検証する:
+
+```tsx
+const { result } = renderHook(() => useTemplates(), {
+  wrapper: ({ children }) => (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  ),
+});
+await waitFor(() => expect(result.current.isSuccess).toBe(true));
+```
+
+### 実装フェーズ移行トリガ
+
+いずれか成立で vitest + RTL + MSW を導入し、結合テストを書き始める（複数該当なら優先度高）:
+
+- フォーム・データ取得を含む新規画面/機能が追加される（US-2 以降の CRUD 拡張等）
+- Playwright MCP の手動確認だけでは回帰を捕捉しきれない結合バグが発生した
+- コンポーネント/フックの分岐ロジックが増え、純粋関数への切り出しだけでは検証しきれない
+- 画面数が増え、E2E 見送りの前提（少数画面・手動確認で十分）が崩れる
+
+導入時は本セクションと上記「ひな型サンプル」表に Web の参照先を追記する。
+
 ## UI 動作検証
 
-React コンポーネントの単体テストは MVP 範囲外。代わりに Playwright MCP で受入条件を再現確認する。運用ルールは [ai-ui-verification.md](./ai-ui-verification.md) を参照。
+Playwright MCP は**開発時に Claude が動作確認するためのツール**であり自動テストではない（[ai-ui-verification.md](./ai-ui-verification.md)）。受入条件の再現確認に使う。自動テストの方針は上記「Web 層テスト（Testing Trophy）」を参照する。
