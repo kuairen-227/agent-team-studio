@@ -249,13 +249,9 @@ sudo bash .devcontainer/init-firewall.sh
 sudo iptables -P OUTPUT ACCEPT
 ```
 
-> ⚠️ **検証状況**: 本 firewall の実機検証はローカル DevContainer 再ビルドで行う段階にある。最低限、以下を確認する:
+> ✅ **検証状況**: ローカル DevContainer（WSL2）で動作確認済み（#287）。default-deny の **許可外拒否**（`example.com` が REJECT）・**許可先到達**（`api.github.com`）・**Docker subnet 許可**（app ↔ db）・allowlist 登録（69 件）を確認。起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。
 >
-> - **許可先に到達できる**: `bun install` / `gh` / Claude Code / LLM API が動く（allowlist 漏れがあると遮断される）。
-> - **許可外が拒否される**（default-deny が効いている）: allowlist 外への outbound が REJECT される。`curl --connect-timeout 5 https://example.com` が失敗すれば OK（起動時の自動検証も同じ判定をログ出力する）。
-> - **DB 接続が維持される**: app → `db:5432` が通る。
->
-> 起動ログの `Firewall verification passed/failed ...` で到達性・遮断の両方を確認できる。
+> なお `statsig.anthropic.com` は A レコードを返さない環境があり、その場合は WARN を出してスキップする（Claude Code のテレメトリ用途で機能影響なし）。
 
 ## トラブルシューティング
 

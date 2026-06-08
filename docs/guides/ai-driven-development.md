@@ -26,7 +26,7 @@
 flowchart TB
     subgraph dc["DevContainer（ローカル実行環境）— 隔離・再現可能"]
         subgraph wt["worktree — 並行作業の隔離ワークスペース"]
-            subgraph sb["egress allowlist firewall — ネットワーク許可制（ADR-0037・検証中）"]
+            subgraph sb["egress allowlist firewall — ネットワーク許可制（ADR-0037）"]
                 subgraph ai["Claude（AI）"]
                     subgraph ML["メインループ — Agent を統括"]
                         AGT["SubAgents（専門ロール）"]
@@ -154,7 +154,7 @@ flowchart TB
 | worktree | 済 | Enablement | — | 並行作業時 | 決定論的 | 並行セッションの隔離作業場 | [worktree.md](./worktree.md) |
 | DevContainer | 済 | Security | Enablement | 環境起動時 | 決定論的 | 隔離された再現可能な開発環境 | [devcontainer.md](./devcontainer.md) |
 | サンドボックス（Claude Code Bash） | 見送り | Security | — | — | — | Bash tool 実行の OS 隔離 | 非特権コンテナでは弱体化必須のため見送り（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。ネットワーク安全網は egress firewall が担う |
-| egress allowlist firewall | 導入（検証中） | Security | — | コンテナ起動時 | 決定論的 | ネットワーク egress をドメイン許可制で制限（自律実行の安全網） | `.devcontainer/init-firewall.sh`（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)） |
+| egress allowlist firewall | 導入 | Security | — | コンテナ起動時 | 決定論的 | ネットワーク egress をドメイン許可制で制限（自律実行の安全網） | `.devcontainer/init-firewall.sh`（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)） |
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
