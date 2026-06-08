@@ -119,15 +119,16 @@ if [ "${domain_count:-0}" -lt 1 ]; then
 fi
 echo "allowed-domains entries: $domain_count"
 
-# Docker subnet（app ↔ db）を許可するため、デフォルトルートのゲートウェイから /24 を導出。
-# 複数デフォルトルート構成でも先頭のみ採用。Docker デフォルトの /24 サブネットを仮定。
-HOST_IP=$(ip -4 route show default | awk '/^default/ {print $3; exit}')
-if [ -z "$HOST_IP" ]; then
-    echo "ERROR: Failed to detect host IP"
+# Docker subnet（app ↔ db）を許可する。/24 固定は仮定せず、デフォルトルートの出力 interface の
+# 実 CIDR をそのまま使う（カスタムサブネット /16 等にも追従。iptables が host ビットを network 境界へ丸める）。
+HOST_IF=$(ip -4 route show default | awk '/^default/ {for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}')
+HOST_NETWORK=$(ip -4 addr show "${HOST_IF:-eth0}" | awk '/inet / {print $2; exit}')
+if [ -z "$HOST_NETWORK" ]; then
+    echo "ERROR: Failed to detect host network CIDR"
+    echo "  ip route: $(ip -4 route show default 2>&1)"
     exit 1
 fi
-HOST_NETWORK=$(echo "$HOST_IP" | sed "s/\.[0-9]*$/.0\/24/")
-echo "Host network detected as: $HOST_NETWORK"
+echo "Host network detected as: $HOST_NETWORK (iface ${HOST_IF:-eth0})"
 
 # --- 許可ルールを先に全て組み立て、default DROP は最後に設定する ---
 # （DROP を先に設定すると、ESTABLISHED 許可を積むまでの間に既存接続が切れる窓ができる）
@@ -169,6 +170,8 @@ echo "Firewall configuration complete"
 echo "Active OUTPUT rules:"
 iptables -L OUTPUT -n -v
 
+# 検証: 許可外（example.com）は接続自体が REJECT されるはず（HTTP ステータスでなく到達可否を見るため -s のみ）。
+#       許可先（api.github.com）は到達できるはず（-sf で HTTP エラーも失敗扱いにする）。
 echo "Verifying firewall rules..."
 if curl --connect-timeout 5 -s https://example.com >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - was able to reach https://example.com"
