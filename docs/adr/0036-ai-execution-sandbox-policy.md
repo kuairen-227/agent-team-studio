@@ -1,0 +1,71 @@
+# 0036. AI 実行のサンドボックス方針（Bash サンドボックス見送り・DevContainer egress allowlist 採用）
+
+## Status
+
+accepted
+
+- 作成日: 2026-06-08
+- 関連: [ADR-0007](./0007-ai-driven-dev-architecture.md)（前提：品質保証 3 層・permissions）, [ADR-0016](./0016-devcontainer-integration.md)（前提：DevContainer 隔離）, Issue #271, Issue #269（親トラッカ）, Issue #270（後続：Plan/Verify 自律ループ）
+
+## Context
+
+AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`）で、Claude Code の tool 実行サンドボックスが **未設定** と判明した（#271）。実態の隔離は **DevContainer + `permissions.deny`** が担っている。
+
+一方 #269 / #270 で、長時間稼働アプリ向けの **Plan/Verify 自律ループ**（Planner / Implementer / Verifier）を構想している。無人・長時間の自律実行に近づくほど、暴走時の隔離（安全網）、とりわけ **ネットワーク経由のデータ持ち出し（exfiltration）防止** の価値が上がる。自律ループの設計（#270）に着手するこのタイミングで、安全網の方針を確定する必要がある。
+
+決めるべき論点は 2 つ:
+
+1. Claude Code の **Bash サンドボックス**（bubblewrap / Seatbelt）を本リポジトリで設定するか
+2. **ネットワーク egress** の安全網をどう張るか
+
+本リポジトリは非特権の **DevContainer** で動く点が判断の前提になる。
+
+## Considered Alternatives
+
+### 論点 1: Claude Code Bash サンドボックス
+
+| # | 選択肢 | 判定 |
+| - | --- | --- |
+| A | 非特権 DevContainer 内で nested 有効化（`enableWeakerNestedSandbox`） | 却下 — 非特権コンテナでは bubblewrap が新規 `/proc` を mount できず、`enableWeakerNestedSandbox: true`（コンテナ既存 `/proc` を bind-mount）が必須。これは「セキュリティを著しく弱める」設定。加えて `gh` / `docker` 等の非互換で `excludedCommands` が増え隔離がなし崩しになり、DevContainer と二重で増分が小さい |
+| B | DevContainer を特権化（`--privileged`）して nested を正常動作させる | 却下 — `--privileged` は外側コンテナの隔離境界をほぼ無効化する。強い実境界（DevContainer）を捨てて重複する弱い内境界を立てる本末転倒で、攻撃面が拡大する |
+| C | Bash サンドボックスは見送る | **採用** — FS 隔離・認証保護・危険コマンド遮断は DevContainer（ephemeral）+ `permissions.deny` + secretlint が既に担う。Bash サンドボックス固有の増分は本環境では小さい |
+
+### 論点 2: ネットワーク egress 制御
+
+| # | 選択肢 | 判定 |
+| - | --- | --- |
+| A | egress 制御なし（現状） | 却下 — 自律実行時に任意ドメインへの outbound が開いたままで、exfiltration 経路が残る |
+| B | Claude Code サンドボックスの network 層のみ利用 | 却下 — network proxy / socat が bubblewrap 機構に依存するため、論点 1-A の nested 問題（弱体化必須）を引きずる |
+| C | DevContainer の egress allowlist firewall（iptables + ipset・default-deny・`NET_ADMIN` / `NET_RAW`） | **採用** — 限定 capability で実現でき `--privileged` 不要。`anthropics/claude-code` 公式 DevContainer の実証済みパターン。OS レベルで子プロセスまで強制する |
+
+## Decision
+
+1. **Claude Code Bash サンドボックス（bubblewrap nested）は見送る。** FS 隔離・認証保護・危険操作の遮断は引き続き DevContainer + `permissions.deny` + secretlint + リモート ephemeral 実行環境が担う。
+
+2. **ネットワークの安全網は DevContainer の egress allowlist firewall で導入する。**
+   - `.devcontainer/init-firewall.sh`: iptables + ipset で **default-deny**（OUTPUT は許可ドメインのみ）。`postStartCommand` から sudo 実行し、毎起動時に再構成する。
+   - `docker-compose.yml` の `app` サービスに `cap_add: [NET_ADMIN, NET_RAW]` を付与（`--privileged` は使わない）。
+   - 許可ドメイン allowlist: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic（API・statsig）/ Groq / Sentry / Statsig / context7 / VS Code marketplace。DNS・SSH・loopback・Docker ネットワーク subnet（app ↔ db）を許可。
+
+3. **役割分担**（多重防御の分担を明確化）:
+
+   | レイヤ | 担当 |
+   | --- | --- |
+   | 実行環境隔離（FS・プロセス） | DevContainer（ephemeral）/ リモート Web 実行環境 |
+   | 危険コマンドの遮断 | `permissions.deny`（`rm -rf` / `force push` / `curl` / `wget` / `.env` 読取 等） |
+   | 機密情報の検出 | secretlint |
+   | **ネットワーク egress** | **本 firewall（allowlist）** |
+
+4. **再検討契機**:
+   - DevContainer を使わない実行経路（ホスト直 / 別環境）へ移行する場合は OS サンドボックス（Seatbelt / bubblewrap）を再評価する。
+   - 自律ループ（#270）の実装着手時に、ループが必要とする outbound ドメインを精査し allowlist を確定する。
+
+## Consequences
+
+- default-deny のため、allowlist に漏れがあると DevContainer 内の outbound（`bun install` / `gh` / Claude Code / 各 LLM API）が遮断される。新規 outbound 先が増えたら `init-firewall.sh` の allowlist 更新が必要。手順は `docs/guides/devcontainer.md` に記載する。
+- firewall は `postStartCommand` で毎起動時に再構成される。GitHub の IP レンジは起動時に `api.github.com/meta` から再取得するため、レンジ変動に追従する反面、起動時に GitHub への到達が必要になる。
+- `app` コンテナに `NET_ADMIN` / `NET_RAW` を付与する。`--privileged` より遥かに限定的だが、capability 追加自体は攻撃面をわずかに広げる。
+- 組み込みプロキシは TLS を検査せず hostname ベースで許可するため、広域ドメイン許可は domain fronting 等で回避され得る（公式サンドボックスと同じ制約）。allowlist は最小限に保つ。
+- **実機検証は本決定の実装 PR では未完**（リモート Web 実行環境では iptables 実行・コンテナ再ビルドができない）。ローカル DevContainer 再ビルドでの動作検証（allowlist の過不足調整・DB 接続維持の確認）は後続で行い、PR コメントで追跡する。
+- Claude Code on the web（リモート実行環境）では別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ。
+- `docs/guides/ai-driven-development.md` の施策インベントリ「サンドボックス＝未設定」を本決定に合わせて更新する。
