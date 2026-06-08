@@ -2,7 +2,7 @@
 
 ## Status
 
-proposed
+accepted
 
 - 作成日: 2026-06-08
 - 関連: [ADR-0007](./0007-ai-driven-dev-architecture.md)（前提：品質保証 3 層）, [ADR-0011](./0011-role-based-agent-architecture.md)（前提：ロールベースエージェントは別系統）, [ADR-0024](./0024-playwright-mcp-for-ai-verification.md)（前提：Playwright MCP）, [ADR-0037](./0037-ai-execution-sandbox-policy.md)（前提：自律実行の安全網）, Issue #269（親トラッカ）, Issue #270（本 ADR の調査）, Issue #225（磨き上げ軸・見送り候補）
@@ -33,7 +33,7 @@ proposed
 | - | --- | --- |
 | A | 見送り継続（人手駆動の疑似ループのまま） | 却下 — `process-issue` → `implement-feature` → `review` の直列は機能するが、自己評価分離・契約・しきい値の機械化という記事の中核価値を取りこぼす。両輪のもう片方（自律軸）が空白のまま |
 | B | Evaluator のみ自動化（生成は人手） | 部分採用 — 段階導入の **Phase 1** として最小コストで最大の知見を取る。ただしここで止めると Generator/Planner の自律化価値が未回収 |
-| C | Planner / Generator / Evaluator の 3 者を段階導入で全採用 | **採用（proposed）** — 3 者の分離が普遍的に効く中核。リスクの低い順（Evaluator → Generator → Planner + 統合）に積み、各 Phase で Go/No-Go を測りながらフル自律ループへ到達する。スプリント機構は足場として必要時のみ追加（「最も単純な解から始める」） |
+| C | Planner / Generator / Evaluator の 3 者を段階導入で全採用 | **採用** — 3 者の分離が普遍的に効く中核。リスクの低い順（Evaluator → Generator → Planner + 統合）に積み、各 Phase で Go/No-Go を測りながらフル自律ループへ到達する。スプリント機構は足場として必要時のみ追加（「最も単純な解から始める」） |
 
 ### 論点 2: エージェントの作り方
 
@@ -81,4 +81,4 @@ proposed
 - 既存のロールベースエージェント（[ADR-0011](./0011-role-based-agent-architecture.md)）と本ループは別系統で併存する。Evaluator は `qa` を流用せず専用に作るため役割の二重化は避けられるが、専用エージェント/プロンプトの新規構築・較正（懐疑性チューニング）のコストが乗る。
 - 段階導入のため、Phase 1 だけで止める判断もあり得る。その場合 Generator / Planner の自律化価値は未回収のまま残る。
 - [ADR-0037](./0037-ai-execution-sandbox-policy.md) が残した fail-close / 起動ヘルスチェックの要否は、無人実行（Phase 2 以降）の設計時に顕在化し、別途判断が必要になる。
-- status は proposed。各 Phase 着手の可否はユーザー判断を経て確定する。
+- status は accepted。3 エージェント全採用の方針を確定する。ただし各 Phase の着手可否は Phase ごとに Go/No-Go 判断（コスト実測・合格率・人手介入頻度）を経る。
