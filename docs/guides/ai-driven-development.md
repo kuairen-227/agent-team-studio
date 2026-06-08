@@ -31,7 +31,7 @@ flowchart TB
                     subgraph ML["メインループ — Agent を統括"]
                         AGT["SubAgents（専門ロール）"]
                         subgraph plan["Plan / Verify ループ（今後の計画）"]
-                            PL["Planner"] -.-> IMP["Implementer"] -.-> VER["Verifier"] -.-> PL
+                            PL["Planner"] -.-> IMP["Generator"] -.-> VER["Evaluator"] -.-> PL
                         end
                     end
                     SKL["Skills"]
@@ -158,7 +158,7 @@ flowchart TB
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
-| Plan / Verify ループ | 計画 | Enablement | Methodology | 自律実行時 | 確率的 | Planner / Implementer / Verifier の自律ループ（計画→実装→検証→修復） | 今後の計画（本文「今後の計画」節） |
+| Plan / Verify ループ | 計画 | Enablement | Methodology | 自律実行時 | 確率的 | Planner / Generator / Evaluator の自律ループ（計画→実装→検証→修復） | 調査・適用設計は [long-running-app-harness.md](./long-running-app-harness.md)。採否・段階導入は [ADR-0038](../adr/0038-autonomous-agent-loop-adoption.md)（proposed） |
 
 ## 各分類の設計意図
 
@@ -247,12 +247,12 @@ Anthropic が長時間稼働アプリ開発向けに示した [3 エージェン
 | エージェント | 役割 |
 | --- | --- |
 | **Planner** | プロンプトや Issue を詳細な仕様へ展開する。スコープ・エッジケース・受入基準を、コード着手前に「正しい振る舞いとは何か」として構造化する（出力はコードではなく仕様） |
-| **Implementer**（Generator） | 仕様をスプリント単位に分割し、段階的に実装する |
-| **Verifier**（Evaluator） | 懐疑的な視点で稼働中のアプリを Playwright 等で実際に操作・検証し、具体的なバグレポートを返す。合格しきい値を機械的に課す |
+| **Generator** | 仕様をスプリント単位に分割し、段階的に実装する。スプリント完了時に自己評価してから Evaluator へ引き渡す |
+| **Evaluator** | 懐疑的な視点で稼働中のアプリを Playwright 等で実際に操作・検証し、具体的なバグレポートを返す。合格しきい値を機械的に課す |
 
 3 者は「何をもって done とするか」をコード着手前に定めるスプリント契約で協調し、**計画 → 実装 → 検証 → 修復**のループを回す。単一エージェントより信頼性が高い反面、コストも高い。
 
-現状この役割は implement-feature スキルの type-first + 軽量 TDD 手順、`review` / `resolve-review` スキル、qa エージェントが部分的・人手駆動で担っている。エージェントループとしての自律実行は MVP のスコープ外であり、長時間の自律開発が必要になった段階で ADR 化のうえ導入を検討する。
+現状この役割は implement-feature スキルの type-first + 軽量 TDD 手順、`review` / `resolve-review` スキル、qa エージェントが部分的・人手駆動で担っている。記事の精読・本リポジトリ適用設計・PoC 段階案・リスク整理は [long-running-app-harness.md](./long-running-app-harness.md)（Spike #270）にまとめ、採否と段階導入方針は [ADR-0038](../adr/0038-autonomous-agent-loop-adoption.md)（proposed: Planner / Generator / Evaluator を段階導入で全採用）で定めた。エージェントループとしての自律実行の実装は MVP のスコープ外で、各 Phase を後続 Issue として扱う。
 
 ## 追加判断の軸
 
@@ -278,6 +278,8 @@ Anthropic が長時間稼働アプリ開発向けに示した [3 エージェン
 | [ADR-0013](../adr/0013-doc-placement-policy.md) | docs/product/ と docs/design/ の配置ポリシー |
 | [ADR-0021](../adr/0021-doc-cross-reference-policy.md) | ドキュメント間参照ポリシー |
 | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) | Playwright MCP 採択理由 |
+| [ADR-0038](../adr/0038-autonomous-agent-loop-adoption.md) | 自律エージェントループの採否・段階導入方針（proposed） |
 | [docs/principles/README.md](../principles/README.md) | 設計・開発原則の SSoT |
+| [long-running-app-harness.md](./long-running-app-harness.md) | 3 エージェントハーネスの調査・適用設計（Spike #270） |
 | [devcontainer.md](./devcontainer.md) | DevContainer 構成・DB モード・認証共有 |
 | [worktree.md](./worktree.md) | Git Worktree 並行セッション運用 |
