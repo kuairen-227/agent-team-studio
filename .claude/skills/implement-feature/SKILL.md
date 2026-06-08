@@ -48,10 +48,10 @@ API 変更を含む場合:
 
 Step 1 を skip して Step 2 に進む場合（例: 自明なリファクタで振る舞いが変わらない / 設定値や依存の追加のみで振る舞いに影響しない）は、ユーザーに理由を通知（承認待ちなし可）したうえで、コミットメッセージまたは PR 本文に同じ理由を残す。
 
-UI のみの変更:
+UI（Web 層）の変更:
 
-- React コンポーネントの単体テストはテスト戦略上見送り（[testing.md](../../../docs/principles/testing.md)）。本 step は適用外
-- 代わりに Step 4 の Playwright MCP 検証を計画に含める
+- Web 層は Testing Trophy（[ADR-0036](../../../docs/adr/0036-web-layer-testing-trophy.md)）。純粋ロジック・reducer は `bun:test` で RED 先行（API と同じ扱い）
+- コンポーネント・結合テストは [guides/testing.md](../../../docs/guides/testing.md) の実装移行トリガが成立する場合に integration テストを RED 先行で書く。未成立（MVP 現状）の間は見送り、本 step は適用外として Step 4 の Playwright MCP 検証を計画に含める
 
 ### Step 2. 実装（GREEN）
 
