@@ -63,7 +63,7 @@ proposed
 
 4. **見送り候補（#225）を再評価する**。auto memory は構造化ファイルハンドオフを優先しつつ Phase 2 以降で再判定、Managed Agents SDK は Phase 3 で再評価する（[long-running-app-harness.md §5](../guides/long-running-app-harness.md)）。
 
-5. **再検討契機**: Phase ごとの Go/No-Go 判断で、コスト実測・合格率・人手介入頻度が想定を外れた場合は方針を見直す。
+5. **再検討契機**: Phase ごとの Go/No-Go 判断で、コスト実測・合格率・人手介入頻度が想定を外れた場合は方針を見直す。あわせて **Phase 2 でハーネス側のモデル選択（コストが偏る Generator への Sonnet 併用可否）を実測判断する**。コストはほぼ Generator に集中する（V2 実測で約 91%）一方、Generator を弱めると Evaluator の反復が増え QA 往復で相殺し得るため、合格率と総コスト（QA 込み）で採否を決める。Planner / Evaluator は判断品質・連鎖影響を優先し当面は強モデルに据え置く。ループはエージェント単位でモデル指定可能に設計する（プロダクト側のマルチベンダー方針 [ADR-0032](./0032-llm-multi-vendor-strategy.md) / [ADR-0034](./0034-llm-client-ai-sdk.md) とは別物のハーネス側選択）。
 
 ## Consequences
 
