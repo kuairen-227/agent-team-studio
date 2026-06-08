@@ -43,9 +43,10 @@ ipset create allowed-domains hash:net
 # GitHub の IP レンジを取得し集約して追加（gh / git / GitHub MCP の到達先）。
 # -sf: HTTP エラー（429/503 等）でも非0終了させ、set -e で確実に止める。
 echo "Fetching GitHub IP ranges..."
-gh_ranges=$(curl -sf https://api.github.com/meta)
-if [ -z "$gh_ranges" ]; then
+if ! gh_ranges=$(curl -sf https://api.github.com/meta) || [ -z "$gh_ranges" ]; then
     echo "ERROR: Failed to fetch GitHub IP ranges"
+    echo "  DNS check    : $(dig +short api.github.com A 2>&1 | head -3)"
+    echo "  Default route: $(ip -4 route show default 2>&1)"
     exit 1
 fi
 
@@ -74,7 +75,9 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 #   context7.com       : context7 MCP の実行時 API
 #   sentry.io          : エラートラッキング（ADR-0035）
 #   statsig.*          : Claude Code のテレメトリ
-#   *.visualstudio.com : VS Code 拡張・更新の取得（marketplace / blob / update）
+#   *.visualstudio.com : VS Code marketplace（拡張のダウンロード）
+#   vscode.blob.core.windows.net : 拡張バイナリの blob ストレージ（windows.net 系・別系統）
+#   update.code.visualstudio.com : VS Code 本体の更新
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -89,8 +92,12 @@ for domain in \
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
-        exit 1
+        # 個別ドメインの解決失敗は致命としない（CNAME のみ応答・一時的失敗・任意ドメイン等）。
+        # WARN を出してスキップし、解決できた他ドメインで firewall を起動する。
+        # 全ドメインが失敗した場合は後段の allowlist 空ガードが捕捉する。
+        echo "WARN: Failed to resolve $domain; skipping (firewall continues without it)"
+        echo "  DNS hint: $(dig +short "$domain" 2>&1 | head -3)"
+        continue
     fi
 
     while read -r ip; do
@@ -105,6 +112,15 @@ for domain in \
         ipset add --exist allowed-domains "$ip"
     done < <(echo "$ips")
 done
+
+# allowlist が空のまま default-deny にすると全 egress を塞いでしまう（bun install / LLM API が
+# 謎の失敗をする）。最低 1 件の登録を保証してから DROP 設定へ進む。
+domain_count=$(ipset list allowed-domains | grep -cE '^[0-9]' || true)
+if [ "${domain_count:-0}" -lt 1 ]; then
+    echo "ERROR: allowed-domains ipset is empty; aborting before applying default-deny"
+    exit 1
+fi
+echo "allowed-domains entries: $domain_count"
 
 # Docker subnet（app ↔ db）を許可するため、デフォルトルートのゲートウェイから /24 を導出。
 # 複数デフォルトルート構成でも先頭のみ採用。Docker デフォルトの /24 サブネットを仮定。
