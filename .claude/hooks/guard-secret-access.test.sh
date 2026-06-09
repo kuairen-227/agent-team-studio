@@ -25,6 +25,7 @@ check() { # $1=説明 $2=期待exit $3=コマンド文字列
 
 # --- BLOCK（exit 2）: シークレットファイルの読取 ---
 check "cat .env"                      2 'cat .env'
+check "cat .env.local"                2 'cat .env.local'
 check "cat nested .env.production"    2 'cat apps/api/.env.production'
 check "cat .env.keys (private key)"   2 'cat .env.keys'
 check "source .env"                   2 'source .env && bun run dev'
@@ -35,6 +36,10 @@ check "printenv"                      2 'printenv PATH'
 check "bare env"                      2 'env'
 check "env piped"                     2 'env | sort'
 check "proc environ"                  2 'cat /proc/self/environ'
+# --- BLOCK（exit 2）: 既知の trade-off（ADR-0039）---
+# .env を引数で参照する git/gh コマンドも fail-safe でブロックされる。
+# 正当な用途（commit メッセージ等）は -F ファイル経由で回避する。この挙動は意図的。
+check "git log --grep mentions .env"  2 'git log --grep=.env.production'
 
 # --- ALLOW（exit 0）: 正当なコマンド・誤検知防止 ---
 check "bun run dev"                   0 'bun run dev'
