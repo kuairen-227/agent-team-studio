@@ -36,7 +36,7 @@ env ファイルを以下のように分割する。
 | ファイル | 変数カテゴリ | 読み込み方 |
 | --- | --- | --- |
 | ルート `.env` | DevContainer 変数（`APP_PORT`, `DB_PORT`, `POSTGRES_*`, `DB_VOLUME`, `WORKTREE_ID`） | compose が自動読み込み |
-| `apps/api/.env` | API アプリ変数（`LLM_API_KEY`, `LLM_BASE_URL`, `PORT`） | `bun --env-file .env` |
+| `apps/api/.env` | API アプリ変数（`LLM_API_KEY`, `LLM_BASE_URL`, `PORT`） | `bun --env-file .env`（[ADR-0039](./0039-secret-read-guard.md) のガードフックで直接実行はブロックされる。標準起動は `bun run dev`＝Turborepo 経由） |
 | `apps/web/.env` | Web アプリ変数（`API_PORT`, `WEB_PORT`） | Vite `loadEnv` |
 
 あわせて `apps/web/vite.config.ts` を `defineConfig` 関数スタイルに変更し、`loadEnv` で `API_PORT`（proxy target）と `WEB_PORT`（Vite listen port）を読み込む。

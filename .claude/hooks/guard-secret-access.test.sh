@@ -50,6 +50,8 @@ check "git log --grep mentions .env"  2 'git log --grep=.env.production'
 check "bun -e process.env access"     2 'bun -e "console.log(process.env.NODE_ENV)"'
 # FS 列挙でシークレットファイルを探す経路もブロック。
 check "find -name .env glob"          2 'find . -name .env*'
+# 文字列・変数中の printenv/env 等の単語も BLOCK される（fail-safe 寄り・guard 本体のコメント参照）。
+check "string contains printenv word" 2 'echo "printenv is a command"'
 
 # --- ALLOW（exit 0）: 正当なコマンド・誤検知防止 ---
 check "bun run dev"                   0 'bun run dev'
