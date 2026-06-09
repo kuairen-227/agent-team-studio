@@ -30,11 +30,17 @@ check "cat nested .env.production"    2 'cat apps/api/.env.production'
 check "cat .env.keys (private key)"   2 'cat .env.keys'
 check "source .env"                   2 'source .env && bun run dev'
 check "bun -e reads .env"             2 'bun -e "require(\"fs\").readFileSync(\".env\")"'
+check "node -e reads .env"            2 'node -e "require(\"fs\").readFileSync(\".env\")"'
+check "python3 -c reads .env"         2 'python3 -c "open(\".env\").read()"'
 check "suffix-spoof .exampleproduction" 2 'cat .env.exampleproduction'
+check "double-ext .example.local"     2 'cat .env.example.local'
+check "double-ext .sample.production" 2 'cat .env.sample.production'
 # --- BLOCK（exit 2）: 環境変数ダンプ ---
 check "printenv"                      2 'printenv PATH'
 check "bare env"                      2 'env'
 check "env piped"                     2 'env | sort'
+check "env -0 flag"                   2 'env -0'
+check "env redirect 2>"               2 'env 2>/dev/null'
 check "proc environ"                  2 'cat /proc/self/environ'
 # --- BLOCK（exit 2）: 既知の trade-off（ADR-0039）---
 # .env を引数で参照する git/gh コマンドも fail-safe でブロックされる。
@@ -47,6 +53,8 @@ check "docker compose up"             0 'docker compose up -d'
 check "read environment.ts"           0 'cat src/environment.ts'
 check "env VAR=x prefix"              0 'env NODE_ENV=test bun test'
 check "cat .env.example (template)"   0 'cat .env.example'
+check "cat nested .env.example"       0 'cat apps/api/.env.example'
+check "cat .env.sample (template)"    0 'cat .env.sample'
 check "git status"                    0 'git status'
 
 printf -- '---- pass=%s fail=%s\n' "$pass" "$fail"

@@ -19,9 +19,10 @@ cmd=$(CLAUDE_TOOL_INPUT="${CLAUDE_TOOL_INPUT:-}" STDIN_JSON="$STDIN_JSON" bun -e
 [[ -z "$cmd" ]] && exit 0
 
 # 安全なテンプレート（.env.example / .env.sample）は判定対象から除外する。
-# 末尾に単語境界（非英数字 or 行末）を要求し、.env.exampleproduction 等のサフィックス偽装で
-# .env チェックをすり抜けることを防ぐ。境界文字（\2）は残す。
-scan=$(printf '%s' "$cmd" | sed -E 's/\.env\.(example|sample)([^a-zA-Z0-9]|$)/\2/g')
+# 前後に単語境界を要求し、完全なトークン一致のみ除外する。末尾境界から `.` を外すことで
+# 二重拡張子（.env.example.local 等）を除外せず後段の .env チェックで BLOCK させ、先頭境界で
+# サフィックス偽装（.env.exampleproduction）も BLOCK する。境界文字（\1 / \3）は残す。
+scan=$(printf '%s' "$cmd" | sed -E 's/(^|[^a-zA-Z0-9.])\.env\.(example|sample)([^a-zA-Z0-9.]|$)/\1\3/g')
 
 deny() {
   echo "guard-secret-access: blocked — $1" >&2  # machine-readable（ログ・診断用）
@@ -36,8 +37,12 @@ deny() {
 printf '%s' "$scan" | grep -Eiq '\.env([^a-zA-Z0-9]|$)' && deny "references a .env secret file"
 
 # 環境変数のダンプ（printenv / 単体の env）。
+# 副作用: 文字列・変数中に printenv/env という単語を含む正当なコマンド（echo "printenv" 等）も
+# BLOCK される（誤検知率はほぼゼロ・fail-safe 寄り）。
 printf '%s' "$scan" | grep -Eiq '(^|[^a-zA-Z0-9_])printenv([^a-zA-Z0-9_]|$)' && deny "printenv dumps environment variables"
-printf '%s' "$scan" | grep -Eiq '(^|[;&|]|[[:space:]])env[[:space:]]*($|[|>&;])' && deny "bare 'env' dumps environment variables"
+# 単体の env（ダンプ）。env VAR=val cmd（実行）は ALLOW。flag（env -0/-u）や redirect（env 2>...）は
+# ダンプとみなして BLOCK する。
+printf '%s' "$scan" | grep -Eiq '(^|[;&|]|[[:space:]])env([[:space:]]*($|[|<>&;])|[[:space:]]+-|[[:space:]]+[0-9]+[<>])' && deny "bare 'env' dumps environment variables"
 
 # プロセスの環境メモリ。
 printf '%s' "$scan" | grep -Eiq '/proc/[^/]*/environ' && deny "reading /proc/*/environ exposes secrets"
