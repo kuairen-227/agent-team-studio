@@ -57,6 +57,7 @@ accepted
 - ガードフックは入力 parse 不可時にフェイルオープン（許可）する。フェイルクローズは全 Bash を誤遮断するリスクがあるため避け、Read deny（[ADR-0037](./0037-ai-execution-sandbox-policy.md)）と egress allowlist firewall の多重防御に依存する。
 - `bun --env-file .env` 等、`.env` を明示参照する正当なコマンドもブロックされる。アプリ起動は `bun run dev`（Turborepo 経由）や compose を使い、`.env` をシェルに展開しない経路を標準とする。
 - dotenvx は採用方向だが未導入。平文 `.env` の排除（穴 3 の解消）は #292 の残タスクとしてローカルで実施する。それまでは Read deny ＋ ガードフック ＋ `.gitignore` ＋ secretlint が現状の保護を構成する。
+- **dotenvx 実導入時には本 ADR を拡張する。** 導入後に新たな評価点が生じる: (1) 暗号化済み `.env` を commit するか（`.gitignore` の `**/.env` との整合）, (2) `DOTENV_PRIVATE_KEY` を持つプロセス内では `printenv` 等で復号後の値が露出し得る抜け道, (3) `.env.vault` 等 dotenvx 固有ファイル形式を deny / ガード対象に含めるか。現時点では dotenvx 固有形式（`.env.vault` 等）は deny に含めない（未導入のため。暗号化済みファイルは Read されても実害が小さい）が、導入時に上記を評価して本 ADR を拡張する。
 - 既存 deny（`curl` / `wget` / `rm -rf` / force push 等・[ADR-0037](./0037-ai-execution-sandbox-policy.md)）と合わせ、tool 層・Bash 層・OS firewall 層の多重防御を形成する。
-- ガードフックは `guard-secret-access` のユニットテスト（ブロック 9 ケース・許可 6 ケース）で誤検知なしを確認した。
+- ガードフックは `.claude/hooks/guard-secret-access.test.sh`（CI の test ジョブで実行）の 16 ケース（ブロック 10 / 許可 6・`.env.example` にサフィックスを付けた偽装ファイル名の回帰を含む）で誤検知なしを確認している。正規表現変更時はこのテストが回帰を検出する。
 - `docs/guides/env.md` にシークレット保護セクションを追加し、`docs/guides/ai-driven-development.md` の施策インベントリ（permissions / hooks 行）を本決定に合わせて更新する。

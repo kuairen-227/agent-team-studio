@@ -19,16 +19,20 @@ cmd=$(CLAUDE_TOOL_INPUT="${CLAUDE_TOOL_INPUT:-}" STDIN_JSON="$STDIN_JSON" bun -e
 [[ -z "$cmd" ]] && exit 0
 
 # 安全なテンプレート（.env.example / .env.sample）は判定対象から除外する。
-scan=$(printf '%s' "$cmd" | sed -E 's/\.env\.(example|sample)//g')
+# 末尾に単語境界（非英数字 or 行末）を要求し、.env.exampleproduction 等のサフィックス偽装で
+# .env チェックをすり抜けることを防ぐ。境界文字（\2）は残す。
+scan=$(printf '%s' "$cmd" | sed -E 's/\.env\.(example|sample)([^a-zA-Z0-9]|$)/\2/g')
 
 deny() {
-  echo "guard-secret-access: blocked — $1" >&2
-  echo "シークレット保護のため拒否しました（ADR-0039）。値が必要なら .env.example / docs/guides/env.md を参照してください。" >&2
+  echo "guard-secret-access: blocked — $1" >&2  # machine-readable（ログ・診断用）
+  echo "シークレット保護のため拒否しました（ADR-0039）。値が必要なら .env.example / docs/guides/env.md を参照してください。" >&2  # human-readable（エージェントへの案内）
   exit 2
 }
 
 # .env および全変種（.env.local / .env.production / .env.keys ...）をファイル名トークンとして検出。
 # `.environment` 等は .env の後ろが英数字のため一致しない。
+# 注: .envrc（direnv）は意図的に対象外（本プロジェクトは direnv 未使用のため）。採用する場合は
+# Read(**/.envrc) を deny に追加し、本パターンにも `.envrc` を加えることを検討する。
 printf '%s' "$scan" | grep -Eiq '\.env([^a-zA-Z0-9]|$)' && deny "references a .env secret file"
 
 # 環境変数のダンプ（printenv / 単体の env）。
