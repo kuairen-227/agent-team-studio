@@ -156,6 +156,7 @@ flowchart TB
 | サンドボックス（Claude Code Bash） | 見送り | Security | — | — | — | Bash tool 実行の OS 隔離 | 非特権コンテナでは弱体化必須のため見送り（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。ネットワーク安全網は egress firewall が担う |
 | egress allowlist firewall | 導入 | Security | — | コンテナ起動時 | 決定論的 | ネットワーク egress をドメイン許可制で制限（自律実行の安全網） | `.devcontainer/init-firewall.sh`（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)） |
 | secretlint | 済 | Security | Harness | 実行・commit 前 | 決定論的 | 機密情報の検出 | `bun run lint:secret` |
+| シークレット読取ガード | 導入 | Security | Harness | 全 tool call（Read / Bash） | 決定論的 | `.env` 系の読取・環境変数ダンプを deny ＋ PreToolUse フックで遮断（サブプロセス・バイパス対策） | `.claude/settings.json` / `.claude/hooks/guard-secret-access.sh`（[ADR-0039](../adr/0039-secret-read-guard.md)） |
 | Issue/PR テンプレート | 済 | Methodology | Context | 起票 / PR 作成時 | 確率的 | 人間にも AI にも構造化入力を強制する型 | `.github/ISSUE_TEMPLATE/` / `PULL_REQUEST_TEMPLATE.md` |
 | 駆動法群 | 済 | Methodology | — | 全工程 | 確率的 | 型駆動 / 軽量 TDD / ADR 駆動 / Issue 駆動 | [ADR-0010](../adr/0010-development-workflow.md)（駆動法定義） / [ADR-0006](../adr/0006-lightweight-agile-process.md)（前提整備） |
 | Plan / Verify ループ | 計画 | Enablement | Methodology | 自律実行時 | 確率的 | Planner / Generator / Evaluator の自律ループ（計画→実装→検証→修復） | 調査・適用設計は [long-running-app-harness.md](./long-running-app-harness.md)。採否・段階導入は [ADR-0038](../adr/0038-autonomous-agent-loop-adoption.md)（accepted） |
