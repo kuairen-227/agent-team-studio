@@ -42,10 +42,14 @@ check "env piped"                     2 'env | sort'
 check "env -0 flag"                   2 'env -0'
 check "env redirect 2>"               2 'env 2>/dev/null'
 check "proc environ"                  2 'cat /proc/self/environ'
-# --- BLOCK（exit 2）: 既知の trade-off（ADR-0039）---
+# --- BLOCK（exit 2）: 既知の trade-off（ADR-0039・意図的な fail-safe）---
 # .env を引数で参照する git/gh コマンドも fail-safe でブロックされる。
-# 正当な用途（commit メッセージ等）は -F ファイル経由で回避する。この挙動は意図的。
+# 正当な用途（commit メッセージ等）は -F ファイル経由で回避する。
 check "git log --grep mentions .env"  2 'git log --grep=.env.production'
+# process.env.X アクセスもブロック（node -e 'console.log(process.env.SECRET)' の exfil を防ぐ）。
+check "bun -e process.env access"     2 'bun -e "console.log(process.env.NODE_ENV)"'
+# FS 列挙でシークレットファイルを探す経路もブロック。
+check "find -name .env glob"          2 'find . -name .env*'
 
 # --- ALLOW（exit 0）: 正当なコマンド・誤検知防止 ---
 check "bun run dev"                   0 'bun run dev'

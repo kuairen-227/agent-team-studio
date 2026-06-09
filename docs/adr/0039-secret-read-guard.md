@@ -26,7 +26,7 @@ accepted
 | # | 選択肢 | 判定 |
 | - | --- | --- |
 | A | deny glob の拡張のみ | 却下 — glob 不足（穴 1）は塞げるが、サブプロセス・バイパス（穴 2）は Read/Edit deny の対象外で残る（公式仕様） |
-| B | deny glob 拡張 ＋ PreToolUse(Bash) ガードフック | **採用** — deny がカバーしない `source` / `printenv` / `bun -e` 等の経路を、コマンド文字列の決定論的検査でブロックする（[ADR-0007](./0007-ai-driven-dev-architecture.md) の hooks による enforcement と同機構） |
+| B | deny glob 拡張 ＋ PreToolUse(Bash) ガードフック | **採用** — deny がカバーしない `source` / `printenv` / `bun -e` 等の経路を、コマンド文字列の決定論的検査でブロックする（[ADR-0007](./0007-ai-driven-dev-architecture.md) の hooks による enforcement と同機構）。入力 parse 不可時はフェイルオープン（理由: フェイルクローズは全 Bash を誤遮断するリスクがあり、Read deny ＋ egress firewall が backstop を担うため） |
 
 ### 論点 2: 平文をディスクから排除するシークレット管理ツール
 
@@ -55,10 +55,10 @@ accepted
 
 - `.env.example` / `.env.sample` は Read 可能なまま維持される。変種の網羅は Read deny の列挙 ＋ Bash ガードフックの二層で担保し、Read tool 経由の未列挙変種（例: 独自命名）には残余ギャップがあるが、Bash 層のフックと egress firewall が backstop となる。
 - ガードフックは入力 parse 不可時にフェイルオープン（許可）する。フェイルクローズは全 Bash を誤遮断するリスクがあるため避け、Read deny（[ADR-0037](./0037-ai-execution-sandbox-policy.md)）と egress allowlist firewall の多重防御に依存する。
-- `bun --env-file .env` 等、`.env` を明示参照する正当なコマンドもブロックされる。アプリ起動は `bun run dev`（Turborepo 経由）や compose を使い、`.env` をシェルに展開しない経路を標準とする。
+- `.env` トークンを引数に含む正当なコマンドもブロックされる（fail-safe）: `bun --env-file .env` / `git log --grep=.env` / `find -name .env*` / `bun -e 'console.log(process.env.X)'` 等。`process.env.*` アクセスのブロックは、`node -e 'console.log(process.env.LLM_API_KEY)'` のようなスクリプト経由の secret exfiltration（`printenv` 相当）を防ぐ意図もある。アプリ起動は `bun run dev`（Turborepo 経由）や compose を使い、`.env` をシェルに展開しない経路を標準とする。`env VAR=val cmd`（実行形式）は環境ダンプではないためブロック対象外（ALLOW）。
 - [ADR-0028](./0028-split-env-infra-and-app.md) で分離したアプリ固有の `apps/api/.env`・`apps/web/.env`（`LLM_API_KEY` 等を所持）も、Read deny の `**/.env` と Bash ガードフックの `.env` トークン検出の両層でカバーされる（パスを問わず一致するため）。
 - dotenvx は採用方向だが未導入。平文 `.env` の排除（穴 3 の解消）は #292 の残タスクとしてローカルで実施する。それまでは Read deny ＋ ガードフック ＋ `.gitignore` ＋ secretlint が現状の保護を構成する。
 - **dotenvx 実導入時には別 ADR（ADR-0040 を想定）で本決定を拡張する**（CLAUDE.md 規約「意思決定は規模を問わず ADR として残す」に沿い、本 ADR の改訂ではなく新 ADR とする）。導入後に新たな評価点が生じる: (1) 暗号化済み `.env` を commit するか（`.gitignore` の `**/.env` との整合）, (2) `DOTENV_PRIVATE_KEY` を持つプロセス内では `printenv` 等で復号後の値が露出し得る抜け道, (3) `.env.vault` 等 dotenvx 固有ファイル形式を deny / ガード対象に含めるか。現時点では dotenvx 固有形式（`.env.vault` 等）は deny に含めない（未導入のため。暗号化済みファイルは Read されても実害が小さい）が、導入時に上記を ADR-0040 で評価する。
 - 既存 deny（`curl` / `wget` / `rm -rf` / force push 等・[ADR-0037](./0037-ai-execution-sandbox-policy.md)）と合わせ、tool 層・Bash 層・OS firewall 層の多重防御を形成する。
-- ガードフックは `.claude/hooks/guard-secret-access.test.sh`（CI の test ジョブで実行）の 26 ケース（ブロック 18 / 許可 8）で誤検知なしを確認している。二重拡張子偽装（`.env.example.local`）・サフィックス偽装（`.env.example` + 任意文字列）・`env -0` / `env 2>` のダンプ・`node`/`python` バイパスの回帰を含む。正規表現変更時はこのテストが回帰を検出する。
+- ガードフックは `.claude/hooks/guard-secret-access.test.sh`（CI の test ジョブで実行）の 28 ケース（ブロック 20 / 許可 8）で誤検知なしを確認している。二重拡張子偽装（`.env.example.local`）・サフィックス偽装（`.env.example` + 任意文字列）・`env -0` / `env 2>` のダンプ・`node`/`python` バイパス・`process.env.*` アクセス・`find -name .env*` の回帰を含む。正規表現変更時はこのテストが回帰を検出する。
 - `docs/guides/env.md` にシークレット保護セクションを追加し、`docs/guides/ai-driven-development.md` の施策インベントリ（permissions / hooks 行）を本決定に合わせて更新する。
