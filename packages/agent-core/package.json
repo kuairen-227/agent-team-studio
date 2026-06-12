@@ -16,6 +16,6 @@
     "@agent-team-studio/shared": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.81",
     "@ai-sdk/groq": "^3.0.39",
-    "ai": "^6.0.197"
+    "ai": "^6.0.199"
   }
 }
