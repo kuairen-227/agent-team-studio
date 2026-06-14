@@ -1,6 +1,17 @@
 {
   "enabledMcpjsonServers": ["context7", "playwright"],
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/guard-secret-access.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -91,6 +102,12 @@
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.keys)",
+      "Read(**/.env.production)",
+      "Read(**/.env.development)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.test)",
       "Bash(gh run rerun --debug:*)",
       "Bash(rm -rf *)",
       "Bash(git push --force:*)",

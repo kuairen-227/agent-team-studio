@@ -99,3 +99,6 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: bun run test
+
+      - name: Test secret-access guard hook
+        run: bash .claude/hooks/guard-secret-access.test.sh

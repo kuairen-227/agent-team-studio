@@ -52,7 +52,7 @@ AI 駆動開発ハーネスの棚卸し（`docs/guides/ai-driven-development.md`
    | レイヤ | 担当 |
    | --- | --- |
    | 実行環境隔離（FS・プロセス） | DevContainer（ephemeral）/ リモート Web 実行環境 |
-   | 危険コマンド・直接 egress の遮断 | `permissions.deny`（`rm -rf` / `force push` / `.env` 読取 等）。`curl` / `wget` も deny し、Claude tool レベルでの直接 egress を遮断 → OS レベルの firewall と多重防御を形成（[ADR-0007](./0007-ai-driven-dev-architecture.md) 品質保証層の Security 版） |
+   | 危険コマンド・直接 egress の遮断 | `permissions.deny`（`rm -rf` / `force push` / `.env` 読取 等）。`curl` / `wget` も deny し、Claude tool レベルでの直接 egress を遮断 → OS レベルの firewall と多重防御を形成（[ADR-0007](./0007-ai-driven-dev-architecture.md) 品質保証層の Security 版）。`.env` 読取の deny 強化・サブプロセスバイパス対策は [ADR-0039](./0039-secret-read-guard.md) で拡張 |
    | 機密情報の検出 | secretlint |
    | **ネットワーク egress** | **本 firewall（allowlist）** |
 
