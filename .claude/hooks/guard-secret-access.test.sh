@@ -1,7 +1,8 @@
 #!/bin/bash
 # cspell:ignore exampleproduction
 # guard-secret-access.sh のユニットテスト（ADR-0039）。
-# CI（.github/workflows/ci.yml の test ジョブ）と手元の両方で実行可能。
+# フックの正規表現を編集したら手元で実行する（`bash .claude/hooks/guard-secret-access.test.sh`）。
+# CI には載せない（フックは Claude Code のローカル環境専用で CI は使わないため）。
 # 各ケースは CLAUDE_TOOL_INPUT にコマンドを与え、フックの exit code を検証する。
 #   BLOCK = 2（シークレット読取・env ダンプを遮断）/ ALLOW = 0
 set -u
