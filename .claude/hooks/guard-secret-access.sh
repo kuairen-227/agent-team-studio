@@ -32,6 +32,11 @@ deny() {
 
 # .env および全変種（.env.local / .env.production / .env.keys ...）をファイル名トークンとして検出。
 # `.environment` 等は .env の後ろが英数字のため一致しない。
+# この .env トークン規則は、以下の偽装・バイパス系も巻き込みで BLOCK する（いずれも意図的な fail-safe）:
+#   - スクリプト経由読取: `bun -e`/`node -e`/`python -c` で ".env" を開く経路（コマンド文字列に .env が現れる）
+#   - `process.env.X` アクセス（"process.env" が ".env" を含む）→ `console.log(process.env.SECRET)` 形の exfil も遮断
+#   - `find -name .env*` / `git log --grep=.env*` 等、.env を引数に持つ正当コマンド（commit メッセージは `-F` ファイルで回避）
+#   - サフィックス偽装（.env.exampleproduction）・二重拡張子（.env.example.local）は上の example/sample 除外をすり抜けて BLOCK
 # 注: .envrc（direnv）は意図的に対象外（本プロジェクトは direnv 未使用のため）。採用する場合は
 # Read(**/.envrc) を deny に追加し、本パターンにも `.envrc` を加えることを検討する。
 printf '%s' "$scan" | grep -Eiq '\.env([^a-zA-Z0-9]|$)' && deny "references a .env secret file"
