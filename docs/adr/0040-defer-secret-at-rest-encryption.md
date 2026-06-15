@@ -2,7 +2,7 @@
 
 ## Status
 
-proposed
+accepted
 
 - 作成日: 2026-06-14
 - 関連: [ADR-0039](./0039-secret-read-guard.md)（再評価元：論点 2 / Decision 3「dotenvx 採用方向」を本 ADR で取り下げ）, [ADR-0037](./0037-ai-execution-sandbox-policy.md)（前提：permissions.deny + egress firewall の多層防御）, Issue #292

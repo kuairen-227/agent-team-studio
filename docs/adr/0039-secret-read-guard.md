@@ -33,7 +33,7 @@ accepted
 | # | 選択肢 | 無料 | 判定 |
 | - | --- | --- | --- |
 | A | 現状維持（平文 `.env`） | — | 却下 — 露出面（穴 3）が残る |
-| B | **dotenvx**（CLI で暗号化 at-rest・ローカル完結） | ✅ OSS | **採用（方向）** — 無料・アカウント不要・外部 SaaS 非依存。`.env` を暗号化して保存し実行時のみ復号注入。守る対象が `.env.keys`（秘密鍵）1 点に集約する |
+| B | **dotenvx**（CLI で暗号化 at-rest・ローカル完結） | ✅ OSS | ~~採用（方向）~~ → **[ADR-0040](./0040-defer-secret-at-rest-encryption.md) で再評価し見送り**（当時は採用方向。無料・アカウント不要・外部 SaaS 非依存で `.env.keys` 1 点に集約できる利点を評価したが、トポロジー上 at-rest 暗号化が二次層にとどまり主価値が gitignore+secretlint と冗長なため取り下げ） |
 | C | Infisical（OSS・self-host 無料 / 無料クラウド枠） | ✅/△ | 次点 — OSS の本格基盤だが self-host の運用コストが学習スコープ過大 |
 | D | 1Password（`op run` で平文をディスクに残さない） | ❌ 有料 | 却下 — 無料前提では対象外（既契約なら再評価可） |
 | E | Doppler（SaaS・無料枠） | △ | 却下 — proprietary SaaS でアカウント必須、ローカル完結しない |
@@ -47,7 +47,7 @@ accepted
    - `printenv` / 単体の `env`（環境変数ダンプ）/ `/proc/*/environ`
    - `.env.example` / `.env.sample` は判定前に除外する。入力 JSON を parse できない場合は**フェイルオープン**（他層が backstop）
 
-3. **シークレット管理は dotenvx を採用方向とする。** `.env` を暗号化 at-rest し `dotenvx run` で実行時注入する。ただし**実 `.env` の暗号化・docker-compose の復号配線は、実シークレットを持つローカル環境での作業**であり、本 ADR では方向決定と runbook 整備にとどめる（実適用は #292 の残タスク）。本リポジトリの `.gitignore` は `**/.env` を無視するため、dotenvx の「暗号化済み `.env` を commit する」モデルとの整合（ファイル名 / ignore 方針）は導入時に確定する。
+3. ~~**シークレット管理は dotenvx を採用方向とする。**~~ **【[ADR-0040](./0040-defer-secret-at-rest-encryption.md) で取り下げ・見送り】** 以下は当時の記述。`.env` を暗号化 at-rest し `dotenvx run` で実行時注入する。ただし**実 `.env` の暗号化・docker-compose の復号配線は、実シークレットを持つローカル環境での作業**であり、本 ADR では方向決定と runbook 整備にとどめる（実適用は #292 の残タスク）。本リポジトリの `.gitignore` は `**/.env` を無視するため、dotenvx の「暗号化済み `.env` を commit する」モデルとの整合（ファイル名 / ignore 方針）は導入時に確定する。
 
 4. **ADR-0037 を supersede せず拡張する。** 本 ADR は ADR-0037 の役割分担（permissions.deny がシークレット読取を担う）を具体化・強化する位置づけで、方針自体は変更しない。
 

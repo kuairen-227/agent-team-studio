@@ -16,6 +16,8 @@ cmd=$(CLAUDE_TOOL_INPUT="${CLAUDE_TOOL_INPUT:-}" STDIN_JSON="$STDIN_JSON" bun -e
 " 2>/dev/null)
 
 # 入力が取れない場合はフェイルオープン（他層: Read deny / egress firewall が backstop）。
+# 注: JSON parse は bun に依存する。将来 bun を外す場合、本フックは入力を取れず常時フェイルオープン
+# になり保護がサイレントに失われる。bun 撤去時は parser を node 等へ移植すること。
 [[ -z "$cmd" ]] && exit 0
 
 # 安全なテンプレート（.env.example / .env.sample）は判定対象から除外する。
