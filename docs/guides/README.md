@@ -17,3 +17,4 @@
 | [env.md](./env.md) | 環境変数・シークレット管理 |
 | [dependabot.md](./dependabot.md) | Dependabot 運用ガイド（PR 種別ごとの作業・auto-merge・cooldown） |
 | [free-llm-setup.md](./free-llm-setup.md) | LLM API 設定ガイド（Anthropic / OpenRouter / Ollama の切り替え） |
+| [external-services.md](./external-services.md) | 外部サービス一覧（アカウント取得・API キー設定が必要なサービスとコンソール URL） |
