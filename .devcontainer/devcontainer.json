@@ -4,9 +4,7 @@
   "service": "app",
   "workspaceFolder": "/workspaces/agent-team-studio",
   "remoteUser": "node",
-  // node/npx の outbound DNS は IPv4 優先で解決する。v6 egress 経路の無いコンテナ（Docker bridge は
-  // 既定 v4 only）で AAAA を先に掴み ENETUNREACH で固まるのを防ぐ。bun は NODE_OPTIONS を無視するため
-  // app 実行には影響しない。詳細は ADR-0041 / Issue #306。
+  // node/npx の outbound DNS を IPv4 優先にし v6 経路欠如での AAAA ハングを防ぐ（詳細は ADR-0041 / #306）
   "containerEnv": {
     "NODE_OPTIONS": "--dns-result-order=ipv4first"
   },
