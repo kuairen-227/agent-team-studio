@@ -64,5 +64,5 @@ ADR-0037 で導入した egress allowlist firewall（`.devcontainer/init-firewal
 - `storage.googleapis.com` は広域共有ドメインで、IP ベース許可のため同 IP レンジの他バケットへの egress も開く。allowlist 最小限の原則からは広いが、Playwright 本体 zip のリダイレクト先として必要なため受容する。これは ADR-0037 が挙げる「広域ドメイン許可は domain fronting 等で回避され得る」既知リスクの一例であり、本 ADR も同方針を継承したうえで、許可先のうち最も広いこの 1 ドメインに限りリスクを受容する。CDN の IP ローテートで許可先が REJECT され得る制約は iptables 版と同様（緩和: `sudo bash .devcontainer/init-firewall.sh` 再適用）。
 - `--dns-result-order=ipv4first` は解決順の優先指定であり IPv6 を禁止しない。v6 が実際に到達可能な宛先では v6 も使われ得る。
 - nftables / nf_tables カーネルモジュールに依存する。実機検証はローカル WSL2 DevContainer で行う必要がある（本移行は Docker・NET_ADMIN を伴うため、Web リモート実行環境では実行検証できない）。
-- 一時的に firewall を外す手順が `sudo iptables -P OUTPUT ACCEPT` から `sudo nft delete table inet egress_fw` に変わる。`docs/guides/devcontainer.md` を更新する。
+- 一時的に firewall を外す手順が `sudo iptables -P OUTPUT ACCEPT` から `sudo nft delete table inet egress_fw` に変わる（`docs/guides/devcontainer.md` の該当手順は本 PR で更新済み）。
 - Claude Code on the web（リモート実行環境）は別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ（ADR-0037 と不変）。
