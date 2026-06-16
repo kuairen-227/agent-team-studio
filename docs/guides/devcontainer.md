@@ -227,7 +227,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | --- | --- |
 | 実体 | `.devcontainer/init-firewall.sh`（nftables・inet ファミリ）。専用テーブル `inet egress_fw` のみを atomic に差し替える（`nft flush ruleset` は使わず Docker の nat/filter には触れない）。ワークスペースの実ファイルを直接実行する（image には焼き込まない） |
 | 発動 | `devcontainer.json` の `postStartCommand`（`sudo bash .devcontainer/init-firewall.sh`）で **毎起動時** に実行・再構成 |
-| 権限 | `docker-compose.yml` の `app.cap_add` に `NET_ADMIN` / `NET_RAW`（`--privileged` は不使用） |
+| 権限 | `docker-compose.yml` の `app.cap_add` に `NET_ADMIN`（`--privileged` は不使用。nftables 操作・自己検証ともに raw socket 不要なため `NET_RAW` は付与しない） |
 | 依存 | `nftables`(nft) / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
 | 既定 | OUTPUT は v4/v6 とも default-deny。許可ドメイン（v4）・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す。IPv6 egress は有効化せず、v6 パケットは許可ルールに一致せず reject へ落ちる（経路の有無に依らず素通り不可） |
 

@@ -226,7 +226,7 @@ hook コマンドは相対パス（`bash .claude/hooks/...`）のため、Claude
 
 実行環境そのものを隔離して、AI の操作が外へ漏れない・壊さないようにする層。DevContainer（[ADR-0016](../adr/0016-devcontainer-integration.md)）が再現可能な隔離環境を提供し、`permissions.deny` が危険操作を環境レベルで遮断する。secretlint は機密情報のコミットを検出する（Harness と重なる多重タグ）。
 
-Claude Code の **Bash サンドボックス**（bubblewrap / Seatbelt）は、非特権 DevContainer 内では `enableWeakerNestedSandbox` で弱体化させない限り動かず、`--privileged` 化は外側の隔離境界を壊す本末転倒になるため **見送る**（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。代わりに、サンドボックスのうち本環境で未充足だった **ネットワーク egress 制御** を、限定 capability（`NET_ADMIN` / `NET_RAW`）で動く **DevContainer の egress allowlist firewall**（`.devcontainer/init-firewall.sh`、iptables + ipset の default-deny）で担う。これは Plan/Verify 自律ループ（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md) 後続 #270）を無人実行する際の安全網として、暴走時のデータ持ち出しを防ぐ。FS 隔離・危険コマンド遮断は引き続き DevContainer + `permissions.deny` が担い、役割を分担する。
+Claude Code の **Bash サンドボックス**（bubblewrap / Seatbelt）は、非特権 DevContainer 内では `enableWeakerNestedSandbox` で弱体化させない限り動かず、`--privileged` 化は外側の隔離境界を壊す本末転倒になるため **見送る**（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。代わりに、サンドボックスのうち本環境で未充足だった **ネットワーク egress 制御** を、限定 capability（`NET_ADMIN`）で動く **DevContainer の egress allowlist firewall**（`.devcontainer/init-firewall.sh`、nftables・inet ファミリの default-deny。[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md)）で担う。これは Plan/Verify 自律ループ（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md) 後続 #270）を無人実行する際の安全網として、暴走時のデータ持ち出しを防ぐ。FS 隔離・危険コマンド遮断は引き続き DevContainer + `permissions.deny` が担い、役割を分担する。
 
 ### Methodology — 駆動法
 
