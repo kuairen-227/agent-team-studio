@@ -54,19 +54,8 @@ while read -r cidr; do
     allowed_ips+=("$cidr")
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# その他の許可ドメインを解決して追加
-#   registry.npmjs.org : bun install / npx 経由の MCP サーバ取得
-#   api.anthropic.com  : Claude Code 本体 + アプリの LLM（既定プロバイダ）
-#   api.groq.com       : 無料 LLM ルート（ADR-0029 / ADR-0034）
-#   context7.com       : context7 MCP の実行時 API
-#   sentry.io          : エラートラッキング（ADR-0035）
-#   *.visualstudio.com : VS Code marketplace（拡張のダウンロード）
-#   vscode.blob.core.windows.net : 拡張バイナリの blob ストレージ（windows.net 系・別系統）
-#   update.code.visualstudio.com : VS Code 本体の更新
-#   cdn.playwright.dev / playwright.download.prss.microsoft.com / storage.googleapis.com :
-#     @playwright/mcp の Chromium 取得（ADR-0024）。本体 zip は cdn.playwright.dev から
-#     storage.googleapis.com へ 307 リダイレクトされるためリダイレクト先まで許可する
-#     （storage.googleapis.com は広域共有ドメインで許可も広くなる点は ADR-0041 で受容）。
+# その他の許可ドメインを解決して追加（各ドメインの用途は docs/guides/devcontainer.md
+# 「egress allowlist firewall」の許可ドメイン表を参照。ここはその実体）
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
