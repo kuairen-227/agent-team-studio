@@ -65,5 +65,5 @@ ADR-0037 で導入した egress allowlist firewall（`.devcontainer/init-firewal
 - `--dns-result-order=ipv4first` は解決順の優先指定であり IPv6 を禁止しない。v6 が実際に到達可能な宛先では v6 も使われ得る。
 - nftables / nf_tables カーネルモジュールに依存する。実機検証はローカル WSL2 DevContainer で行う必要がある（本移行は Docker・NET_ADMIN を伴うため、Web リモート実行環境では実行検証できない）。
 - 一時的に firewall を外す手順が `sudo iptables -P OUTPUT ACCEPT` から `sudo nft delete table inet egress_fw` に変わる（`docs/guides/devcontainer.md` の該当手順は本 PR で更新済み）。
-- 付与する capability を `NET_ADMIN` のみに削減する（`docker-compose.yml` の `app.cap_add` から `NET_RAW` を除去）。nftables のルールセット操作は `NET_ADMIN` で完結し、起動時の自己検証も `curl`（通常の TCP ソケット）ベースで raw socket を使わないため、`NET_RAW` は不要になった（iptables 版が踏襲した公式スクリプトの `ping` 疎通確認の名残）。ADR-0037 の「最小限の capability 付与」方針をさらに徹底する。
+- 付与する capability を `NET_ADMIN` のみに絞る。nftables のルールセット操作は `NET_ADMIN` で完結し、起動時の自己検証も `curl`（通常の TCP ソケット）ベースで raw socket を使わないため `NET_RAW` は不要（iptables 版が踏襲した公式スクリプトの `ping` 疎通確認の名残）。`NET_RAW` は Docker のデフォルト capability セットに含まれるため、`cap_add` から外すだけでは実コンテナに残る。`docker-compose.yml` で `cap_drop: NET_RAW` を明示して落とす。L2 raw socket（`AF_PACKET`）は `inet` family の L3 `output` フックを迂回して egress allowlist を素通りし得るため、egress 制御を安全網とする本方針では明示削除に意義がある。ADR-0037 の「最小限の capability 付与」方針をさらに徹底する。
 - Claude Code on the web（リモート実行環境）は別途 network policy が egress を統治しており、本 firewall は **ローカル DevContainer** の egress を補完する位置づけ（ADR-0037 と不変）。

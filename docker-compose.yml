@@ -9,8 +9,13 @@ services:
     init: true
     # egress allowlist firewall（ADR-0037 / ADR-0041）が nftables を操作するための限定 capability。
     # --privileged は使わず、ルールセット操作に必要な NET_ADMIN のみを付与する。
+    # NET_RAW は Docker のデフォルト capability セットに含まれるため cap_add から外すだけでは残る。
+    # nftables は raw socket を使わず、L2 raw socket（AF_PACKET）は L3 egress allowlist を迂回し得る
+    # ため、cap_drop で明示的に落とす（ADR-0041）。
     cap_add:
       - NET_ADMIN
+    cap_drop:
+      - NET_RAW
     volumes:
       - .:/workspaces/agent-team-studio:cached
       - claude-home:/home/node/.claude
