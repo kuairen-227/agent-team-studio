@@ -215,7 +215,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | AI による UI 検証（実装中の動作確認） | `@playwright/mcp` を `.mcp.json` で起動 | **導入済**（2026-05-04） | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) |
 | E2E テスト（リグレッション防止） | `playwright` を `package.json` に追加 + `playwright.config.ts` | 後続 Issue で導入予定（ADR-0010 の見送り判断を再評価する別議論） | ADR-0010 |
 
-`@playwright/mcp` の Chromium 取得は `.devcontainer/post-create.sh` で行うため、DevContainer リビルド時に自動で揃う。取得時は Node の DNS 解決順を IPv4 優先（`NODE_OPTIONS="--dns-result-order=ipv4first"`）に固定している。IPv6 egress 経路の無い環境（Docker bridge は既定 v4 only）で downloader が AAAA を先に掴み `ENETUNREACH` で固まるのを防ぐ恒久対応で、手動の `/etc/hosts` 固定は不要（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md) / Issue #306）。E2E 用 `playwright` を導入する際は、ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成、および `@playwright/mcp` との Chromium バイナリ共有（`PLAYWRIGHT_BROWSERS_PATH`）と version pin を後続 ADR で決定する。
+`@playwright/mcp` の Chromium 取得は `.devcontainer/post-create.sh` で行うため、DevContainer リビルド時に自動で揃う。取得時は Node の DNS 解決順が IPv4 優先になる（`devcontainer.json` の `containerEnv` で `NODE_OPTIONS="--dns-result-order=ipv4first"` をコンテナ全体に設定）。IPv6 egress 経路の無い環境（Docker bridge は既定 v4 only）で downloader が AAAA を先に掴み `ENETUNREACH` で固まるのを防ぐ恒久対応で、手動の `/etc/hosts` 固定は不要（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md) / Issue #306）。E2E 用 `playwright` を導入する際は、ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成、および `@playwright/mcp` との Chromium バイナリ共有（`PLAYWRIGHT_BROWSERS_PATH`）と version pin を後続 ADR で決定する。
 
 詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
 
@@ -231,7 +231,19 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | 依存 | `nftables`(nft) / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
 | 既定 | OUTPUT は v4/v6 とも default-deny。許可ドメイン（v4）・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す。IPv6 egress は有効化せず、v6 パケットは許可ルールに一致せず reject へ落ちる（経路の有無に依らず素通り不可） |
 
-許可ドメイン: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic API / Groq / context7 / Sentry / VS Code marketplace / Playwright 取得経路（`cdn.playwright.dev` / `playwright.download.prss.microsoft.com` / `storage.googleapis.com`）。allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。
+許可ドメイン:
+
+| 用途 | ドメイン |
+| --- | --- |
+| GitHub（gh / git / GitHub MCP） | `api.github.com/meta` の web/api/git レンジ |
+| npm レジストリ | `registry.npmjs.org` |
+| LLM API | `api.anthropic.com` / `api.groq.com` |
+| MCP（context7） | `context7.com` |
+| エラートラッキング | `sentry.io` |
+| VS Code 拡張 | `marketplace.visualstudio.com` / `vscode.blob.core.windows.net` / `update.code.visualstudio.com` |
+| Playwright 取得 | `cdn.playwright.dev` / `playwright.download.prss.microsoft.com` / `storage.googleapis.com` |
+
+allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。`storage.googleapis.com` は広域共有ドメインで許可も広くなるが、Playwright 本体 zip のリダイレクト先として必要なため受容している（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md)）。
 
 ### allowlist の更新
 
@@ -249,11 +261,7 @@ sudo bash .devcontainer/init-firewall.sh
 sudo nft delete table inet egress_fw
 ```
 
-> ✅ **検証状況**: iptables 版はローカル DevContainer（WSL2）で動作確認済み（#287）。default-deny の **許可外拒否**（`example.com` が REJECT）・**許可先到達**（`api.github.com`）・**Docker subnet 許可**（app ↔ db）・allowlist 登録を確認。起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。
->
-> ⚠️ nftables 版（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md)）への移行分は **ローカル WSL2 DevContainer での再検証が必要**（Web リモート実行環境では Docker / NET_ADMIN を伴うため実行検証できない）。同じく起動ログ末尾の `Firewall verification passed ...` で確認する。
->
-> 解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
+> 起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
 
 ## トラブルシューティング
 

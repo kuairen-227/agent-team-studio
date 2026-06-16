@@ -40,7 +40,7 @@ ADR-0037 で導入した egress allowlist firewall（`.devcontainer/init-firewal
 
 | # | 選択肢 | 判定 |
 | - | --- | --- |
-| A | **解決順を IPv4 優先（`--dns-result-order=ipv4first`）** | **採用** — IPv6 の禁止ではなく解決順の優先指定。既に動く v4 経路を確実に使わせる。ホスト非依存・IP 変動に強い。`post-create.sh` の install-browser 実行時に `NODE_OPTIONS` で付与 |
+| A | **解決順を IPv4 優先（`--dns-result-order=ipv4first`）** | **採用** — IPv6 の禁止ではなく解決順の優先指定。既に動く v4 経路を確実に使わせる。ホスト非依存・IP 変動に強い。`devcontainer.json` の `containerEnv` で `NODE_OPTIONS` を**コンテナ全体**に設定（v6 経路欠如はコンテナの性質のため。bun は NODE_OPTIONS を無視し app 実行には影響しない） |
 | B | 対象ホストを IPv4 で `/etc/hosts` に恒久登録 | 却下 — ホスト名・IP 変動に弱く、対象ホスト分のメンテナンス負債を抱える |
 
 ## Decision
@@ -51,7 +51,7 @@ ADR-0037 で導入した egress allowlist firewall（`.devcontainer/init-firewal
 
 3. **dual-stack 化（論点 2-C）は見送り、再検討契機を定める。** 許可先に v6-only（A レコードを持たない）宛先が現れる、または v6-only ネットワークでの実行が必要になった時点で再評価する。nftables へ移行済みのため、その際は v6 set と AAAA 解決を追加する局所的増分で済む。
 
-4. **(A) は Node の DNS 解決順を IPv4 優先に固定して解決する（論点 3-A）。** `post-create.sh` の `install-browser` 実行に `NODE_OPTIONS="--dns-result-order=ipv4first"` を付与し、手動 `/etc/hosts` 措置を撤廃する。Playwright 取得経路（`cdn.playwright.dev` / `playwright.download.prss.microsoft.com` / `storage.googleapis.com`）は allowlist に追加する。
+4. **(A) は Node の DNS 解決順を IPv4 優先に固定して解決する（論点 3-A）。** `devcontainer.json` の `containerEnv` で `NODE_OPTIONS="--dns-result-order=ipv4first"` をコンテナ全体に設定し、手動 `/etc/hosts` 措置を撤廃する。v6 egress 経路の欠如はそのコマンド固有でなくコンテナの性質のため、node/npx の取得全般を対象にする（bun は NODE_OPTIONS を無視するため app 実行には影響しない）。Playwright 取得経路（`cdn.playwright.dev` / `playwright.download.prss.microsoft.com` / `storage.googleapis.com`）は allowlist に追加する。
 
 ## Consequences
 

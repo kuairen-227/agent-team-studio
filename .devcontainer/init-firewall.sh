@@ -1,27 +1,17 @@
 #!/bin/bash
-# DevContainer egress allowlist firewall（nftables 版 / ADR-0037 + ADR-0041 / Issue #271 #306）
+# DevContainer egress allowlist firewall（nftables / ADR-0037 + ADR-0041 / Issue #271 #306）
 #
 # default-deny で許可ドメインのみへの outbound を通す、自律実行時のネットワーク安全網。
 # devcontainer.json の postStartCommand から sudo で実行する（毎起動時に再構成）。
 # NET_ADMIN / NET_RAW capability が必要（docker-compose.yml の app.cap_add で付与）。
+# 採用方式（nftables 移行 / IPv6 default-deny）の判断根拠は ADR-0041 を参照。
 #
-# nftables を採用する理由（ADR-0041）:
-#   - inet ファミリの 1 ルールセットで IPv4 と IPv6 を同時に統治する。IPv6 egress は
-#     有効化しない（v4 だけを allowlist 許可）が、v6 パケットは許可ルールに一致せず
-#     policy drop / reject へ落ちるため、v6 経路が存在しても allowlist を素通りできない。
-#   - ルールセットを 1 トランザクションで atomic に差し替えるため、iptables 版にあった
-#     「取得〜DROP 設定の間に egress が開く窓」が存在しない。
-#   - ipset 依存を排除（nft のネイティブ set で代替）。
-#
-# Docker 連携の重要点:
-#   `nft flush ruleset` は使わない。Docker は自身の nat / filter ルールも nftables バックエンド
-#   （iptables-nft）に持つため、全 ruleset を flush すると組み込み DNS（127.0.0.11）や bridge が
-#   壊れる。本 firewall は専用テーブル `inet egress_fw` だけを atomic に差し替え、Docker の
-#   テーブルには一切触れない。
+# 実装上の注意: `nft flush ruleset` は使わない。Docker 自身の nat/filter も nftables
+# バックエンドにあり、全 flush で組み込み DNS（127.0.0.11）や bridge が壊れる。専用テーブル
+# `inet egress_fw` だけを atomic に差し替える。
 #
 # allowlist を増やすときは下の `for domain in` ループに追記する。
-# 一時的に firewall を外したい場合は `sudo nft delete table inet egress_fw`（次回起動で再構成）。
-# 役割分担と運用は docs/guides/devcontainer.md「egress allowlist firewall」を参照。
+# 役割分担・運用（一時無効化の手順含む）は docs/guides/devcontainer.md を参照。
 
 set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'        # Stricter word splitting
