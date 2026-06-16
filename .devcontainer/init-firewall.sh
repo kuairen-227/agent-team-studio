@@ -154,10 +154,10 @@ table inet egress_fw {
     }
 
     chain forward {
+        type filter hook forward priority 0; policy drop;
         # app コンテナ自身はルーターにならないため forward は本来不要だが、多重防御として default-deny。
         # Docker bridge の forwarding はホスト側 netns で行われ、app コンテナ自身の netns の forward
         # フックは経由しないため、Docker networking には干渉しない。
-        type filter hook forward priority 0; policy drop;
     }
 
     chain output {

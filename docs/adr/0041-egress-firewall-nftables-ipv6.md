@@ -57,7 +57,8 @@ ADR-0037 で導入した egress allowlist firewall（`.devcontainer/init-firewal
 
 - v4/v6 が 1 ルールセットで統治され、IPv6 egress バイパスの余地が経路の有無に依らず塞がる。Docker 設定（`enable_ipv6`）やホストの v6 アップリンクの変化に対しても default-deny が保たれる。
 - atomic 差し替えにより、ADR-0037 が欠点として挙げた「取得〜DROP 設定の間に egress が一時開放される窓」が解消される。
-- `input` チェーンも `policy drop` とし、inbound は loopback・established/related・Docker subnet（`HOST_NETWORK`）発のみ許可して他は drop する。app↔db 間通信と `devcontainer.json` の `forwardPorts`（VS Code のポート転送、Docker gateway 経由で `HOST_NETWORK` 内から到達）はこのルールで通る。`HOST_NETWORK` は Docker bridge が返すサブネット CIDR を前提とし、起動時に検出値をログ出力する（万一 `/32` 等が返る環境では db からの inbound が遮断され得るため、この前提はローカル実機検証で確認する）。
+- `input` チェーンも `policy drop` とし、inbound は loopback・established/related・Docker subnet（`HOST_NETWORK`）発のみ許可して他は drop する。app↔db 間通信と `devcontainer.json` の `forwardPorts`（VS Code のポート転送、Docker gateway 経由で `HOST_NETWORK` 内から到達）はこのルールで通る。`HOST_NETWORK` は Docker bridge が返すサブネット CIDR を前提とし、起動時に検出値をログ出力する（万一 `/32` 等が返る環境では db からの inbound が遮断され得るため、この前提はローカル実機検証で確認する）。標準的な Docker bridge では subnet CIDR が返るため `/32` は未観測であり、投機的なフォールバックは作り込まない（YAGNI）。実機検証で `/32` が観測された時点で、subnet 手動指定 option の追加を follow-up Issue として対応する。
+- フェイルクローズ（`init-firewall.sh` の適用失敗時にコンテナを停止させる）の未対応状態は ADR-0037 と不変。nftables 移行後も「適用が失敗すれば firewall なしで起動する」リスクは変わらないため、追加要否は #270 の設計時に引き続き再評価する。
 - 起動時の自己検証は **egress 経路のみ**を対象とする（`example.com` が REJECT＝許可外の遮断、`api.github.com` が到達＝許可先の疎通）。`example.com` は IANA 特別用途ドメインで実トラフィックの許可レンジと重複しない canary として用いる。app↔db の inbound 疎通はこの検証の対象外で、別途ローカル実機検証で確認する。
 - ipset 依存が消え、firewall が nft 1 ツールに集約される。`Dockerfile` の依存は `iptables ipset` → `nftables` に変わる。
 - `storage.googleapis.com` は広域共有ドメインで、IP ベース許可のため同 IP レンジの他バケットへの egress も開く。allowlist 最小限の原則からは広いが、Playwright 本体 zip のリダイレクト先として必要なため受容する。これは ADR-0037 が挙げる「広域ドメイン許可は domain fronting 等で回避され得る」既知リスクの一例であり、本 ADR も同方針を継承したうえで、許可先のうち最も広いこの 1 ドメインに限りリスクを受容する。CDN の IP ローテートで許可先が REJECT され得る制約は iptables 版と同様（緩和: `sudo bash .devcontainer/init-firewall.sh` 再適用）。
