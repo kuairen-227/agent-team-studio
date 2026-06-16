@@ -143,6 +143,9 @@ table inet egress_fw {
     }
 
     chain forward {
+        # コンテナ自身はルーターにならないため forward は本来不要だが、多重防御として default-deny。
+        # Docker bridge の forwarding はホスト側 netns で行われ、このコンテナ netns の forward
+        # フックは経由しないため、Docker networking には干渉しない。
         type filter hook forward priority 0; policy drop;
     }
 
@@ -166,7 +169,8 @@ echo "Active ruleset (inet egress_fw):"
 nft list table inet egress_fw
 
 # 検証: 許可外（example.com）は接続自体が REJECT されるはず（HTTP ステータスでなく到達可否を見るため -s のみ）。
-#       許可先（api.github.com）は到達できるはず（-sf で HTTP エラーも失敗扱いにする）。
+#       許可先（api.github.com）は到達できるはず（到達可否のみを見る。-f は付けない:
+#       rate limit の 403 等でも「到達できた」ことに変わりはなく、起動を失敗させたくないため）。
 echo "Verifying firewall rules..."
 if curl --connect-timeout 5 -s https://example.com >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - was able to reach https://example.com"
@@ -175,8 +179,8 @@ else
     echo "Firewall verification passed - unable to reach https://example.com as expected"
 fi
 
-# GitHub API への到達を確認
-if ! curl --connect-timeout 5 -sf https://api.github.com/zen >/dev/null 2>&1; then
+# GitHub API への到達を確認（HTTP レスポンスが返れば到達成功。レスポンス本体は破棄）
+if ! curl --connect-timeout 5 -s https://api.github.com/zen >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
     exit 1
 else
