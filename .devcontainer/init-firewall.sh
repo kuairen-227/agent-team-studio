@@ -42,6 +42,13 @@ if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
 fi
 
 echo "Processing GitHub IPs..."
+# プロセス置換だと aggregate の異常終了（未インストール・クラッシュ）が while ループに伝播せず、
+# GitHub レンジが全件欠落したまま起動してしまう。一時変数に受けて空＝失敗を fail-closed で捕捉する。
+gh_cidrs=$(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
+if [ -z "$gh_cidrs" ]; then
+    echo "ERROR: Failed to aggregate GitHub IP ranges (aggregate missing or produced no output)"
+    exit 1
+fi
 while read -r cidr; do
     # IPv6 等の非 IPv4 CIDR はスキップ（GitHub meta は IPv6 も返すが allowlist は v4 のみ）
     if [[ ! "$cidr" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then
@@ -52,7 +59,7 @@ while read -r cidr; do
         continue
     fi
     allowed_ips+=("$cidr")
-done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
+done <<< "$gh_cidrs"
 
 # その他の許可ドメインを解決して追加（各ドメインの用途は docs/guides/devcontainer.md
 # 「egress allowlist firewall」の許可ドメイン表を参照。ここはその実体）
@@ -109,13 +116,17 @@ elements=${elements%, }
 # Docker subnet（app ↔ db）を許可する。/24 固定は仮定せず、デフォルトルートの出力 interface の
 # 実 CIDR をそのまま使う（カスタムサブネット /16 等にも追従）。
 HOST_IF=$(ip -4 route show default | awk '/^default/ {for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}')
-HOST_NETWORK=$(ip -4 addr show "${HOST_IF:-eth0}" | awk '/inet / {print $2; exit}')
+if [ -z "$HOST_IF" ]; then
+    echo "WARN: No default route found; falling back to eth0 for host network detection"
+    HOST_IF=eth0
+fi
+HOST_NETWORK=$(ip -4 addr show "$HOST_IF" | awk '/inet / {print $2; exit}')
 if [ -z "$HOST_NETWORK" ]; then
     echo "ERROR: Failed to detect host network CIDR"
     echo "  ip route: $(ip -4 route show default 2>&1)"
     exit 1
 fi
-echo "Host network detected as: $HOST_NETWORK (iface ${HOST_IF:-eth0})"
+echo "Host network detected as: $HOST_NETWORK (iface $HOST_IF)"
 
 # --- 専用テーブル inet egress_fw を atomic に差し替える ---
 # 先頭の `table inet egress_fw`（空宣言）は未存在時に作成して直後の delete を冪等にするための
@@ -143,8 +154,8 @@ table inet egress_fw {
     }
 
     chain forward {
-        # コンテナ自身はルーターにならないため forward は本来不要だが、多重防御として default-deny。
-        # Docker bridge の forwarding はホスト側 netns で行われ、このコンテナ netns の forward
+        # app コンテナ自身はルーターにならないため forward は本来不要だが、多重防御として default-deny。
+        # Docker bridge の forwarding はホスト側 netns で行われ、app コンテナ自身の netns の forward
         # フックは経由しないため、Docker networking には干渉しない。
         type filter hook forward priority 0; policy drop;
     }
