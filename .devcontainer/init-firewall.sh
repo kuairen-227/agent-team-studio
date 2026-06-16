@@ -148,6 +148,8 @@ table inet egress_fw {
 
     chain input {
         type filter hook input priority 0; policy drop;
+        # egress で開始した通信の戻りと loopback・Docker subnet 発のみ許可し、外部起点の inbound は drop。
+        # `ct state established,related accept` を削除すると egress の応答パケットも落ちて通信が壊れる。
         iifname "lo" accept
         ct state established,related accept
         ip saddr ${HOST_NETWORK} accept
@@ -182,6 +184,7 @@ nft list table inet egress_fw
 # 検証: 許可外（example.com）は接続自体が REJECT されるはず（HTTP ステータスでなく到達可否を見るため -s のみ）。
 #       許可先（api.github.com）は到達できるはず（到達可否のみを見る。-f は付けない:
 #       rate limit の 403 等でも「到達できた」ことに変わりはなく、起動を失敗させたくないため）。
+#       --connect-timeout 5: REJECT は即時返るが、policy drop へ落ちた場合は無応答でハングするため上限を設ける。
 echo "Verifying firewall rules..."
 if curl --connect-timeout 5 -s https://example.com >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - was able to reach https://example.com"

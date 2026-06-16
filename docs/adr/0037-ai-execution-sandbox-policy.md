@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted
+accepted（firewall 実装方式は ADR-0041 で一部 superseded）
 
 - 作成日: 2026-06-08
 - 関連: [ADR-0007](./0007-ai-driven-dev-architecture.md)（前提：品質保証 3 層・permissions）, [ADR-0016](./0016-devcontainer-integration.md)（前提：DevContainer 隔離）, Issue #271, Issue #269（親トラッカ）, Issue #270（後続：Plan/Verify 自律ループ）
