@@ -215,23 +215,35 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | AI による UI 検証（実装中の動作確認） | `@playwright/mcp` を `.mcp.json` で起動 | **導入済**（2026-05-04） | [ADR-0024](../adr/0024-playwright-mcp-for-ai-verification.md) |
 | E2E テスト（リグレッション防止） | `playwright` を `package.json` に追加 + `playwright.config.ts` | 後続 Issue で導入予定（ADR-0010 の見送り判断を再評価する別議論） | ADR-0010 |
 
-`@playwright/mcp` の Chromium 取得は `.devcontainer/post-create.sh` で行うため、DevContainer リビルド時に自動で揃う。E2E 用 `playwright` を導入する際は、ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成、および `@playwright/mcp` との Chromium バイナリ共有（`PLAYWRIGHT_BROWSERS_PATH`）と version pin を後続 ADR で決定する。
+`@playwright/mcp` の Chromium 取得は `.devcontainer/post-create.sh` で行うため、DevContainer リビルド時に自動で揃う。取得時は Node の DNS 解決順が IPv4 優先になる（`devcontainer.json` の `containerEnv` で `NODE_OPTIONS="--dns-result-order=ipv4first"` をコンテナ全体に設定）。IPv6 egress 経路の無い環境（Docker bridge は既定 v4 only）で downloader が AAAA を先に掴み `ENETUNREACH` で固まるのを防ぐ恒久対応で、手動の `/etc/hosts` 固定は不要（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md) / Issue #306）。E2E 用 `playwright` を導入する際は、ルート `.env` のポート設定を `playwright.config.ts` の dev server に渡す構成、および `@playwright/mcp` との Chromium バイナリ共有（`PLAYWRIGHT_BROWSERS_PATH`）と version pin を後続 ADR で決定する。
 
 詳細な使い分け（軽量 / 視覚デバッグ / 並行 E2E）は [worktree.md](./worktree.md) のユースケースマトリクスを参照。
 
 ## egress allowlist firewall
 
-自律実行時のネットワーク安全網として、DevContainer の outbound を **許可ドメインのみ**に絞る default-deny の firewall を導入している（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md)）。Claude Code の Bash サンドボックスは非特権コンテナでは弱体化必須のため見送り、未充足だったネットワーク egress 制御だけをこの firewall で担う。
+自律実行時のネットワーク安全網として、DevContainer の outbound を **許可ドメインのみ**に絞る default-deny の firewall を導入している（[ADR-0037](../adr/0037-ai-execution-sandbox-policy.md) / 実装方式は [ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md) で nftables へ移行）。Claude Code の Bash サンドボックスは非特権コンテナでは弱体化必須のため見送り、未充足だったネットワーク egress 制御だけをこの firewall で担う。
 
 | 項目 | 内容 |
 | --- | --- |
-| 実体 | `.devcontainer/init-firewall.sh`（iptables + ipset）。ワークスペースの実ファイルを直接実行する（image には焼き込まない） |
+| 実体 | `.devcontainer/init-firewall.sh`（nftables・inet ファミリ）。専用テーブル `inet egress_fw` のみを atomic に差し替える（`nft flush ruleset` は使わず Docker の nat/filter には触れない）。ワークスペースの実ファイルを直接実行する（image には焼き込まない） |
 | 発動 | `devcontainer.json` の `postStartCommand`（`sudo bash .devcontainer/init-firewall.sh`）で **毎起動時** に実行・再構成 |
-| 権限 | `docker-compose.yml` の `app.cap_add` に `NET_ADMIN` / `NET_RAW`（`--privileged` は不使用） |
-| 依存 | `iptables` / `ipset` / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
-| 既定 | OUTPUT は DROP。許可ドメイン・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す |
+| 権限 | `docker-compose.yml` で `cap_add: NET_ADMIN` + `cap_drop: NET_RAW`（`--privileged` は不使用）。nftables 操作・自己検証ともに raw socket 不要。`NET_RAW` は Docker デフォルトに含まれるため `cap_drop` で明示削除する |
+| 依存 | `nftables`(nft) / `dnsutils`(dig) / `aggregate` / `jq`（`Dockerfile` で導入） |
+| 既定 | OUTPUT は v4/v6 とも default-deny。許可ドメイン（v4）・DNS・SSH・loopback・Docker subnet（app ↔ db）のみ通す。IPv6 egress は有効化せず、v6 パケットは許可ルールに一致せず reject へ落ちる（経路の有無に依らず素通り不可） |
 
-許可ドメイン: GitHub（`api.github.com/meta` の web/api/git レンジ）/ npm レジストリ / Anthropic API / Groq / context7 / Sentry / VS Code marketplace。allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。
+許可ドメイン:
+
+| 用途 | ドメイン |
+| --- | --- |
+| GitHub（gh / git / GitHub MCP） | `api.github.com/meta` の web/api/git レンジ |
+| npm レジストリ | `registry.npmjs.org` |
+| LLM API | `api.anthropic.com` / `api.groq.com` |
+| MCP（context7） | `context7.com` |
+| エラートラッキング | `sentry.io` |
+| VS Code 拡張 | `marketplace.visualstudio.com` / `vscode.blob.core.windows.net` / `update.code.visualstudio.com` |
+| Playwright 取得 | `cdn.playwright.dev` / `playwright.download.prss.microsoft.com` / `storage.googleapis.com` |
+
+allowlist は最小限に保つ方針で、Claude Code のテレメトリ（statsig）等の非必須ドメインは含めない。`storage.googleapis.com` は広域共有ドメインで許可も広くなるが、Playwright 本体 zip のリダイレクト先として必要なため受容している（[ADR-0041](../adr/0041-egress-firewall-nftables-ipv6.md)）。
 
 ### allowlist の更新
 
@@ -243,22 +255,20 @@ sudo bash .devcontainer/init-firewall.sh
 
 ### 一時的に firewall を外す
 
-ブラウザバイナリの再取得など、allowlist 外への一時的なアクセスが必要なときは OUTPUT を開放する（次回起動時に再び default-deny へ戻る）。
+ブラウザバイナリの再取得など、allowlist 外への一時的なアクセスが必要なときは専用テーブルを削除して egress を開放する（次回起動時に再び default-deny へ戻る）。
 
 ```bash
-sudo iptables -P OUTPUT ACCEPT
+sudo nft delete table inet egress_fw
 ```
 
-> ✅ **検証状況**: ローカル DevContainer（WSL2）で動作確認済み（#287）。default-deny の **許可外拒否**（`example.com` が REJECT）・**許可先到達**（`api.github.com`）・**Docker subnet 許可**（app ↔ db）・allowlist 登録（69 件）を確認。起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。
->
-> 解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
+> 起動ログ末尾の `Firewall verification passed ...` で到達性・遮断の両方を確認できる。解決できないドメインがあっても WARN を出してスキップし、解決できた他ドメインで firewall を起動する（全滅時は allowlist 空ガードが中止する）。
 
 ## トラブルシューティング
 
 | 症状 | 対処 |
 | --- | --- |
 | ポートが衝突する | ルート `.env` の `APP_PORT` / `DB_PORT` をオフセットする |
-| 外部サイトに繋がらない / `bun install` が失敗する | egress firewall の allowlist 漏れの可能性。`init-firewall.sh` にドメインを追記して再適用、または一時的に `sudo iptables -P OUTPUT ACCEPT` |
+| 外部サイトに繋がらない / `bun install` が失敗する | egress firewall の allowlist 漏れの可能性。`init-firewall.sh` にドメインを追記して再適用、または一時的に `sudo nft delete table inet egress_fw` |
 | DB に接続できない | `docker compose ps` で `db` の healthcheck 状態を確認 |
 | 認証が切れた | `claude logout && claude login` で `agent-team-studio-claude-home` volume を更新 |
 | DB を初期化したい | `docker volume rm <DB_VOLUME>` してから DevContainer を再起動 |

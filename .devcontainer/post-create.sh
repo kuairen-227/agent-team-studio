@@ -10,5 +10,7 @@ sudo install -d -o node -g node -m 700 /home/node/.config /home/node/.config/gh
 bun install
 
 # @playwright/mcp が使う Chrome for Testing と system 依存パッケージを事前取得（ADR-0024）。
+# Chromium 取得はコンテナ全体の NODE_OPTIONS=--dns-result-order=ipv4first（devcontainer.json）で
+# IPv4 優先に解決され、v6 egress 経路の無い環境での AAAA ハング（ENETUNREACH）を避ける（ADR-0041 / #306）。
 sudo npx --yes playwright install-deps chromium
 npx --yes @playwright/mcp@latest install-browser chrome-for-testing

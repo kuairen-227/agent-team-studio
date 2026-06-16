@@ -4,6 +4,10 @@
   "service": "app",
   "workspaceFolder": "/workspaces/agent-team-studio",
   "remoteUser": "node",
+  // node/npx の outbound DNS を IPv4 優先にし v6 経路欠如での AAAA ハングを防ぐ（詳細は ADR-0041 / #306）
+  "containerEnv": {
+    "NODE_OPTIONS": "--dns-result-order=ipv4first"
+  },
   "features": {
     "ghcr.io/devcontainers-extra/features/gh-cli:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
