@@ -3,7 +3,7 @@
 #
 # default-deny で許可ドメインのみへの outbound を通す、自律実行時のネットワーク安全網。
 # devcontainer.json の postStartCommand から sudo で実行する（毎起動時に再構成）。
-# NET_ADMIN / NET_RAW capability が必要（docker-compose.yml の app.cap_add で付与）。
+# NET_ADMIN capability が必要（docker-compose.yml の app.cap_add で付与）。
 # 採用方式（nftables 移行 / IPv6 default-deny）の判断根拠は ADR-0041 を参照。
 #
 # 実装上の注意: `nft flush ruleset` は使わない。Docker 自身の nat/filter も nftables
