@@ -149,7 +149,7 @@ table inet egress_fw {
     chain input {
         type filter hook input priority 0; policy drop;
         # egress で開始した通信の戻りと loopback・Docker subnet 発のみ許可し、外部起点の inbound は drop。
-        # `ct state established,related accept` を削除すると egress の応答パケットも落ちて通信が壊れる。
+        # 下の ct state 行を削除すると egress の応答パケットも落ちて通信が壊れる。
         iifname "lo" accept
         ct state established,related accept
         ip saddr ${HOST_NETWORK} accept
