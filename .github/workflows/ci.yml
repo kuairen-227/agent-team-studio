@@ -111,7 +111,6 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       # bun audit は bun.lock を直接参照するため install / cache 不要。
-      # 依存の侵害バージョン・既知脆弱性を検知する依存スキャン層（CodeQL を補完）。
-      # 閾値は critical: install 時マルウェアは critical で報告されるため自動ブロックし、
-      # dev ツール由来の通常 CVE では PR を止めない。
+      # 依存の既知脆弱性・侵害版を検知（CodeQL を補完）。閾値 critical は install 時
+      # マルウェア相当のみブロックし、dev ツール由来の通常 CVE では PR を止めない。
       - run: bun audit --audit-level=critical
