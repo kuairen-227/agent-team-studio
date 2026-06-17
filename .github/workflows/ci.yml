@@ -99,3 +99,26 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: bun run test
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      # bun のバージョンは package.json の packageManager フィールドで解決される
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
+
+      # 依存の侵害バージョン・既知脆弱性を検知する依存スキャン層（CodeQL を補完）。
+      # 閾値は critical: install 時マルウェアは critical で報告されるため自動ブロックし、
+      # dev ツール由来の通常 CVE では PR を止めない。
+      - run: bun audit --audit-level=critical
