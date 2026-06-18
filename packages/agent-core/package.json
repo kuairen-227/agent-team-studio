@@ -15,7 +15,7 @@
   "dependencies": {
     "@agent-team-studio/shared": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.84",
-    "@ai-sdk/groq": "^3.0.39",
+    "@ai-sdk/groq": "^3.0.41",
     "ai": "^6.0.199"
   }
 }
