@@ -69,7 +69,7 @@ accepted
    | 人間チェックポイント | スプリント契約合意・PR 作成・ADR 要否の各点で human-in-the-loop |
    | 安全網 | [ADR-0037](./0037-ai-execution-sandbox-policy.md) の egress firewall（exfiltration 防止）を前提とする |
 
-3. **オーケストレーション手段は Phase で確定する**。Phase 1〜2 は自前実装（論点 3-F）、Phase 3 着手時に Claude Agent SDK（論点 3-G）との比較で確定する。
+3. **オーケストレーション手段は Phase で確定する**。Phase 1〜2 は自前実装（論点 3-F）、Phase 3 着手時に Claude Agent SDK（論点 3-G）との比較で確定する。→ Phase 3（#291）で [ADR-0043](./0043-autonomous-loop-orchestration-mechanism.md) として**自前（論点 3-F）に確定**した。
 
 4. **見送り候補（#225）を再評価する**。auto memory は構造化ファイルハンドオフを優先しつつ Phase 2 以降で再判定、Managed Agents SDK は Phase 3 で再評価する（[long-running-app-harness.md §5](../guides/long-running-app-harness.md)）。
 
