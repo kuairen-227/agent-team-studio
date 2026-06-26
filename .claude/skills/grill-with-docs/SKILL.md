@@ -1,0 +1,24 @@
+---
+name: grill-with-docs
+description: 壁打ちで詰めた意思決定を ADR として残しながら進める、ドキュメント生成付きの壁打ち。
+when_to_use: ユーザーが「壁打ちして記録も残して」「詰めて ADR 化して」「設計を固めて決定を残して」「grill-with-docs」などと言ったとき
+disable-model-invocation: true
+allowed-tools: Read Grep Glob AskUserQuestion Skill(create-adr)
+---
+
+# grill-with-docs
+
+`grilling` の壁打ちを回しつつ、合意に達した意思決定を ADR として残す。軽い壁打ち（`grilling`）に対し、成果物（ADR）を残す重い版。
+
+## 進め方
+
+1. `grilling` の要領で計画・設計を一問ずつ詰める（一度に1問・推奨回答付き・コードベースで答えられる問いは自分で調べる）。
+2. 議論の中で**意思決定が固まるたび**に、その決定を書き留めておく（何を・なぜ・検討した代替案）。
+3. 壁打ちが一区切りしたら、固まった決定を `Skill(create-adr)` で ADR 化する。複数の独立した決定があれば ADR を分ける（1 ADR = 1 決定）。
+4. ADR の全文をユーザーに提示し、確認を求める。
+
+## 注意点
+
+- ADR 化は**決定が固まってから**行う。議論の途中で先走って書かない。
+- 本リポジトリは「意思決定は規模を問わず ADR」方針（CLAUDE.md）。小さな決定でも残す価値はあるが、粒度に迷う場合はユーザーに確認する。
+- 用語整理（glossary 反映）が必要そうなら指摘に留め、本スキルでは行わない（スコープ外。必要なら別途 `write-product-doc`）。
