@@ -48,8 +48,8 @@ YAML frontmatter は `---` で囲み、以下のフィールドを**グループ
 | create-adr | `[title-or-topic]` | auto | gh issue 参照 + ファイル編集 |
 | create-issue | `[type] [title]` | auto | gh issue/label 作成 |
 | create-pr | `[issue-number]` | auto | git push + gh pr 作成 |
+| grill-me | なし | auto | コードベース探索 + AskUserQuestion |
 | grill-with-docs | なし | **手動のみ** | コードベース探索 + Skill(create-adr) |
-| grilling | なし | auto | コードベース探索 + AskUserQuestion |
 | implement-feature | `[issue-or-context]` | auto | bun/git + Playwright + Skill(create-adr) |
 | judge-dev-mode | `<issue-number>` | **手動のみ** | gh issue 参照（判断のみ・副作用なし） |
 | manage-issue | `[status\|plan\|scope]` | auto（`context: fork`, `agent: pm`） | gh issue/milestone 全般 |

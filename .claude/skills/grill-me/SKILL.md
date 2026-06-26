@@ -1,11 +1,11 @@
 ---
-name: grilling
+name: grill-me
 description: 計画や設計を一問ずつ問い詰めて磨き上げる壁打ち。決定木の各分岐を依存関係ごとに解消し、共通理解に到達させる。
 when_to_use: ユーザーが「壁打ちして」「詰めて」「設計を固めたい」「計画を詰めたい」「グリルして」「grill して」「実装前にプランを叩きたい」などと言ったとき
 allowed-tools: Read Grep Glob AskUserQuestion
 ---
 
-# grilling
+# grill-me
 
 計画・設計をユーザーと一問ずつ詰めて磨き上げる。勝手に決めず、判断材料を提示して合意に到達させる（[principles §1](../../../docs/principles/README.md)）。
 
