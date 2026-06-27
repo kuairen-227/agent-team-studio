@@ -2,10 +2,10 @@
 
 ## Status
 
-accepted
+accepted（§3 の v2.1 割当は [ADR-0045](./0045-minor-version-milestone-generalization.md) で一部再評価: UC#2 分離先を v2.2 へ繰下げ）
 
 - 作成日: 2026-06-26
-- 関連: [ADR-0005](./0005-mvp-scope.md)（前提：v2 ロードマップ）, [ADR-0031](./0031-version-naming-convention.md)（前提：バージョン体系）, [ADR-0038](./0038-autonomous-agent-loop-adoption.md)（前提：フェーズ制 + Go/No-Go の先例）, Issue #320（親トラッカ）, Issue #321（本 ADR）
+- 関連: [ADR-0005](./0005-mvp-scope.md)（前提：v2 ロードマップ）, [ADR-0031](./0031-version-naming-convention.md)（前提：バージョン体系）, [ADR-0038](./0038-autonomous-agent-loop-adoption.md)（前提：フェーズ制 + Go/No-Go の先例）, [ADR-0045](./0045-minor-version-milestone-generalization.md)（v2.1 割当を一部再評価）, Issue #320（親トラッカ）, Issue #321（本 ADR）
 
 ## Context
 
