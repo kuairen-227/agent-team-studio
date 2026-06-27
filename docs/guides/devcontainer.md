@@ -238,6 +238,7 @@ Playwright には用途の異なる 2 つの導入線があり、それぞれ別
 | GitHub（gh / git / GitHub MCP） | `api.github.com/meta` の web/api/git レンジ |
 | npm レジストリ | `registry.npmjs.org` |
 | LLM API | `api.anthropic.com` / `api.groq.com` |
+| Web 検索 API（Tavily / #323・ADR-0045） | `api.tavily.com` |
 | MCP（context7） | `context7.com` |
 | エラートラッキング | `sentry.io` |
 | VS Code 拡張 | `marketplace.visualstudio.com` / `vscode.blob.core.windows.net` / `update.code.visualstudio.com` |

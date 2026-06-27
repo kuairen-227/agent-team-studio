@@ -67,6 +67,7 @@ for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
     "api.groq.com" \
+    "api.tavily.com" \
     "context7.com" \
     "sentry.io" \
     "marketplace.visualstudio.com" \
