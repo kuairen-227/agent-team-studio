@@ -2,7 +2,7 @@
 
 ## Status
 
-proposed
+accepted
 
 - 作成日: 2026-06-27
 - 関連: [ADR-0031](./0031-version-naming-convention.md)（前提：バージョン命名規約を拡張）, [ADR-0044](./0044-v2-scope-definition.md)（v2.1 予約を一部再評価）, Issue #328（デザイン質感改善）, #320（v2.0 親トラッカ）
