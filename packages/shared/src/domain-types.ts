@@ -206,12 +206,15 @@ export type EvidenceLevel = "strong" | "moderate" | "weak" | "insufficient";
  * agent-core / web のパースガードはこの配列を参照し origin を検証する。
  * - `knowledge_base`: LLM 知識ベース由来。`detail` に既知の一次情報源（URL / 文献名）。
  * - `reference`: ユーザー提供の参考テキスト由来。`detail` に該当箇所（見出し / 抜粋）。
+ * - `web_search`: 実 Web 検索由来（#323 / ADR-0045）。`detail` に取得した実在の出典 URL。
+ *   検索失敗・ゼロ件時は本 origin を使わず `knowledge_base` / `estimated` へ縮退し、URL を捏造しない。
  * - `estimated`: 推定。確証なく導いた情報である旨を明示する。
  * - `unknown`: 出典不明。
  */
 export const SOURCE_ORIGINS = [
   "knowledge_base",
   "reference",
+  "web_search",
   "estimated",
   "unknown",
 ] as const;

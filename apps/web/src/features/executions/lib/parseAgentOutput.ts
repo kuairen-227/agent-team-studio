@@ -48,8 +48,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * `sources` フィールドの構造を検証する（#226）。optional のため undefined は許容するが、
- * 存在する場合は配列かつ各要素が既知の origin を持つことを要求し、`origin: "web_search"`
- * 等の不正値が未検証のまま待機 UI へ透過するのを防ぐ（agent-core の検証と対称）。
+ * 存在する場合は配列かつ各要素が既知の origin を持つことを要求し、未知の origin 値が
+ * 未検証のまま待機 UI へ透過するのを防ぐ（agent-core の検証と対称）。
  * origin 値の SSoT は shared の `SOURCE_ORIGINS`。
  */
 function isValidSources(value: unknown): boolean {

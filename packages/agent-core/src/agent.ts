@@ -27,6 +27,7 @@ import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { LlmError } from "./llm-error.ts";
 import { type Logger, NOOP_LOGGER } from "./logger-port.ts";
+import type { WebSearchOutcome, WebSearchPort } from "./web-search-client.ts";
 
 // ---------- 公開型 ----------
 
@@ -49,6 +50,13 @@ export type AgentDeps = {
    * 単体で使う場合の追跡性を確保するために残している。
    */
   logger?: Logger;
+  /**
+   * Web 検索境界（#323 / ADR-0045）。Investigation Agent が LLM 呼び出し前に
+   * 競合×観点で検索し、実在の出典 URL を文脈へ注入するために使う。
+   * 未注入時は検索を行わず、各 finding を knowledge_base 由来として扱う従来動作へ縮退する
+   * （`TAVILY_API_KEY` 未設定環境・テストでの差し替えを許容するため optional）。
+   */
+  webSearch?: WebSearchPort;
 };
 
 /** agent_executions テーブルへの書き込みパッチ型。 */
@@ -110,6 +118,7 @@ function buildInvestigationSystem(
   template: string,
   def: InvestigationAgentDefinition,
   params: CompetitorAnalysisParameters,
+  webSearchResults: string,
 ): string {
   return substituteTemplate(template, {
     perspective_key: def.specialization.perspective_key,
@@ -117,7 +126,76 @@ function buildInvestigationSystem(
     perspective_description: def.specialization.perspective_description,
     competitors: params.competitors.join(", "),
     reference_or_empty: params.reference ?? "（参考情報なし）",
+    web_search_results: webSearchResults,
   });
+}
+
+// ---------- Web 検索文脈の組み立て（#323 / ADR-0045） ----------
+
+/** webSearch 未注入時に注入する縮退指示。出典は knowledge_base 扱いとし URL 捏造を禁ずる。 */
+const NO_WEB_SEARCH_NOTE =
+  "Web 検索は利用できません。各 finding は知識ベース（knowledge_base）または推定（estimated）で扱い、出典 URL を捏造しないこと。";
+
+/** 検索結果を出典付与の根拠として LLM に渡す際のヘッダ指示。 */
+const WEB_SEARCH_HEADER =
+  '以下は各企業について取得した実在の Web 検索結果です。各 finding の sources には、根拠とした結果の url を {"origin": "web_search", "detail": "<url>"} の形で付与してください。検索結果が無い企業は knowledge_base / estimated で扱い、URL を捏造しないこと。';
+
+/** 検索失敗・ゼロ件の企業に付すマーカー。捏造を避けるため明示的に「取得不可」とする。 */
+const UNAVAILABLE_NOTE =
+  "検索結果を取得できませんでした（出典取得不可）。knowledge_base / estimated で扱い、URL を捏造しないこと。";
+
+/** プロンプト肥大を防ぐためのスニペット最大文字数。 */
+const MAX_SNIPPET_CHARS = 300;
+
+/** 競合 1 社分の検索結果セクションを Markdown 風テキストへ整形する。 */
+function formatCompetitorSection(
+  competitor: string,
+  outcome: WebSearchOutcome,
+): string {
+  const head = `### ${competitor}`;
+  if (outcome.status === "unavailable" || outcome.results.length === 0) {
+    return `${head}\n${UNAVAILABLE_NOTE}`;
+  }
+  const lines = outcome.results.map((r, i) => {
+    const snippet = r.snippet.slice(0, MAX_SNIPPET_CHARS);
+    return `${i + 1}. ${r.title}\n   ${r.url}\n   ${snippet}`;
+  });
+  return `${head}\n${lines.join("\n")}`;
+}
+
+/**
+ * 調査エージェントの担当観点について、競合 1 社ごとに Web 検索し、出典付与の根拠となる
+ * 文脈テキストを組み立てる。検索失敗・ゼロ件は「出典取得不可」を明示して縮退し、例外を
+ * 投げない（実行を中断させない / 偽出典を作らない — ADR-0045 Decision 5）。
+ */
+async function gatherWebSearchContext(
+  input: InvestigationAgentRunInput,
+  webSearch: WebSearchPort | undefined,
+  log: Logger,
+): Promise<string> {
+  if (!webSearch) return NO_WEB_SEARCH_NOTE;
+
+  const perspective = input.definition.specialization.perspective_name_ja;
+  const gathered = await Promise.all(
+    input.parameters.competitors.map(async (competitor) => {
+      const query = `${competitor} ${perspective}`;
+      const outcome = await webSearch.search(query, input.signal);
+      return { competitor, outcome };
+    }),
+  );
+
+  const withResults = gathered.filter(
+    (g) => g.outcome.status === "ok" && g.outcome.results.length > 0,
+  ).length;
+  log.info(
+    { agentId: input.agentId, competitors: gathered.length, withResults },
+    "web search gathered",
+  );
+
+  const sections = gathered.map((g) =>
+    formatCompetitorSection(g.competitor, g.outcome),
+  );
+  return [WEB_SEARCH_HEADER, "", ...sections].join("\n");
 }
 
 function buildIntegrationSystem(
@@ -351,12 +429,18 @@ export async function runInvestigationAgent(
   const chunks: string[] = [];
 
   try {
+    const webSearchResults = await gatherWebSearchContext(
+      input,
+      deps.webSearch,
+      log,
+    );
     const llmInput: LlmInput = {
       model: input.llm.model,
       system: buildInvestigationSystem(
         input.definition.system_prompt_template,
         input.definition,
         input.parameters,
+        webSearchResults,
       ),
       user: "指示に従って JSON を出力してください。",
       temperature: input.llm.temperature_by_role.investigation,

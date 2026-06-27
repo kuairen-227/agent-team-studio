@@ -23,6 +23,10 @@ import { AGENT_TIMEOUT_MS, EXECUTION_TIMEOUT_MS } from "./constants.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { type Logger, NOOP_LOGGER } from "./logger-port.ts";
+import {
+  createDedupedWebSearch,
+  type WebSearchPort,
+} from "./web-search-client.ts";
 
 // ---------- 公開型 ----------
 
@@ -55,6 +59,12 @@ export type EngineRunDeps = {
    * runExecution が agent 単位の child logger を派生させ AgentDeps へ渡す。
    */
   logger?: Logger;
+  /**
+   * Web 検索境界（#323 / ADR-0045）。注入時は実行スコープの dedup ラッパを噛ませて
+   * Investigation Agent に共有する（並列調査間で同一クエリの重複検索を 1 回に畳む）。
+   * 未注入時は検索なしで knowledge_base 動作へ縮退する。
+   */
+  webSearch?: WebSearchPort;
   /** テスト用: 注入された場合は streamAgentMessage の代わりに使う */
   _stream?: (input: LlmInput, signal?: AbortSignal) => AsyncIterable<string>;
   /** テスト用: エージェント単位タイムアウト ms（省略時は定数値を使用） */
@@ -171,6 +181,12 @@ async function _runExecution(
 
   // ---------- Investigation 並列実行 ----------
 
+  // Web 検索は実行スコープで dedup する（並列調査間の重複クエリを 1 回に畳む）。
+  // 検索を行うのは Investigation Agent のみ（Integration には渡さない）。
+  const webSearch = deps.webSearch
+    ? createDedupedWebSearch(deps.webSearch)
+    : undefined;
+
   const investigationResults = await runInvestigationsWithTimeout(
     investigationAes,
     parameters,
@@ -179,6 +195,7 @@ async function _runExecution(
     streamFn,
     agentTimeoutMs,
     executionSignal,
+    webSearch,
   );
 
   // Execution タイムアウト確認
@@ -334,6 +351,7 @@ async function runInvestigationsWithTimeout(
   streamFn: (input: LlmInput, signal?: AbortSignal) => AsyncIterable<string>,
   agentTimeoutMs: number,
   executionSignal: AbortSignal,
+  webSearch: WebSearchPort | undefined,
 ): Promise<InvestigationRunResult[]> {
   const results = await Promise.allSettled(
     agentExecutions.map(async (ae) => {
@@ -364,6 +382,7 @@ async function runInvestigationsWithTimeout(
             updateAgentExecution: deps.updateAgentExecution,
             onEvent: deps.onEvent,
             logger: agentChildLogger(deps.logger, ae),
+            webSearch,
           },
         );
       } finally {

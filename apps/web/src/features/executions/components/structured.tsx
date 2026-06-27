@@ -51,6 +51,7 @@ export const MISSING_REASON_LABEL: Record<
 export const SOURCE_ORIGIN_LABEL: Record<SourceOrigin, string> = {
   knowledge_base: "知識ベース",
   reference: "参考情報",
+  web_search: "Web検索",
   estimated: "推定",
   unknown: "不明",
 };
