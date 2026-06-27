@@ -50,9 +50,9 @@ N2（Web 検索連携）は、MVP 受け入れ検証で残った**基準3 CONDIT
 
 1. **到達方式は B（専用 Web 検索 API・アプリ層に検索境界）を採用する（論点 1-B）。** プロバイダ内蔵検索（A）は無料主力 Groq で機能せず ADR-0029 の無料・マルチベンダー方針を崩すため却下する。ハイブリッド（C）は学習スコープに過剰として見送り、forcing function 出現時に再評価する。
 
-2. **採用 API は Tavily とする（論点 2-A）。** 1,000 credits/月・クレカ不要の無料枠（ADR-0029 が重視した方針と整合）、LLM エージェント向けに出典 URL を返す設計（基準3 に直結）、Google スクレイピング系の ToS グレーゾーンを回避（承認制・セキュリティレビュー制約と整合）、単一安定ドメインで egress 追加が容易、という総合判断による。Exa を次点とし、Tavily の無料枠/品質が将来不足した場合の第一代替とする。
+2. **採用 API は Tavily とする（論点 2-A）。** 1,000 credits/月・クレカ不要の無料枠（ADR-0029 が重視した方針と整合）、LLM エージェント向けに出典 URL を返す設計（基準3 に直結）、Google スクレイピング系の ToS グレーゾーンを回避（承認制・セキュリティレビュー制約と整合）、単一安定ドメインで egress 追加が容易、という総合判断による。Exa を次点とし、Tavily の無料枠/品質が将来不足した場合の第一代替とする。次点 Exa への切替が必要になった場合は、その時点で本 ADR を追記または supersede する（Consequences §ネガティブ・Decision 5 と同方針）。
 
-3. **egress allowlist に `api.tavily.com` を追加する。** [ADR-0041](./0041-egress-firewall-nftables-ipv6.md) の許可ドメイン追加方針（`.devcontainer/init-firewall.sh` の `for domain in` ループへ追記し、`docs/guides/devcontainer.md` の許可ドメイン表を更新）に従う。最小限の原則（ADR-0037）に沿い、追加は本 API の単一ドメインに限定する。Claude Code on the web（リモート実行環境）は別途 network policy が egress を統治するため、本追加は**ローカル DevContainer** の egress を補完する位置づけ（ADR-0041 と不変）。具体的な firewall 設定変更は後続 #323 の実装で行い、本 ADR は方針のみを定める。
+3. **egress allowlist に `api.tavily.com` を追加する。** [ADR-0041](./0041-egress-firewall-nftables-ipv6.md) の許可ドメイン追加方針（`.devcontainer/init-firewall.sh` の `for domain in` ループへ追記し、`docs/guides/devcontainer.md` の許可ドメイン表を更新）に従う。最小限の原則（ADR-0037）に沿い、追加は本 API の単一ドメインに限定する。Claude Code on the web（リモート実行環境）は別途 network policy が egress を統治するため、本追加は**ローカル DevContainer** の egress を補完する位置づけ（ADR-0041 と不変）。具体的な firewall 設定変更は後続 #323 の実装で行い、本 ADR は方針のみを定める。`init-firewall.sh` への `api.tavily.com` 追記と `docs/guides/devcontainer.md` 許可ドメイン表の更新は、Decision 5 のフォールバック型と同様に #323 の受入条件に含める。
 
 4. **API キーは既存の secret 管理方式に載せる。** `TAVILY_API_KEY` をアプリ env（`apps/api/.env`）に置き、[ADR-0039](./0039-secret-read-guard.md) の保護層（Read deny の `**/.env` 系 glob ＋ PreToolUse(Bash) ガードフックの `.env` トークン検出 ＋ `.gitignore` ＋ secretlint ＋ egress firewall）でカバーする。新規の deny エントリ追加は不要（パスベースの既存 glob が一致する）。`.env.example` に鍵名のみ（値は空）を追記し、実値はローカルにのみ置く。
 
@@ -69,7 +69,8 @@ N2（Web 検索連携）は、MVP 受け入れ検証で残った**基準3 CONDIT
 
 ### ネガティブ / リスク
 
-- **無料枠の制約**: Tavily は 1,000 credits/月・繰越なし。調査エージェントの並列実行で消費が嵩むと月内に枯渇し得る。→ 緩和: クエリのキャッシュ/重複排除で消費を抑制し、枯渇時は「出典取得不可」を明示（捏造禁止）。継続的に不足する場合は次点 Exa へ切替（本 ADR 追記）。
+- **本 ADR 単独では基準3 を解決しない**: 本 ADR は N2（出典 URL 付与）の技術基盤（到達方式・採用 API）を確立するに留まる。基準3 PASS の判定には N2 ＋ V2 ファクトチェック機構（#324）の両者が揃う必要があり、V2 が未実装の間は基準3 の合否は判定不能（ADR-0044 軸1）。後続実装者は本 ADR をもって基準3 を「解決済み」と誤読しないこと。
+- **無料枠の制約**: Tavily は 1,000 credits/月・繰越なし（1 credit ≒ 基本検索 1 回相当。advanced 検索やコンテンツ抽出では加算され得る — 詳細は上記出典 docs.tavily.com/documentation/api-credits 参照）。調査エージェントの並列実行で消費が嵩むと月内に枯渇し得る。→ 緩和: クエリのキャッシュ/重複排除で消費を抑制し、枯渇時は「出典取得不可」を明示（捏造禁止）。継続的に不足する場合は次点 Exa へ切替（本 ADR 追記）。
 - **外部サービス継続性への依存**: 検索品質・無料枠・ToS は提供元都合で変動し得る（Brave の無料枠廃止が実例）。→ 緩和: 検索境界をアプリ層の port として薄く保ち、Exa 等への差し替えを局所化する。
 - **ファクトチェック（基準3 のもう一方）は本 ADR の範囲外**: 出典 URL の付与（N2）はカバーするが、入力参考情報の事実矛盾検出（V2 / #324）は別機能。基準3 PASS には両者が要る（ADR-0044 軸1）。
 
