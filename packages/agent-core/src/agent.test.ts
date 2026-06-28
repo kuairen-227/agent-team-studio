@@ -10,6 +10,7 @@ import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import { LlmError } from "./llm-error.ts";
 import type { LogFields, Logger } from "./logger-port.ts";
+import type { WebSearchPort } from "./web-search-client.ts";
 
 // ---- fake logger ----
 
@@ -44,6 +45,10 @@ const baseLlm = {
 
 const baseParams = { competitors: ["CompanyA", "CompanyB"] };
 
+// 注意: この基底フィクスチャの system_prompt_template には {{web_search_results}} が
+// 無い（substituteTemplate はテンプレ内のプレースホルダのみ置換するため、未参照でも throw
+// しない）。Web 検索の文脈注入を観測するテストは {{web_search_results}} を持つ defWithSearch
+// を使う（下記 describe 参照）。本フィクスチャに同プレースホルダを足す改変は不要。
 const investigationDef = {
   role: "investigation" as const,
   agent_id: "investigation:strategy",
@@ -239,7 +244,7 @@ describe("runInvestigationAgent", () => {
           competitor: "CompanyA",
           points: ["点1"],
           evidence_level: "strong",
-          sources: [{ origin: "web_search" }],
+          sources: [{ origin: "made_up_origin" }],
         },
       ],
     });
@@ -430,6 +435,130 @@ describe("runInvestigationAgent", () => {
 
 // ---- Integration Agent テスト ----
 
+// ---- Web 検索連携 (#323) ----
+
+describe("runInvestigationAgent の Web 検索連携 (#323)", () => {
+  // {{web_search_results}} を持つテンプレ（検索文脈の注入先を観測するため）
+  const defWithSearch = {
+    ...investigationDef,
+    system_prompt_template:
+      "観点: {{perspective_name_ja}}。企業: {{competitors}}。{{reference_or_empty}}\n検索結果:\n{{web_search_results}}",
+  };
+
+  /** input.system を捕捉しつつ有効な JSON を返す stream override 付き deps を作る。 */
+  function makeDepsCapturingSystem(captured: { system: string }) {
+    return makeDeps([], {
+      stream: (input: LlmInput) => {
+        captured.system = input.system;
+        return (async function* () {
+          yield validInvestigationJson;
+        })();
+      },
+    });
+  }
+
+  test("検索成功時: 実在 URL を含む検索結果がプロンプトに注入され completed になる", async () => {
+    const captured = { system: "" };
+    const okSearch: WebSearchPort = {
+      search: async () => ({
+        status: "ok",
+        results: [
+          { title: "公式発表", url: "https://example.com/a", snippet: "抜粋A" },
+        ],
+      }),
+    };
+    const deps = { ...makeDepsCapturingSystem(captured), webSearch: okSearch };
+
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    expect(captured.system).toContain("https://example.com/a");
+    expect(captured.system).toContain("CompanyA");
+  });
+
+  test("競合 1 社ごとに検索を発火する", async () => {
+    const captured = { system: "" };
+    const queries: string[] = [];
+    const countingSearch: WebSearchPort = {
+      search: async (query) => {
+        queries.push(query);
+        return { status: "ok", results: [] };
+      },
+    };
+    const deps = {
+      ...makeDepsCapturingSystem(captured),
+      webSearch: countingSearch,
+    };
+
+    await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    // baseParams.competitors = ["CompanyA", "CompanyB"]
+    expect(queries).toHaveLength(2);
+    expect(queries.some((q) => q.includes("CompanyA"))).toBe(true);
+    expect(queries.some((q) => q.includes("CompanyB"))).toBe(true);
+  });
+
+  test("検索 unavailable 時: 出典取得不可を明示して縮退し、実行は中断しない", async () => {
+    const captured = { system: "" };
+    const downSearch: WebSearchPort = {
+      search: async () => ({ status: "unavailable", reason: "429" }),
+    };
+    const deps = {
+      ...makeDepsCapturingSystem(captured),
+      webSearch: downSearch,
+    };
+
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    expect(captured.system).toContain("出典取得不可");
+  });
+
+  test("webSearch.search が例外を投げても agent を失敗させず縮退して completed になる", async () => {
+    const captured = { system: "" };
+    const throwingSearch: WebSearchPort = {
+      search: async () => {
+        throw new Error("unexpected port bug");
+      },
+    };
+    const deps = {
+      ...makeDepsCapturingSystem(captured),
+      webSearch: throwingSearch,
+    };
+
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    // 契約違反の throw も検索失敗として扱い、出典取得不可へ縮退する（中断しない）
+    expect(result.success).toBe(true);
+    expect(captured.system).toContain("出典取得不可");
+  });
+
+  test("webSearch 未注入時: 知識ベース縮退の指示を注入し従来どおり completed になる", async () => {
+    const captured = { system: "" };
+    const deps = makeDepsCapturingSystem(captured);
+
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    expect(captured.system).toContain("Web 検索は利用できません");
+  });
+});
+
 describe("runIntegrationAgent", () => {
   test("正常系: agent_started → chunk* → agent_completed のイベントシーケンスを発行する", async () => {
     const deps = makeDeps([validIntegrationRaw]);
@@ -541,7 +670,7 @@ describe("runIntegrationAgent", () => {
               competitor: "CompanyA",
               summary: "要約",
               source_evidence_level: "strong",
-              sources: [{ origin: "web_search" }],
+              sources: [{ origin: "made_up_origin" }],
             },
           ],
         },

@@ -7,8 +7,15 @@
  * Bun の serve には `fetch` と `websocket` の双方を渡す必要がある（hono/bun の規約）。
  */
 
-import type { AgentEvent, Logger } from "@agent-team-studio/agent-core";
-import { runExecution } from "@agent-team-studio/agent-core";
+import type {
+  AgentEvent,
+  Logger,
+  WebSearchPort,
+} from "@agent-team-studio/agent-core";
+import {
+  createTavilyWebSearch,
+  runExecution,
+} from "@agent-team-studio/agent-core";
 import type { AgentExecutionRow } from "@agent-team-studio/db";
 import {
   createDbClient,
@@ -38,6 +45,22 @@ if (!databaseUrl) {
 const { db } = createDbClient(databaseUrl);
 
 const eventHub = createEventHub();
+
+/**
+ * Web 検索境界（#323 / ADR-0045）。`TAVILY_API_KEY` 設定時のみ Tavily port を起こして
+ * engine に注入する。未設定なら undefined のままで、調査エージェントは knowledge_base
+ * 動作へ縮退する（外部キー無し環境でも起動・実行できる。secret 管理は ADR-0039）。
+ */
+const tavilyApiKey = process.env.TAVILY_API_KEY;
+const webSearch: WebSearchPort | undefined = tavilyApiKey
+  ? createTavilyWebSearch({ apiKey: tavilyApiKey })
+  : undefined;
+if (!webSearch) {
+  logger.warn(
+    {},
+    "TAVILY_API_KEY is not set; investigation runs fall back to knowledge_base sources",
+  );
+}
 
 /**
  * Execution を取得してエンジンを起動する。
@@ -94,6 +117,7 @@ async function launchEngine(
       insertResult: (input) => insertResult(db, input),
       onEvent: (event: AgentEvent) => eventHub.publish(executionId, event),
       logger: engineLogger,
+      webSearch,
     },
   );
 }

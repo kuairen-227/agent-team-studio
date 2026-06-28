@@ -51,6 +51,7 @@ export const MISSING_REASON_LABEL: Record<
 export const SOURCE_ORIGIN_LABEL: Record<SourceOrigin, string> = {
   knowledge_base: "知識ベース",
   reference: "参考情報",
+  web_search: "Web検索",
   estimated: "推定",
   unknown: "不明",
 };
@@ -66,13 +67,39 @@ export function SourceList({ sources }: { sources?: Source[] }) {
   }
   return (
     <ul className="mt-1 space-y-0.5">
-      {sources.map((source, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
-        <li key={i} className="text-xs text-muted-foreground">
-          出典: {SOURCE_ORIGIN_LABEL[source.origin]}
-          {source.detail ? `（${source.detail}）` : ""}
-        </li>
-      ))}
+      {sources.map((source, i) => {
+        // web_search の detail は実在 URL。リンク化して各セルの自力検証を可能にする
+        // （基準3 の検証可能性 / ADR-0045・レビュー指摘 Should4）。それ以外はテキスト。
+        const isUrl =
+          source.origin === "web_search" &&
+          (source.detail?.startsWith("http") ?? false);
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: サーバー生成の固定リスト
+          <li key={i} className="text-xs text-muted-foreground">
+            出典: {SOURCE_ORIGIN_LABEL[source.origin]}
+            {source.detail ? (
+              isUrl ? (
+                <>
+                  （
+                  <a
+                    href={source.detail}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    {source.detail}
+                  </a>
+                  ）
+                </>
+              ) : (
+                `（${source.detail}）`
+              )
+            ) : (
+              ""
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

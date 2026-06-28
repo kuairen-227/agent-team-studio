@@ -133,6 +133,28 @@ describe("parseAgentOutput", () => {
     ]);
   });
 
+  it("web_search 由来の出典 URL を構造化結果へ透過する (#323)", () => {
+    const withWebSearch = JSON.stringify({
+      perspective: "strategy",
+      findings: [
+        {
+          competitor: "A社",
+          points: ["要点"],
+          evidence_level: "strong",
+          sources: [
+            { origin: "web_search", detail: "https://example.com/news" },
+          ],
+        },
+      ],
+    });
+    const result = parseAgentOutput("investigation_strategy", withWebSearch);
+    expect(result.kind).toBe("investigation");
+    if (result.kind !== "investigation") throw new Error("unreachable");
+    expect(result.data.findings[0]?.sources).toEqual([
+      { origin: "web_search", detail: "https://example.com/news" },
+    ]);
+  });
+
   it("不正な origin を含む sources は unstructured へフォールバックする (#226)", () => {
     const invalidOrigin = JSON.stringify({
       perspective: "strategy",
@@ -141,7 +163,7 @@ describe("parseAgentOutput", () => {
           competitor: "A社",
           points: ["要点"],
           evidence_level: "strong",
-          sources: [{ origin: "web_search" }],
+          sources: [{ origin: "made_up_origin" }],
         },
       ],
     });

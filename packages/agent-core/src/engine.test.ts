@@ -22,6 +22,7 @@ import { runExecution } from "./engine.ts";
 import type { AgentEvent } from "./events.ts";
 import type { LlmInput } from "./llm-client.ts";
 import type { LogFields, Logger } from "./logger-port.ts";
+import type { WebSearchPort } from "./web-search-client.ts";
 
 // ---- fake logger ----
 
@@ -464,5 +465,90 @@ describe("runExecution", () => {
 
     const finalPatch = deps.executionPatches[deps.executionPatches.length - 1];
     expect(finalPatch?.patch.status).toBe("failed");
+  });
+});
+
+// ---- Web 検索連携 (#323) ----
+
+describe("runExecution の Web 検索連携 (#323)", () => {
+  /** クエリを記録する WebSearchPort。常に ok（0 件）を返す。 */
+  function makeRecordingWebSearch(): { calls: string[]; port: WebSearchPort } {
+    const calls: string[] = [];
+    return {
+      calls,
+      port: {
+        search: async (query) => {
+          calls.push(query);
+          return { status: "ok", results: [] };
+        },
+      },
+    };
+  }
+
+  test("注入時: Investigation 経由で競合×観点の検索が走る", async () => {
+    const { calls, port } = makeRecordingWebSearch();
+    const deps = { ...makeFakeDeps(), webSearch: port };
+
+    await runExecution(baseInput, deps);
+
+    // 投資観点は無いが strategy/product × CompanyA/CompanyB = 4 クエリ
+    expect(calls).toHaveLength(4);
+    expect(calls.some((q) => q.includes("戦略"))).toBe(true);
+    expect(calls.some((q) => q.includes("製品"))).toBe(true);
+    expect(calls.some((q) => q.includes("CompanyA"))).toBe(true);
+  });
+
+  test("実行スコープで dedup する（同一クエリは 1 回に畳む）", async () => {
+    const { calls, port } = makeRecordingWebSearch();
+    // 2 つの Investigation Agent が同一観点名 → クエリが衝突する
+    const dupTemplate: TemplateDefinition = {
+      ...templateDefinition,
+      agents: [
+        {
+          role: "investigation",
+          agent_id: "investigation:a",
+          specialization: {
+            perspective_key: "strategy",
+            perspective_name_ja: "戦略",
+            perspective_description: "x",
+          },
+          system_prompt_template: "p {{competitors}}",
+        },
+        {
+          role: "investigation",
+          agent_id: "investigation:b",
+          specialization: {
+            perspective_key: "product",
+            perspective_name_ja: "戦略",
+            perspective_description: "y",
+          },
+          system_prompt_template: "p {{competitors}}",
+        },
+        {
+          role: "integration",
+          agent_id: "integration:matrix",
+          system_prompt_template: "統合 {{investigation_results}}",
+        },
+      ],
+    };
+    const dupInput: EngineRunInput = {
+      ...baseInput,
+      templateDefinition: dupTemplate,
+      agentExecutions: [
+        { id: "ae-1", agentId: "investigation:a", role: "investigation" },
+        { id: "ae-2", agentId: "investigation:b", role: "investigation" },
+        { id: "ae-3", agentId: "integration:matrix", role: "integration" },
+      ],
+    };
+    const deps = { ...makeFakeDeps(), webSearch: port };
+
+    await runExecution(dupInput, deps);
+
+    // 衝突する 4 クエリ（2 agent × 2 競合）が dedup され 2 クエリに畳まれる
+    expect(calls).toHaveLength(2);
+    // クエリ内容も固定する（形式変更で素通りしないように）
+    expect(calls).toEqual(
+      expect.arrayContaining(["CompanyA 戦略", "CompanyB 戦略"]),
+    );
   });
 });
