@@ -45,6 +45,10 @@ const baseLlm = {
 
 const baseParams = { competitors: ["CompanyA", "CompanyB"] };
 
+// 注意: この基底フィクスチャの system_prompt_template には {{web_search_results}} が
+// 無い（substituteTemplate はテンプレ内のプレースホルダのみ置換するため、未参照でも throw
+// しない）。Web 検索の文脈注入を観測するテストは {{web_search_results}} を持つ defWithSearch
+// を使う（下記 describe 参照）。本フィクスチャに同プレースホルダを足す改変は不要。
 const investigationDef = {
   role: "investigation" as const,
   agent_id: "investigation:strategy",
@@ -515,6 +519,28 @@ describe("runInvestigationAgent の Web 検索連携 (#323)", () => {
       deps,
     );
 
+    expect(result.success).toBe(true);
+    expect(captured.system).toContain("出典取得不可");
+  });
+
+  test("webSearch.search が例外を投げても agent を失敗させず縮退して completed になる", async () => {
+    const captured = { system: "" };
+    const throwingSearch: WebSearchPort = {
+      search: async () => {
+        throw new Error("unexpected port bug");
+      },
+    };
+    const deps = {
+      ...makeDepsCapturingSystem(captured),
+      webSearch: throwingSearch,
+    };
+
+    const result = await runInvestigationAgent(
+      { ...baseInvestigationInput, definition: defWithSearch },
+      deps,
+    );
+
+    // 契約違反の throw も検索失敗として扱い、出典取得不可へ縮退する（中断しない）
     expect(result.success).toBe(true);
     expect(captured.system).toContain("出典取得不可");
   });

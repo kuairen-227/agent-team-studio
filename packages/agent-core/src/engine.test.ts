@@ -546,5 +546,9 @@ describe("runExecution の Web 検索連携 (#323)", () => {
 
     // 衝突する 4 クエリ（2 agent × 2 競合）が dedup され 2 クエリに畳まれる
     expect(calls).toHaveLength(2);
+    // クエリ内容も固定する（形式変更で素通りしないように）
+    expect(calls).toEqual(
+      expect.arrayContaining(["CompanyA 戦略", "CompanyB 戦略"]),
+    );
   });
 });

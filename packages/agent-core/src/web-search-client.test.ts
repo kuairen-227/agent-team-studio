@@ -98,6 +98,28 @@ describe("createTavilyWebSearch", () => {
     expect(outcome.status).toBe("unavailable");
     expect(calls).toBe(0);
   });
+
+  test("失敗後のバックオフ sleep 中に abort されると次の試行でループを抜ける", async () => {
+    let calls = 0;
+    const controller = new AbortController();
+    const port = createTavilyWebSearch({
+      apiKey: "test",
+      maxRetries: 5,
+      baseDelayMs: 50,
+      _rawSearch: async () => {
+        calls += 1;
+        // 1 回目失敗 → sleep に入った直後に abort し、次の試行開始前に中断させる
+        controller.abort();
+        throw new Error("transient");
+      },
+    });
+
+    const outcome = await port.search("CompanyA", controller.signal);
+
+    expect(outcome.status).toBe("unavailable");
+    // 初回のみ実行され、sleep 中 abort により以降の試行は走らない
+    expect(calls).toBe(1);
+  });
 });
 
 // ---- createDedupedWebSearch ----
@@ -128,7 +150,10 @@ describe("createDedupedWebSearch", () => {
   test("異なるクエリは inner を個別に呼ぶ", async () => {
     let calls = 0;
     const inner: WebSearchPort = {
-      search: async (): Promise<WebSearchOutcome> => {
+      search: async (
+        _query: string,
+        _signal?: AbortSignal,
+      ): Promise<WebSearchOutcome> => {
         calls += 1;
         return { status: "ok", results: [] };
       },
@@ -139,5 +164,50 @@ describe("createDedupedWebSearch", () => {
     await deduped.search("クエリ2");
 
     expect(calls).toBe(2);
+  });
+
+  test("失敗（unavailable）はキャッシュせず、後続の同一クエリで再試行する", async () => {
+    let calls = 0;
+    const inner: WebSearchPort = {
+      search: async (): Promise<WebSearchOutcome> => {
+        calls += 1;
+        // 1 回目は失敗、2 回目は成功
+        return calls === 1
+          ? { status: "unavailable", reason: "429" }
+          : { status: "ok", results: [{ title: "T", url: "u", snippet: "s" }] };
+      },
+    };
+    const deduped = createDedupedWebSearch(inner);
+
+    const first = await deduped.search("同一クエリ");
+    const second = await deduped.search("同一クエリ");
+
+    expect(first.status).toBe("unavailable");
+    expect(second.status).toBe("ok");
+    // 失敗はネガティブキャッシュされないため再試行され、計 2 回呼ばれる
+    expect(calls).toBe(2);
+  });
+
+  test("成功キャッシュ後は 2 回目が abort 済み signal でもキャッシュ結果を返す", async () => {
+    let calls = 0;
+    const inner: WebSearchPort = {
+      search: async (): Promise<WebSearchOutcome> => {
+        calls += 1;
+        return {
+          status: "ok",
+          results: [{ title: "T", url: "u", snippet: "s" }],
+        };
+      },
+    };
+    const deduped = createDedupedWebSearch(inner);
+
+    const first = await deduped.search("同一クエリ");
+    const aborted = new AbortController();
+    aborted.abort();
+    const second = await deduped.search("同一クエリ", aborted.signal);
+
+    // 2 回目の signal は無視され、1 回目の成功キャッシュが共有される
+    expect(calls).toBe(1);
+    expect(second).toEqual(first);
   });
 });

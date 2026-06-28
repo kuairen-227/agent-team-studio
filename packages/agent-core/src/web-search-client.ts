@@ -55,7 +55,9 @@ export type TavilyWebSearchOptions = {
   _rawSearch?: RawSearch;
 };
 
-const DEFAULT_MAX_RESULTS = 5;
+// 1 クエリの取得件数。プロンプトへ注入する文脈サイズ（競合数×件数×スニペット長）と
+// Tavily クレジット消費の双方を抑えるため 3 に抑える（ADR-0045 無料枠運用 / レビュー指摘 Must2）。
+const DEFAULT_MAX_RESULTS = 3;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_BASE_DELAY_MS = 500;
 /** バックオフ上限（ms）。エージェント単位タイムアウト内に収めるための保険。 */
@@ -149,6 +151,13 @@ export function createTavilyWebSearch(
  * 同一クエリの重複呼び出しを実行スコープで 1 回に畳む dedup ラッパ（ADR-0045 無料枠抑制）。
  * engine が runExecution ごとに生成し、並列調査エージェント間で共有する。
  * inflight の Promise を共有するため、同時発火する同一クエリも 1 回の検索に集約される。
+ *
+ * - **失敗はネガティブキャッシュしない**: `unavailable` や reject は cache から除去し、
+ *   後続の同一クエリが再試行できるようにする（transient な 429 等で実行内の出典取得が
+ *   恒久的に潰れるのを防ぐ — ADR-0045「出典取得可能性を最大化」）。成功（`ok`）のみ残す。
+ * - **signal は最初の呼び出し元のものだけが `inner.search` に渡る**。2 番目以降の signal は
+ *   無視される。engine 経路では全 Investigation Agent が同一 execution の AbortSignal を
+ *   共有する前提のため実害はない（前提が崩れる構成で再利用する場合は要注意）。
  */
 export function createDedupedWebSearch(inner: WebSearchPort): WebSearchPort {
   const cache = new Map<string, Promise<WebSearchOutcome>>();
@@ -158,6 +167,16 @@ export function createDedupedWebSearch(inner: WebSearchPort): WebSearchPort {
       if (cached) return cached;
       const pending = inner.search(query, signal);
       cache.set(query, pending);
+      // 成功以外（unavailable / reject）は settle 後にキャッシュから除去して再試行を許す。
+      // 同時発火中の共有は pending を返すことで担保済み（除去は次回以降にのみ影響する）。
+      void pending.then(
+        (outcome) => {
+          if (outcome.status !== "ok") cache.delete(query);
+        },
+        () => {
+          cache.delete(query);
+        },
+      );
       return pending;
     },
   };

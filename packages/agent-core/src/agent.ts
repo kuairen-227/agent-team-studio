@@ -179,7 +179,18 @@ async function gatherWebSearchContext(
   const gathered = await Promise.all(
     input.parameters.competitors.map(async (competitor) => {
       const query = `${competitor} ${perspective}`;
-      const outcome = await webSearch.search(query, input.signal);
+      // WebSearchPort は失敗を WebSearchOutcome で返す契約だが、実装が誤って throw しても
+      // 検索を理由に agent を失敗させない（「検索失敗時に縮退し中断しない」）。例外は
+      // unavailable に倒して当該競合のみ knowledge_base へ縮退させる。
+      let outcome: WebSearchOutcome;
+      try {
+        outcome = await webSearch.search(query, input.signal);
+      } catch (err) {
+        outcome = {
+          status: "unavailable",
+          reason: err instanceof Error ? err.message : String(err),
+        };
+      }
       return { competitor, outcome };
     }),
   );
